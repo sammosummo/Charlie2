@@ -25,18 +25,21 @@ class Test(ExpWidget):
 
     def mousePressEvent(self, event):
         """Check if mouse press was inside the square. If so, trial is over."""
-        if event.pos() in self.clickable_zones[0]:
 
-            self.data.current_trial_details['rt'] = self.trial_time.elapsed()
-            self.data.current_trial_details[
-                'total_time'] = self.test_time.elapsed()
-            self.data.current_trial_details['success'] = True
-            self.square.hide()
-            self.next_trial()
+        if self.doing_trial:
 
-        else:
+            if event.pos() in self.clickable_zones[0]:
 
-            self.data.current_trial_details['misses'] += 1
+                self.data.current_trial_details[
+                    'rt'] = self.trial_time.elapsed()
+                self.data.current_trial_details[
+                    'total_time'] = self.test_time.elapsed()
+                self.square.hide()
+                self.next_trial()
+
+            else:
+
+                self.data.current_trial_details['misses'] += 1
 
     def gen_control(self):
         """Each trial needs the trial number and position of the square."""
@@ -52,7 +55,7 @@ class Test(ExpWidget):
         """Not much to be done."""
         # TODO: Remove this function?
         self.window_size = (800, 800)
-        self.display_instructions('hello')
+        self.display_instructions(self.instructions[4])
 
     def trial(self):
         """Draw a square on the screen, define a clickable zone, and listen."""

@@ -40,7 +40,6 @@ class Data:
         self.csv_name = f'{s}.csv'
         self.csv_path = pj(csv_path, self.csv_name)
         self.pkl = copy(vars(self))
-        print(self.pkl)
         self.load()
 
     def load(self):

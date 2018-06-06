@@ -49,7 +49,7 @@ def _get_common_instructions(lang):
 def get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
     lst = _get_common_instructions(lang)
-    lst.append(_get_instructions(s, lang))
+    lst += _get_instructions(s, lang)
     return lst
 
 

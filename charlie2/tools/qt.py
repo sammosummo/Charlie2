@@ -4,8 +4,8 @@ from .data import Data
 from .defaults import window_size
 from .paths import get_test, get_vis_stim_paths, get_aud_stim_paths, get_instructions, get_tests_from_batch
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QSizePolicy, QPushButton, QGridLayout
-from PyQt5.QtCore import QTime, QRect, Qt
-from PyQt5.QtGui import QPixmap, QMouseEvent, QFont
+from PyQt5.QtCore import QTime, QRect, Qt, QTimer, QEventLoop
+from PyQt5.QtGui import QPixmap, QMouseEvent, QFont, QTextDocument
 
 
 class MainWindow(QMainWindow):
@@ -73,9 +73,14 @@ class ExpWidget(QWidget):
         self.clickable_zones = []
         self.data.language = l
         self.instructions = get_instructions(t, l)
-        self.instructions_font = QFont('Helvetica', 48)
+        self.instructions_font = QFont('Helvetica', 24)
+        self.instructions_label = QLabel('', self)
+        self.continue_button = QPushButton('', self)
+        self.continue_button.clicked.connect(self._trial)
         self.data.current_trial_details = None
         self.data.first_trial = True
+        self.doing_trial = False
+        self.countdown = 5
         self.summary = {}
         self.test_time = QTime()
         self.trial_time = QTime()
@@ -106,7 +111,6 @@ class ExpWidget(QWidget):
         self.resize_window(True)
         self.test_time.start()
         self.trial_time.start()
-        self._trial()
 
     def setup(self):
         """Override this method."""
@@ -117,11 +121,18 @@ class ExpWidget(QWidget):
 
         if self.data.test_done:
 
-            print('test is done')
             self.continue_to_next_test()
 
         self.data.current_trial_details = self.data.control.pop(0)
         self.trial_time.restart()
+
+        if self.data.first_trial:
+
+            self.display_countdown(self.countdown)
+
+        self.doing_trial = True
+        self.instructions_label.hide()
+        self.continue_button.hide()
         self.trial()
         self.data.results.append(self.data.current_trial_details)
         self.data.save()
@@ -143,6 +154,7 @@ class ExpWidget(QWidget):
         pass
 
     def next_trial(self):
+        """Just an alias for _trial()."""
         self._trial()
 
     def load_image(self, s):
@@ -168,37 +180,50 @@ class ExpWidget(QWidget):
         self.data.summary = self.summarise()
         self.parent().set_central_widget()
 
-    def _display_instructions(self, s):
-        """Return a label with text."""
-        label = QLabel(s, self)
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(self.instructions_font)
-        # label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        return label
+    def _update_instructions_label(self, instr):
+        """Update the text in the instructions label and show."""
+        self.instructions_label.setText(instr)
+        self.instructions_label.setAlignment(Qt.AlignCenter)
+        self.instructions_label.setFont(self.instructions_font)
+        x = self.window_size[0] - 20
+        y = self.window_size[1] - 100
+        self.instructions_label.resize(x, y)
+        self.instructions_label.move(20, 20)
+        self.instructions_label.show()
 
-    def _display_continue_button(self):
-        """Return a continue button."""
-        button = QPushButton('Continue', self)
-        button.resize(button.sizeHint())
-        return button
+    def _update_continue_button(self):
+        """Update the text in the instructions label and show."""
+        self.continue_button.setText(self.instructions[1])
+        self.continue_button.resize(self.continue_button.sizeHint())
+        x = (self.window_size[1] - self.continue_button.width()) / 2
+        y = self.window_size[0] - (self.continue_button.height() + 20)
+        self.continue_button.move(x, y)
+        self.continue_button.show()
 
-    def display_instructions(self, s):
+    def display_instructions(self, instr):
         """Display a set of instructions on the screen."""
-        layout = QGridLayout()
-        label = self._display_instructions(s)
-        layout.addWidget(label, 0, 0)
-        button = self._display_continue_button()
-        layout.addWidget(button, 1, 0)
-        self.setLayout(layout)
-        self.show()
+        self._update_instructions_label(instr)
+        self._update_continue_button()
+
+    def sleep(self, t):
+        """PyQt-friendly sleep function."""
+        loop = QEventLoop()
+        QTimer.singleShot(t * 1000, loop.quit)
+        loop.exec_()
+
+    def display_countdown(self, t):
+        """Display the countdown timer."""
+        self.instructions_label.hide()
+        self.continue_button.hide()
+
+        for i in range(t):
+
+            self._update_instructions_label(self.instructions[0] % (t - i))
+            self.sleep(1.5)
 
 
-        # label = QLabel(s, self)
-        # label.resize(*self.window_size)
-        #
 
-        # label.setFont(self.instructions_font)
-        # label.show()
+
 
 
 
