@@ -36,36 +36,57 @@ def get_tests_from_batch(s):
     return (t.rstrip() for t in open(pj(lists_path, f'{s}.txt')))
 
 
-def get_instructions(s, lang):
+def _get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
     return import_module(f'charlie2.instructions.{s}.{lang}').instr
 
 
-def get_common_instructions(lang):
+def _get_common_instructions(lang):
     """For instructions common to several tests."""
-    return get_instructions('common', lang)
+    return _get_instructions('common', lang)
+
+
+def get_instructions(s, lang):
+    """Return the instructions from test `s` in the given language."""
+    dic = _get_common_instructions(lang)
+    dic.update(_get_instructions(s, lang))
+    return dic
+
+
+def _get_vis_stim_paths(s):
+    """Return dict containing paths to visual stimuli."""
+    p = pj(vis_stim_path, s)
+    return {n: pj(p, n) for n in ls(p) if n.endswith('.png')}
+
+
+def _get_aud_stim_paths(s):
+    """Return dict containing paths to visual stimuli."""
+    p = pj(vis_stim_path, s)
+    return {n: pj(p, n) for n in ls(p) if n.endswith('.png')}
+
+
+def _get_common_vis_stim_paths():
+    """For stimuli common to several tests."""
+    return _get_vis_stim_paths('common')
+
+
+def _get_common_aud_stim_paths():
+    """For stimuli common to several tests."""
+    return _get_aud_stim_paths('common')
 
 
 def get_vis_stim_paths(s):
     """Return dict containing paths to visual stimuli."""
-    p = pj(vis_stim_path, s)
-    return {n: pj(p, n) for n in ls(p) if n.endswith('.png')}
+    dic = _get_common_vis_stim_paths(s)
+    dic.update(_get_vis_stim_paths(s))
+    return dic
 
 
 def get_aud_stim_paths(s):
-    """Return dict containing paths to visual stimuli."""
-    p = pj(vis_stim_path, s)
-    return {n: pj(p, n) for n in ls(p) if n.endswith('.png')}
-
-
-def get_common_vis_stim_paths():
-    """For stimuli common to several tests."""
-    return get_vis_stim_paths('common')
-
-
-def get_common_aud_stim_paths():
-    """For stimuli common to several tests."""
-    return get_aud_stim_paths('common')
+    """Return dict containing paths to auditory stimuli."""
+    dic = _get_common_aud_stim_paths(s)
+    dic.update(_get_aud_stim_paths(s))
+    return dic
 
 
 def csv_exists(s, p):

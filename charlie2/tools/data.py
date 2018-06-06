@@ -1,5 +1,5 @@
 import pandas as pd
-from .paths import csv_path, h5_path,pkl_path, pkl_exists, pj
+from .paths import csv_path, pkl_path, pkl_exists, pj
 from datetime import datetime
 from pickle import dump, load
 from getpass import getuser
@@ -8,12 +8,10 @@ from getpass import getuser
 class Data:
 
     def __init__(self, proband_id, test_name):
-        """Data class.
-
-        Data objects contain all the necessary details to run a given proband
-        in a given test and save the data. It allows any test to be resumed if
-        prematurely aborted and prevents a proband for completing the same
-        test twice.
+        """Data objects contain all the necessary details to run a given
+        proband in a given test and save the data. It allows any test to be
+        resumed if prematurely aborted and prevents a proband for completing
+        the same test twice.
 
         Args:
             proband_id (str): Proband's ID.
@@ -33,6 +31,7 @@ class Data:
         self.test_done = False
         self.control = None
         self.results = []
+        self.log = {}
         s = '%s_%s' % (self.proband_id, self.test_name)
         self.pkl_name = f'{s}.pkl'
         self.pkl_path = pj(pkl_path, self.pkl_name)
@@ -54,18 +53,24 @@ class Data:
             self.test_done = self.pkl['test_done']
             self.control = self.pkl['control']
             self.results = self.pkl['results']
+            self.to_log('Data object loaded.')
+
+        else:
+
+            self.to_log('Attempted to load data object; did not exist.')
 
     def save(self):
         """Save the data."""
         dump(self.pkl, open(self.pkl_path, 'wb'))
+        self.to_log('Data object saved.')
 
     def to_csv(self):
         """Write the results to a human-readable csv file."""
         pd.DataFrame(self.results).to_csv(self.csv_path, index=False)
+        self.to_log('Results written to CSV file.')
 
-    def to_h5(self):
-        """Write the results to one big hdf5 file."""
-        s = '%s_%s' % (self.proband_id, self.test_name)
-        pd.DataFrame(self.results).to_hdf(pj(h5_path, 'local.h5'), s)
+    def to_log(self, s):
+        """Write the string to the log."""
+        self.log[datetime.now()] = s
 
 
