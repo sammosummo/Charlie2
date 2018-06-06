@@ -52,7 +52,7 @@ class Test(ExpWidget):
         """Not much to be done."""
         # TODO: Remove this function?
         self.window_size = (800, 800)
-        self.display_instructions_text('hello')
+        self.display_instructions('hello')
 
     def trial(self):
         """Draw a square on the screen, define a clickable zone, and listen."""
@@ -68,4 +68,4 @@ class Test(ExpWidget):
 
     def summarise(self):
         """Only one summary statistic."""
-        return {'orientation_time_taken': self.data.results[-1]['time_taken']}
+        return {'orientation_time_taken': self.data.results[-1]['total_time']}

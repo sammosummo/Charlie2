@@ -3,7 +3,7 @@ from .argparsing import get_parser
 from .data import Data
 from .defaults import window_size
 from .paths import get_test, get_vis_stim_paths, get_aud_stim_paths, get_instructions, get_tests_from_batch
-from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QSizePolicy, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QSizePolicy, QPushButton, QGridLayout
 from PyQt5.QtCore import QTime, QRect, Qt
 from PyQt5.QtGui import QPixmap, QMouseEvent, QFont
 
@@ -168,21 +168,38 @@ class ExpWidget(QWidget):
         self.data.summary = self.summarise()
         self.parent().set_central_widget()
 
-    def display_instructions_text(self, s, continue_method='box'):
-        """Display large, legible instructions for the given test in the centre
-        of the window.
-
-        """
+    def _display_instructions(self, s):
+        """Return a label with text."""
         label = QLabel(s, self)
-        label.resize(*self.window_size)
-        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         label.setAlignment(Qt.AlignCenter)
         label.setFont(self.instructions_font)
-        label.show()
+        # label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        return label
 
-    def display_continue_button(self, s):
-        """A box that must be clicked in order to continue."""
-        continue_button = QPushButton('Continue', self)
+    def _display_continue_button(self):
+        """Return a continue button."""
+        button = QPushButton('Continue', self)
+        button.resize(button.sizeHint())
+        return button
+
+    def display_instructions(self, s):
+        """Display a set of instructions on the screen."""
+        layout = QGridLayout()
+        label = self._display_instructions(s)
+        layout.addWidget(label, 0, 0)
+        button = self._display_continue_button()
+        layout.addWidget(button, 1, 0)
+        self.setLayout(layout)
+        self.show()
+
+
+        # label = QLabel(s, self)
+        # label.resize(*self.window_size)
+        #
+
+        # label.setFont(self.instructions_font)
+        # label.show()
+
 
 
 
