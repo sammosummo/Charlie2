@@ -1,5 +1,6 @@
 import pandas as pd
 from .paths import csv_path, pkl_path, pkl_exists, pj
+from copy import copy
 from datetime import datetime
 from pickle import dump, load
 from getpass import getuser
@@ -32,12 +33,14 @@ class Data:
         self.control = None
         self.results = []
         self.log = {}
+        self.summary = {}
         s = '%s_%s' % (self.proband_id, self.test_name)
         self.pkl_name = f'{s}.pkl'
         self.pkl_path = pj(pkl_path, self.pkl_name)
         self.csv_name = f'{s}.csv'
         self.csv_path = pj(csv_path, self.csv_name)
-        self.pkl = locals()
+        self.pkl = copy(vars(self))
+        print(self.pkl)
         self.load()
 
     def load(self):
@@ -45,7 +48,7 @@ class Data:
 
         if pkl_exists(self.test_name, self.proband_id):
 
-            self.pkl.update(load(open(self.pkl_path, 'rb')))
+            self.dic.update(load(open(self.pkl_path, 'rb')))
             self.last_loaded = datetime.now()
             self.created = self.pkl['created']
             self.previous_user_id = self.pkl['current_user_id']
@@ -61,13 +64,20 @@ class Data:
 
     def save(self):
         """Save the data."""
-        dump(self.pkl, open(self.pkl_path, 'wb'))
-        self.to_log('Data object saved.')
+
+        if self.proband_id != 'TEST':
+
+            self.pkl = copy(vars(self))
+            dump(self.pkl, open(self.pkl_path, 'wb'))
+            self.to_log('Data object saved.')
 
     def to_csv(self):
         """Write the results to a human-readable csv file."""
-        pd.DataFrame(self.results).to_csv(self.csv_path, index=False)
-        self.to_log('Results written to CSV file.')
+
+        if self.proband_id != 'TEST':
+
+            pd.DataFrame(self.results).to_csv(self.csv_path, index=False)
+            self.to_log('Results written to CSV file.')
 
     def to_log(self, s):
         """Write the string to the log."""

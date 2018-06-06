@@ -1,19 +1,21 @@
+import sys
 from .argparsing import get_parser
 from .data import Data
 from .defaults import window_size
 from .paths import get_test, get_vis_stim_paths, get_aud_stim_paths, get_instructions, get_tests_from_batch
-from PyQt5.QtWidgets import QMainWindow, QWidget
-from PyQt5.QtCore import QTime
+from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QSizePolicy, QPushButton
+from PyQt5.QtCore import QTime, QRect, Qt
+from PyQt5.QtGui import QPixmap, QMouseEvent, QFont
 
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, parent=None):
         """Very top-level instance for running a test or batch of tests. Called
         once when running the programme.
 
         """
-        super(MainWindow, self).__init__()
+        super(MainWindow, self).__init__(parent)
         self.args = get_parser().parse_args()
         self.proband_id = self.args.proband_id
         self.test_names = self.args.test_names.split()
@@ -50,7 +52,7 @@ class MainWindow(QMainWindow):
     def shutdown(self):
         """Close the programme."""
         # TODO: Add shutdown stuff here.
-        self.close()
+        sys.exit()
 
 
 class ExpWidget(QWidget):
@@ -58,30 +60,28 @@ class ExpWidget(QWidget):
     def __init__(self, parent=None):
         """Base class for test widgets. Not called directly. Contains commonly
         used attributes and methods necessary for running a test, such as
-        `next_trial()`, `save()`, and so on.
+        `trial()`, `save()`, and so on.
 
         """
         super(ExpWidget, self).__init__(parent)
-        self.proband_id = self.parent().proband_id
-        self.test_name = self.parent().test_name
-        self.data = Data(self.proband_id, self.test_name)
-        self.visual_stimuli = get_vis_stim_paths(self.test_name)
-        self.auditory_stimuli = get_aud_stim_paths(self.test_name)
-        self.language = self.parent().language
-        self.instructions = get_instructions(self.test_name, self.language)
-        self.current_trial_details = None
+        p = self.parent().proband_id
+        t = self.parent().test_name
+        l = self.parent().language
+        self.data = Data(p, t)
+        self.visual_stimuli = get_vis_stim_paths(t)
+        self.auditory_stimuli = get_aud_stim_paths(t)
+        self.clickable_zones = []
+        self.data.language = l
+        self.instructions = get_instructions(t, l)
+        self.instructions_font = QFont('Helvetica', 48)
+        self.data.current_trial_details = None
+        self.data.first_trial = True
+        self.summary = {}
         self.test_time = QTime()
         self.trial_time = QTime()
-
-        if not self.data_obj.control and not self.data_obj.test_done:
-
-            self.data_obj.control = self.gen_control()
-
-        self.setup()
+        self._setup()
         # self.setStyleSheet("background-color:lightGray;")
         # self.setMinimumSize(*self.window_size)
-        self.test_time.start()
-        self.show()
 
     def resize_window(self, resize_main_window=True):
         """Resize the current widget and optionally also the main window."""
@@ -95,25 +95,94 @@ class ExpWidget(QWidget):
         """Override this method."""
         pass
 
+    def _setup(self):
+        """Preamble to call before test-specific setup."""
+
+        if not self.data.control and not self.data.test_done:
+
+            self.data.control = self.gen_control()
+
+        self.setup()
+        self.resize_window(True)
+        self.test_time.start()
+        self.trial_time.start()
+        self._trial()
+
     def setup(self):
         """Override this method."""
         pass
 
-    def _trial_preamble(self, next_trial):
-        """Used to decorate next_trial() so that the timer always starts."""
+    def _trial(self):
+        """"Preamble to call before test-specific trial."""
 
-        def _preamble(s):
+        if self.data.test_done:
 
-            s.test_time.start()
-            next_trial(s)
+            print('test is done')
+            self.continue_to_next_test()
 
-        return _preamble
+        self.data.current_trial_details = self.data.control.pop(0)
+        self.trial_time.restart()
+        self.trial()
+        self.data.results.append(self.data.current_trial_details)
+        self.data.save()
 
-    @_trial_preamble
-    def next_trial(self):
+        if self.data.first_trial:
+
+            self.data.first_trial = False
+
+        if not self.data.control:
+
+            self.data.test_done = True
+
+    def trial(self):
         """Override this method."""
         pass
 
-    def save(self):
-        """Save the data."""
-        self.data_obj.save()
+    def summarise(self):
+        """Override this method."""
+        pass
+
+    def next_trial(self):
+        self._trial()
+
+    def load_image(self, s):
+        """Returns a QLabel containing the image `s`."""
+        label = QLabel(self)
+        label.setPixmap(QPixmap(self.visual_stimuli[s]))
+        return label
+
+    def make_clickable_zones(self, zones, reset=False):
+        """Reset and make new list of clickable zones."""
+        if reset:
+
+            self.clickable_zones = []
+
+        for zone in zones:
+
+            if type(zone) == QRect:
+
+                self.clickable_zones.append(zone)
+
+    def continue_to_next_test(self):
+        """Move on to the next test."""
+        self.data.summary = self.summarise()
+        self.parent().set_central_widget()
+
+    def display_instructions_text(self, s, continue_method='box'):
+        """Display large, legible instructions for the given test in the centre
+        of the window.
+
+        """
+        label = QLabel(s, self)
+        label.resize(*self.window_size)
+        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        label.setAlignment(Qt.AlignCenter)
+        label.setFont(self.instructions_font)
+        label.show()
+
+    def display_continue_button(self, s):
+        """A box that must be clicked in order to continue."""
+        continue_button = QPushButton('Continue', self)
+
+
+

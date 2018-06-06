@@ -38,7 +38,7 @@ def get_tests_from_batch(s):
 
 def _get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
-    return import_module(f'charlie2.instructions.{s}.{lang}').instr
+    return import_module(f'charlie2.instructions.{lang}.{s}').instr
 
 
 def _get_common_instructions(lang):
@@ -48,9 +48,9 @@ def _get_common_instructions(lang):
 
 def get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
-    dic = _get_common_instructions(lang)
-    dic.update(_get_instructions(s, lang))
-    return dic
+    lst = _get_common_instructions(lang)
+    lst.append(_get_instructions(s, lang))
+    return lst
 
 
 def _get_vis_stim_paths(s):
@@ -77,14 +77,14 @@ def _get_common_aud_stim_paths():
 
 def get_vis_stim_paths(s):
     """Return dict containing paths to visual stimuli."""
-    dic = _get_common_vis_stim_paths(s)
+    dic = _get_common_vis_stim_paths()
     dic.update(_get_vis_stim_paths(s))
     return dic
 
 
 def get_aud_stim_paths(s):
     """Return dict containing paths to auditory stimuli."""
-    dic = _get_common_aud_stim_paths(s)
+    dic = _get_common_aud_stim_paths()
     dic.update(_get_aud_stim_paths(s))
     return dic
 
