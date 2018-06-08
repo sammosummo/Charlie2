@@ -1,11 +1,10 @@
 from argparse import ArgumentParser
-
-
-description = 'Charlie2: A neurocognitive test battery.'
+from .recipes import str2bool
 
 
 def get_parser():
     """Parse command-line arguments."""
+    description = 'Charlie2: A neurocognitive test battery.'
     parser = ArgumentParser(description=description)
     parser.add_argument(
         '-p',
@@ -30,5 +29,19 @@ def get_parser():
         '--language',
         default='en',
         help='Two-letter code for language (e.g., `en`).'
+    )
+    parser.add_argument(
+        '-g',
+        '--gui',
+        type=str2bool,
+        default=False,
+        help='Activate the GUI first? (default is no).'
+    )
+    parser.add_argument(
+        '-f',
+        '--fullscreen',
+        type=str2bool,
+        default=True,
+        help='Run tests in fullscreen? (default is yes).'
     )
     return parser

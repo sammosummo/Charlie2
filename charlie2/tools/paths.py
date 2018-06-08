@@ -3,6 +3,7 @@ from pkgutil import iter_modules
 from os import listdir as ls
 from os.path import dirname, exists, join as pj
 from importlib import import_module
+from copy import copy
 
 
 _path = dirname(charlie2.__file__)
@@ -18,7 +19,9 @@ tests_list = [name for _, name, _ in iter_modules([tests_path])]
 instructions_path = pj(_path, 'instructions')
 icon_path = pj(vis_stim_path, 'icon', 'icon.png')
 fonts_path = pj(_path, 'fonts')
-lists_path = pj(_path, 'lists')
+batch_path = pj(_path, 'batch')
+batches_list = [b for b in ls(batch_path) if b.endswith('.txt')]
+logo_path = pj(_path, 'logo', 'charlie.png')
 
 
 def is_test(s):
@@ -33,12 +36,12 @@ def get_test(s):
 
 def get_tests_from_batch(s):
     """Return the names of tests from a batch file."""
-    return (t.rstrip() for t in open(pj(lists_path, f'{s}.txt')))
+    return [t.rstrip() for t in open(pj(batch_path, f'{s}'))]
 
 
 def _get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
-    return import_module(f'charlie2.instructions.{lang}.{s}').instr
+    return copy(import_module(f'charlie2.instructions.{lang}.{s}').instr)
 
 
 def _get_common_instructions(lang):

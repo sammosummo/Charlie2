@@ -1,5 +1,5 @@
 instr = [
-    'The test will begin in %s',
+    'Test will begin in %s',
     'Continue',
     'Yes',
     'No',

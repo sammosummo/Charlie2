@@ -3,11 +3,11 @@
 This test is designed to be administered first in any battery. On each trial,
 the proband sees a red square positioned randomly on the screen. The task is to
 touch the square as quickly as possible. It is similar to the mouse practice
-task from [1]. There are 20 trials.
+task from [1]. There are 10 trials.
 
 Summary statistics:
 
-    orientation_time_taken : time taken to complete the test (seconds).
+    time_taken : time taken to complete the test (seconds).
 
 References:
 
@@ -21,20 +21,22 @@ from charlie2.tools.qt import ExpWidget
 
 
 class Test(ExpWidget):
-    """Widget for the orientation test."""
 
     def mousePressEvent(self, event):
-        """Check if mouse press was inside the square. If so, trial is over."""
+        """On mouse click/screen touch, check if it was inside the target
+        square. If so, record the trial as a success and move on.
+
+        """
 
         if self.doing_trial:
 
             if event.pos() in self.clickable_zones[0]:
 
-                self.data.current_trial_details[
-                    'rt'] = self.trial_time.elapsed()
-                self.data.current_trial_details[
-                    'total_time'] = self.test_time.elapsed()
-                self.square.hide()
+                rt = self.trial_time.elapsed()
+                time_elapsed = self.test_time.elapsed()
+                dic = {'rt': rt, 'time_elapsed': time_elapsed}
+                self.data.current_trial_details.update(dic)
+                self.square.hide()  # otherwise it will stay on the screen
                 self.next_trial()
 
             else:
@@ -42,33 +44,51 @@ class Test(ExpWidget):
                 self.data.current_trial_details['misses'] += 1
 
     def gen_control(self):
-        """Each trial needs the trial number and position of the square."""
+        """For this test, each trial simply needs its number (counting from 0)
+        and the centre position of the square.
+
+        """
         pos = [
-            (417, 550), (78, 547), (594, 34), (365, 369), (61, 519),
-            (640, 570), (206, 511), (151, 539), (532, 271), (108, 160),
-            (361, 371), (110, 306), (83, 110), (50, 398), (534, 559),
-            (16, 511), (656, 309), (669, 210), (535, 564), (457, 282)
+            (-122, -53), (-40, 19), (78, -85), (251, 296), (136, -203),
+            (-42, 255), (294, -221), (108, 155), (-207, -54), (95, 215)
         ]
         return [{'trial': i, 'position': p} for i, p in enumerate(pos)]
 
-    def setup(self):
-        """Not much to be done."""
-        # TODO: Remove this function?
-        self.window_size = (800, 800)
+    def block(self):
+        """For this test, there is only one block. There is therefore no need
+        to overwrite the setup() method because everything can be done here.
+
+        Before the first trial, we display test instructions and load pre-load
+        the image of the red square (its the same on every trial).
+
+        """
         self.display_instructions(self.instructions[4])
+        self.square = self.load_image('0_s.png')
 
     def trial(self):
-        """Draw a square on the screen, define a clickable zone, and listen."""
+        """For this test, draw the square on the screen, and listen for a
+        mouse click/screen touch within its area.
+
+        """
+        # counter for number of times proband clicks/presses elsewhere
         self.data.current_trial_details['misses'] = 0
-        self.data.current_trial_details['success'] = False
-        n = self.data.current_trial_details['trial']
-        self.square = self.load_image('%i_s.png' % (n // 2))
+
+        # move the square to the correct position
         pos = self.data.current_trial_details['position']
-        self.square.move(*pos)
+        g = self.move_widget(self.square, pos)
+
+        # convert position tuple to str for healthy later storage
         self.data.current_trial_details['position'] = str(pos)
-        self.square.show()
-        self.make_clickable_zones([self.square.geometry()], True)
+
+        # add the clickable zone
+        self.make_clickable_zones([g], True)
 
     def summarise(self):
-        """Only one summary statistic."""
-        return {'orientation_time_taken': self.data.results[-1]['total_time']}
+        """For this test, simply take the total amount of time elapsed since
+        starting the test. Note that this is invalid if the proband did not
+        complete the test in one sitting.
+
+        """
+        last_trial = self.data.results[-1]
+        dic = {'time_taken': last_trial['time_elapsed']}
+        return dic
