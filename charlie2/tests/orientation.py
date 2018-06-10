@@ -33,7 +33,7 @@ class Test(ExpWidget):
             if event.pos() in self.clickable_zones[0]:
 
                 rt = self.trial_time.elapsed()
-                time_elapsed = self.test_time.elapsed()
+                time_elapsed = self.block_time.elapsed()
                 dic = {'rt': rt, 'time_elapsed': time_elapsed}
                 self.data.current_trial_details.update(dic)
                 self.square.hide()  # otherwise it will stay on the screen

@@ -1,16 +1,16 @@
 """Trail-making test.
 
 In this task, the proband must click on circles drawn on the screen in a
-specified order, making a 'trail' between them. There are a total of six phases
-to the test, with varying numbers of trials in each phase. In the first and
-second phases, the proband draws a trail between consecutive numbers, starting
-with 1. In the thrid and fourth phases, the proband does the same with letters
-starting with 'a'. In the fifth and sixth phases, the proband alternates
-between numbers and letters. Odd-numbered phases are 'practice' phases with
-8 trials each, and even-numbered phases are 'test' phases with 25 trials each.
+specified order, making a 'trail' between them. There are a total of six blocks
+to the test, with varying numbers of trials in each block. In the first and
+second blocks, the proband draws a trail between consecutive numbers, starting
+with 1. In the thrid and fourth blocks, the proband does the same with letters
+starting with 'a'. In the fifth and sixth blocks, the proband alternates
+between numbers and letters. Odd-numbered blocks are 'practice' blocks with
+5 trials each, and even-numbered blocks are 'test' blocks with 20 trials each.
 
-The traditional trail-making test [1, 2] contains only two phases (equivalent
-to the 'number' and 'number-letter' phases in the present version). The
+The traditional trail-making test [1, 2] contains only two blocks (equivalent
+to the 'number' and 'number-letter' blocks in the present version). The
 traditional test is also done with pen and paper, and requires an experienced
 experimenter to administer it. Thus the current version should be more
 convenient than the traditional test. Please note that this test has not been
@@ -19,7 +19,7 @@ studies suggests that they are correlated.
 
 Summary statistics:
 
-    <num, let or numlet>_time_taken : time taken to complete the test phase
+    <num, let or numlet>_time_taken : time taken to complete the test block
         (seconds).
     <num, let or numlet>_blaze_errors : number of errors inside blazes.
     <num, let or numlet>_misses : number of errors outside blazes.
@@ -34,136 +34,146 @@ organic brain damage. Percept Mot Skills, 8:271-276.
 B of the Trail Making Test. J Clin Psychol, 43(4):402–409.
 
 """
-from itertools import zip_longest
+from PyQt5.QtGui import QPainter, QPen
+from charlie2._scratch._trials import _charlie2_trials
 from charlie2.tools.qt import ExpWidget
-from charlie2.tools.recipes import roundrobin
-
-phases = range(0, 6)
-phase_type = ('practice', 'test')
-trials = [list(range(8)), list(range(25))]
-blaze_positions = [
-    (
-        (-238, -111), (387, 60), (347, -269), (135, -157), (34, -360),
-        (-227, 17), (130, 122), (400, 320),
-    ),
-    (
-        (-264, -59), (257, 205), (-156, 238), (90, -144), (370, -146),
-        (205, -348), (-209, -253), (-358, -211), (-43, -37), (122, -264),
-        (-176, -359), (-139, -185), (170, 12), (400, 0), (396, 88), (347, 316),
-        (-5, 172), (138, -67), (-11, -165), (211, -216), (400, -300),
-        (250, -46), (-200, 101), (237, 103), (35, 329),
-    ),
-    (
-        (-285, -22), (-44, 131), (-291, 138), (26, -219), (261, 41),
-        (-324, -200), (258, -342), (191, 353),
-    ),
-    (
-        (344, 272), (-58, 254), (-353, -329), (243, -172), (150, -400),
-        (300, -309), (380, -18), (-387, -47), (-186, -385), (-189, -153),
-        (361, 125), (-311, 104), (-231, 247), (-71, -192), (92, -310),
-        (298, -88), (-77, 36), (98, 73), (244, 187), (33, 169), (146, 341),
-        (-136, 336), (-147, 201), (-294, -102), (-33, -313),
-    ),
-    (
-        (337, 13), (-345, -3), (396, 280), (-365, 118), (86, -231),
-        (-306, -275), (366, -125), (-165, -131),
-    ),
-    (
-        (-316, -140), (-385, 6), (-387, -346), (296, -328), (303, -57),
-        (308, 252), (361, 23), (127, 30), (-266, -64), (-166, -64),
-        (193, -217), (-88, 123), (178, 213), (353, -240), (-27, -399),
-        (-65, -228), (-248, 58), (-33, 270), (-371, 180), (-205, -274),
-        (60, -276), (-132, 28), (76, 101), (91, 346), (-126, 345),
-    ),
-]
-numbers = list(range(1, 26))
-letters = 'abcdefghijklmnopqrstuvwxy'
-glyphs = [
-    numbers[:8], numbers, letters[:8], letters,
-    list(roundrobin(numbers[:8], letters[:8])),
-    list(roundrobin(numbers, letters)),
-]
-details = list(
-    zip_longest(phases, phase_type, trials, blaze_positions, glyphs)
-)
 
 
 class Test(ExpWidget):
-    """Widget for the trail-making test."""
 
-    def new_phase(self, phase):
-        """Display instructions, load all blazes, show them all, and make them
-        all clickable zones.
+    def gen_control(self):
+        """For this test, each trial requires the block number (for indexing
+        the on-screen instructions), the block type (practice blocks are not
+        included in the summary), the trial number (to indicate when a new
+        block starts), the target blaze position (where a correct click/press
+        should go), and the glyph (to load the correct image). All this was
+        complicated to generate and required many manual edits so was all done
+        in a different script and simply imported here.
 
         """
-        self.display_instructions(self.instructions[phase + 4])
-        zones = []
+        return _charlie2_trials()
 
-        for _, _, _, pos, glyph in details[phase]:
+    def block(self):
+        """For this test, display instructions, pre-load the images, pre-move
+        them, set up clickable zones, creater a painter widget for drawing the
+        trail.
 
-            blaze = self.load_image(f'a_{glyph}.png')
-            blaze.hide()  # otherwise it might appear
-            g = self.move_widget(blaze, pos)
-            zones.append(g)
+        """
+        # display block-specific instructions
+        n = self.data.current_trial_details['block']
+        self.display_instructions(self.instructions[4 + n], True)
 
-        self.make_clickable_zones(zones)
+        # find all trials in this block
+        trials = [self.data.current_trial_details]  # first trial popped
+        trials += [t for t in self.data.control if t['block'] == n]
+
+        # get their glyphs and positions
+        glyphs = [t['glyph'] for t in trials]
+        positions = [t['blaze_position'] for t in trials]
+
+        # record image labels and rects
+        self.images = []
+        self.rects = []
+
+        # load the images; save their labels and rects
+
+        for g, p in zip(glyphs, positions):
+
+            img = self.load_image('a_%s.png' % g)
+            self.images.append(img)
+            rect = self.move_widget(img, p, False)
+            self.rects.append(rect)
+
+        # make clickable zones
+        self.make_clickable_zones(self.rects)
+
+        # make empty trail
+        self.trail = []
+
+    def trial(self):
+        """For this test, just listen for a mouse click/screen touch within the
+        target blaze.
+
+        """
+        # reset click/press counters
+        self.data.current_trial_details['misses'] = 0
+        self.data.current_trial_details['blaze_errors'] = 0
+
+        # show all blazes
+        [img.show() for img in self.images]
+
+        # set previous and target blazes
+        n = self.data.current_trial_details['trial']
+        self.target_blaze = self.rects[n]
+
+        # convert position tuple to str for healthy later storage
+        pos = self.data.current_trial_details['blaze_position']
+        self.data.current_trial_details['blaze_position'] = str(pos)
+
+    def summarise(self):
+        """Summary statistics:
+
+            <num, let or numlet>_time_taken : time taken to complete the test
+                block(seconds).
+            <num, let or numlet>_blaze_errors : number of errors inside blazes.
+            <num, let or numlet>_misses : number of errors outside blazes.
+
+        """
+        names = {1: 'num', 3: 'let', 5: 'numlet'}
+        dic = {}
+
+        for block, name in names.items():
+
+            results = [r for r in self.data.results if r['block'] == block][-1]
+
+            for stat in ('time_taken', 'blaze_errors', 'misses'):
+
+                dic[f'{name}_{stat}'] = results[stat]
+
+        return dic
 
     def mousePressEvent(self, event):
-        """On mouse click/screen touch, check if it was inside a blaze. If so,
-        the trial is over. If the last correct blaze, the phase is over.
+        """On mouse click/screen touch, check if it was inside the target
+        blaze. If so, the trial is over. If not, register a miss or a non-
+        target blaze.
 
         """
 
         if self.doing_trial:
 
-            if any(event.pos() in z for z in self.clickable_zones):
+            if event.pos() in self.target_blaze:
 
-                if event.pos() in self.target_blaze:
+                # record the response
+                rt = self.trial_time.elapsed()
+                time_taken = self.block_time.elapsed()
+                dic = {'rt': rt, 'time_taken': time_taken}
+                self.data.current_trial_details.update(dic)
+                self.trail.append(self.target_blaze)
+                self.repaint()
+                self.next_trial()
 
-                    rt = self.trial_time.elapsed()
-                    time_elapsed = self.test_time.elapsed()
-                    dic = {'rt': rt, 'time_elapsed': time_elapsed}
-                    self.data.current_trial_details.update(dic)
-                    self.draw_trail(self.previous_blaze, self.target_blaze)
+            elif any(event.pos() in z for z in self.clickable_zones):
 
-                    if self.target_blaze == self.last_target_blaze:
-
-                        self.phase_done = True
-
-                    self.next_trial()
-
-                else:
-
-                    self.data.current_trial_details['blaze_errors'] += 1
+                self.data.current_trial_details['blaze_errors'] += 1
 
             else:
 
                 self.data.current_trial_details['misses'] += 1
 
-    def gen_control(self):
-        """This is essentially just a flattened/expanded version of `details`
-        defined outside the class.
+    def paintEvent(self, event):
+        """Draw a trail (straight line) from the centre of one blaze to the
+        centre of the other.
 
         """
-        return [list(zip_longest(list(i) for i in it)) for it in details]
+        if len(self.trail) > 1:
 
-    def trial(self):
-        """Draw a square on the screen, define a clickable zone, and listen."""
-        t = self.data.current_trial_details['trial']
+            painter = QPainter(self)
+            pen = QPen()
+            pen.setWidth(4)
+            painter.setPen(pen)
 
-        if t == 0:
+            for a, b in zip([None] + self.trail, self.trail + [None]):
 
-            self.new_phase()
-        self.data.current_trial_details['misses'] = 0
-        self.data.current_trial_details['success'] = False
-        n = self.data.current_trial_details['trial']
-        self.square = self.load_image('%i_s.png' % (n // 2))
-        pos = self.data.current_trial_details['position']
-        self.square.move(*pos)
-        self.data.current_trial_details['position'] = str(pos)
-        self.square.show()
-        self.make_clickable_zones([self.square.geometry()], True)
-#
-#     def summarise(self):
-#         """Only one summary statistic."""
-#         return {'orientation_time_taken': self.data.results[-1]['total_time']}
+                if a and b:
+
+                    painter.drawLine(a.center(), b.center())

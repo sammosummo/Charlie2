@@ -177,6 +177,9 @@ class ExpWidget(QWidget):
         self.block_time = QTime()
         self.trial_time = QTime()
 
+        # create a painter widget
+        self.painter = None
+
         # used when moving widgets around
         self.x = self.frameGeometry().center().x()
         self.y = self.frameGeometry().center().y()
@@ -255,6 +258,10 @@ class ExpWidget(QWidget):
         """Override this method."""
         pass
 
+    def summarise(self):
+        """Override this method."""
+        pass
+
     def load_image(self, s, hidden=True):
         """Returns a QLabel containing the image `s`. It is possibly important
         to explicitly set the size of the label after setting its pixmap since
@@ -296,8 +303,12 @@ class ExpWidget(QWidget):
         self.data.summary.update(self.summarise())
         self.parent().set_central_widget()
 
-    def display_instructions(self, s):
+    def display_instructions(self, s, clear=False):
         """Display a set of instructions on the screen."""
+        if clear:
+
+            self._remove_all_other_labels()
+
         self.instructions_label.setText(s)
         self.instructions_label.show()
 
@@ -354,11 +365,12 @@ class ExpWidget(QWidget):
         """Just a wrapper around _step()"""
         self._step()
 
+    def _remove_all_other_labels(self):
+        """Remove all other labels besides the instructions label.
 
+        """
+        for child in self.children():
 
+            if type(child) == QLabel and child != self.instructions_label:
 
-
-
-
-
-
+                child.deleteLater()
