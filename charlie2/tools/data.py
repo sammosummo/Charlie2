@@ -8,7 +8,6 @@ from os import listdir
 
 
 class Data:
-
     def __init__(self, proband_id, test_name):
         """Data objects contain all the necessary details to run a given
         proband in a given test and save the data. It allows any test to be
@@ -27,9 +26,9 @@ class Data:
         self.proband_id = proband_id
         self.test_name = test_name
         self.current_user_id = getuser()
-        s = '%s_%s' % (self.proband_id, self.test_name)
-        self.pkl_name = f'{s}.pkl'
-        self.csv_name = f'{s}.csv'
+        s = "%s_%s" % (self.proband_id, self.test_name)
+        self.pkl_name = f"{s}.pkl"
+        self.csv_name = f"{s}.csv"
         self.pkl_path = pj(pkl_path, self.pkl_name)
         self.csv_path = pj(csv_path, self.csv_name)
 
@@ -62,22 +61,22 @@ class Data:
         if pkl_exists(self.test_name, self.proband_id):
 
             # load previous pkl
-            pkl = load(open(self.pkl_path, 'rb'))
+            pkl = load(open(self.pkl_path, "rb"))
 
             # update ambiguous variables
-            self.created = pkl['created']
-            self.last_loaded = pkl['last_loaded']
-            self.original_user_id = pkl['original_user_id']
-            self.previous_user_id = pkl['previous_user_id']
-            self.test_done = pkl['test_done']
-            self.first_trial = pkl['first_trial']
-            self.first_block = pkl['first_block']
-            self.control = pkl['control']
+            self.created = pkl["created"]
+            self.last_loaded = pkl["last_loaded"]
+            self.original_user_id = pkl["original_user_id"]
+            self.previous_user_id = pkl["previous_user_id"]
+            self.test_done = pkl["test_done"]
+            self.first_trial = pkl["first_trial"]
+            self.first_block = pkl["first_block"]
+            self.control = pkl["control"]
             self.resumed = True
-            self.results = pkl['results']
-            self.log = pkl['log']
-            self.summary = pkl['summary']
-            self.to_log('Previous data object found; contents loaded.')
+            self.results = pkl["results"]
+            self.log = pkl["log"]
+            self.summary = pkl["summary"]
+            self.to_log("Previous data object found; contents loaded.")
             self.pkl.update(copy(vars(self)))
 
         else:
@@ -92,25 +91,25 @@ class Data:
             self.results = []
             self.log = {}
             self.summary = {}
-            self.to_log('Previous data object not found; initialise new.')
+            self.to_log("Previous data object not found; initialise new.")
             self.pkl.update(copy(vars(self)))
 
     def save(self):
         """Save the data."""
 
-        if self.proband_id != 'TEST':
+        if self.proband_id != "TEST":
 
             self.pkl.update(copy(vars(self)))
-            dump(self.pkl, open(self.pkl_path, 'wb'))
-            self.to_log('Data object saved.')
+            dump(self.pkl, open(self.pkl_path, "wb"))
+            self.to_log("Data object saved.")
 
     def to_csv(self):
         """Write the results to a human-readable csv file."""
 
-        if self.proband_id != 'TEST':
+        if self.proband_id != "TEST":
 
             pd.DataFrame(self.results).to_csv(self.csv_path, index=False)
-            self.to_log('Results written to CSV file.')
+            self.to_log("Results written to CSV file.")
 
     def to_log(self, s):
         """Write the string to the log."""
@@ -119,6 +118,6 @@ class Data:
 
 def make_df():
     """Return all the local data in a pandas DataFrame."""
-    paths = [pj(pkl_path, f) for f in listdir(pkl_path) if f.endswith('.pkl')]
-    pkls = [load(open(f, 'rb')) for f in paths]
+    paths = [pj(pkl_path, f) for f in listdir(pkl_path) if f.endswith(".pkl")]
+    pkls = [load(open(f, "rb")) for f in paths]
     return pd.DataFrame(pkls)
