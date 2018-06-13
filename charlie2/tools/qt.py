@@ -155,6 +155,12 @@ class ExpWidget(QWidget):
         # begin trials
         self._step()
 
+        # configure whether blocks are "silent" (i.e., does not pause before continuing)
+        self.block_silent = False
+
+        # configure whether to skip countdowns
+        self.skip_countdowns = False
+
     def sleep(self, t):
         """PyQt-friendly sleep function."""
         loop = QEventLoop()
@@ -183,6 +189,7 @@ class ExpWidget(QWidget):
 
     def display_continue_button(self):
         """Display a continue button."""
+        self.block_silent = False
         button = QPushButton(self.instructions[1], self)
         button.resize(button.sizeHint())
         button.clicked.connect(self._trial)
@@ -335,6 +342,9 @@ class ExpWidget(QWidget):
         print('timed_out set to False, doing_trial set to False')
         self._stop_block_timeout()
         self.block()
+        if self.block_silent:
+            self.skip_countdowns = True
+            self._trial()
 
     def _trial(self):
         """Runs at the start of a new trial. Displays the countdown if first in a new
@@ -354,7 +364,8 @@ class ExpWidget(QWidget):
                     self.vprint("displaying countdown")
                     self.display_countdown_message()
             except KeyError:
-                self.display_countdown_message()
+                if not self.skip_countdowns:
+                    self.display_countdown_message()
 
             if self.block_max_time:
                 self.vprint('block_max_time = %i s' % self.block_max_time)
