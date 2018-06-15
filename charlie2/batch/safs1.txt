@@ -1,7 +1,7 @@
 orientation
 trails
 digitsymbol
-spatialmemory
+visualmemory
 facialmemory
 emotionrecognition
 matrixreasoning

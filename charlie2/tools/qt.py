@@ -161,6 +161,9 @@ class ExpWidget(QWidget):
         # configure whether to skip countdowns
         self.skip_countdowns = False
 
+        # enforce showing the mouse
+        self.show_mouse()
+
     def sleep(self, t):
         """PyQt-friendly sleep function."""
         loop = QEventLoop()
@@ -293,6 +296,7 @@ class ExpWidget(QWidget):
 
     def next_trial(self):
         """Just a wrapper around _step()"""
+        self.vprint('trial results:', self.data.current_trial_details)
         self._step()
 
     def _step(self):
@@ -337,6 +341,7 @@ class ExpWidget(QWidget):
         the proband a break or display new instructions.
 
         """
+        self.show_mouse()
         self.timed_out = False
         self.doing_trial = False
         print('timed_out set to False, doing_trial set to False')
@@ -451,7 +456,7 @@ class ExpWidget(QWidget):
 
     def summarise(self):
         """Override this method."""
-        pass
+        return {}
 
     def make_zones(self, rects, reset=True):
         """Clickable zones are rects in which mousePressEvents should be registered.
@@ -476,3 +481,9 @@ class ExpWidget(QWidget):
 
         """
         self.delete_labels_and_buttons(False)
+
+    def hide_mouse(self):
+        self.setCursor(Qt.BlankCursor)
+
+    def show_mouse(self):
+        self.setCursor(Qt.ArrowCursor)

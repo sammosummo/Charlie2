@@ -1266,6 +1266,15 @@ class Test(ExpWidget):
         else:
             self.block_max_time = 90
 
+        # stop if performance was poor in the first block
+        if self.data.current_trial_details['block'] == 2:
+            results = [r for r in self.data.results if r['block'] == 1]
+            ncorrect = len([r for r in results if r['correct']])
+            if ncorrect >= 20:
+                self.data.control = []
+                self.data.test_done = True
+                return
+
         # display block-specific instructions
         n = self.data.current_trial_details["block"]
         for i in range(len(self.instructions)):
@@ -1292,6 +1301,7 @@ class Test(ExpWidget):
         """
         # clear the screen, show key and arrow keys
         self.clear_screen()
+        self.hide_mouse()
         l = self.symbols + self.digits + [self.l, self.r] + list(self.arrow_labels)
         [im.show() for im in l]
 
