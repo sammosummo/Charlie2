@@ -30,4 +30,6 @@ task as quickly as you can within 90 seconds
 without making mistakes.
  
 Press the button below to begin.""",
+    "Correct! :)",
+    "Incorrect! :(",
 ]

@@ -39,7 +39,6 @@ from charlie2.tools.qt import ExpWidget
 
 
 class Test(ExpWidget):
-
     def gen_control(self):
         """For this test, each trial requires the block number (for indexing the on-
         screen instructions), the block type (practice blocks are not included in the
@@ -160,7 +159,7 @@ class Test(ExpWidget):
         pen = QPen()
         pen.setWidth(4)
         painter.setPen(pen)
-        rects = self.rects[:self.data.current_trial_details['trial']]
+        rects = self.rects[: self.data.current_trial_details["trial"]]
         for a, b in zip([None] + rects, rects + [None]):
             if a and b:
                 painter.drawLine(a.center(), b.center())

@@ -8,10 +8,12 @@ from matplotlib import cm
 cmap = cm.ScalarMappable(cmap=cmocean.cm.phase)
 cmap.to_rgba([0., 0.5, 1.])
 
+
 def make_item(c, f, n=None):
     theta = [0]
     clr = cmap.to_rgba(c)
-    if not n: n = np.random.randint(3, 9)
+    if not n:
+        n = np.random.randint(3, 9)
     m = 2 * np.pi / n
     for j in range(n):
         a = (j * m) + (np.random.rand() * m)
@@ -38,14 +40,15 @@ def make_item(c, f, n=None):
     fig, ax = plt.subplots(1, figsize=(1, 1))
     # ax.plot(out[0], out[1], 'k', lw=2)
     # ax.fill(out[0], out[1], c=clr)
-    ax.plot(x, y, 'k', lw=2)
+    ax.plot(x, y, "k", lw=2)
     ax.fill(x, y, c=clr)
 
-    plt.tick_params(left=False, labelleft=False, right=False, bottom=False,
-                    labelbottom=False)
+    plt.tick_params(
+        left=False, labelleft=False, right=False, bottom=False, labelbottom=False
+    )
     plt.box(False)
     plt.tight_layout(0)
-    p = '/Users/smathias/Documents/Charlie2/charlie2/stimuli/visual/visualmemory/'
+    p = "/Users/smathias/Documents/Charlie2/charlie2/stimuli/visual/visualmemory/"
     f = p + f
     plt.savefig(f, transparent=True)
     plt.close(fig)
@@ -58,13 +61,12 @@ for load in [5]:
         for item in range(load):
             c = np.random.uniform(0, 1)
             # c = 0.5
-            f = 'l%i_t%i_i%i.png' % (load, trial, item)
+            f = "l%i_t%i_i%i.png" % (load, trial, item)
             make_item(c, f)
             if item == 0:
                 if c > 0.5:
-                    c-= 0.5
+                    c -= 0.5
                 else:
-                    c+= 0.5
-                f = 'l%i_t%i_i%i_r.png' % (load, trial, item)
+                    c += 0.5
+                f = "l%i_t%i_i%i_r.png" % (load, trial, item)
                 make_item(c, f)
-

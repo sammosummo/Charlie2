@@ -40,10 +40,10 @@ from charlie2.tools.qt import ExpWidget
 
 class Test(ExpWidget):
     def gen_control(self):
-        """For this test, trials require the block number, trial number, digit,
-        symbol, and whether the digit and symbol are the same. There is an
-        arbitrarily large number of trials (600). The task will almost
-        certainly before all trials are completed.
+        """For this test, trials require the block number, trial number, digit, symbol,
+        and whether the digit and symbol are the same. There is an arbitrarily large
+        number of trials. The task will almost certainly before all trials are
+        completed.
 
         """
         blocks = ([0] * 5) + ([1] * 295) + ([2] * 300)
@@ -1267,13 +1267,13 @@ class Test(ExpWidget):
             self.block_max_time = 90
 
         # stop if performance was poor in the first block
-        if self.data.current_trial_details['block'] == 2:
-            results = [r for r in self.data.results if r['block'] == 1]
-            ncorrect = len([r for r in results if r['correct']])
-            if ncorrect >= 20:
+        if self.data.current_trial_details["block"] == 2:
+            results = [r for r in self.data.results if r["block"] == 1]
+            ncorrect = len([r for r in results if r["correct"]])
+            if ncorrect < 21:
                 self.data.control = []
                 self.data.test_done = True
-                return
+                self.next_trial()
 
         # display block-specific instructions
         n = self.data.current_trial_details["block"]
@@ -1292,8 +1292,8 @@ class Test(ExpWidget):
             self.move_widget(digit, (x, 200))
             digit.hide()
 
-        # load neutral keyboard arrow keys and labels
-        self.l, self.r, *self.arrow_labels = self.load_keyboard_arrow_keys()
+        # load keyboard arrow keys and labels
+        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[2:4])
 
     def trial(self):
         """
@@ -1302,8 +1302,7 @@ class Test(ExpWidget):
         # clear the screen, show key and arrow keys
         self.clear_screen()
         self.hide_mouse()
-        l = self.symbols + self.digits + [self.l, self.r] + list(self.arrow_labels)
-        [im.show() for im in l]
+        [l.show() for l in self.symbols + self.digits + self.keyboard_keys]
 
         # select and draw the target symbol and digit
         s = self.data.current_trial_details["symbol"]
@@ -1311,7 +1310,7 @@ class Test(ExpWidget):
         self.symbol = self.display_image(f"sym{s}.png", (0, 25))
         self.digit = self.display_text(str(d), (0, -25))
 
-    def keyPressEvent(self, event):
+    def keyReleaseEvent(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
         dic = {Qt.Key_Left: True, Qt.Key_Right: False}
 
@@ -1336,17 +1335,13 @@ class Test(ExpWidget):
 
             # feedback?
             if self.data.current_trial_details["block"] == 0:
-                self.l.deleteLater()
-                self.r.deleteLater()
-                a = ["r", "g"][correct]
-                if event.key() == Qt.Key_Left:
-                    self.l, self.r = self.display_keyboard_arrow_keys(a, '', text=False)
+                if dic['correct']:
+                    a = self.display_text(self.instructions[7], (0, -100))
                 else:
-                    self.l, self.r = self.display_keyboard_arrow_keys('', a, text=False)
+                    a = self.display_text(self.instructions[8], (0, -100))
                 self.sleep(1)
-                self.l.deleteLater()
-                self.r.deleteLater()
-                self.l, self.r = self.display_keyboard_arrow_keys(text=False)
+                a.hide()
+                a.deleteLater()
 
             # move on
             self.next_trial()
@@ -1359,16 +1354,15 @@ class Test(ExpWidget):
             <first or both>_adjusted: correct * proportion correct
 
         """
-        first = [f for f in self.data.results if f['block'] == 1]
-        both = [f for f in self.data.results if f['block'] > 0]
+        first = [f for f in self.data.results if f["block"] == 1]
+        both = [f for f in self.data.results if f["block"] > 0]
         return {
-            'first_completed': len(first),
-            'first_correct': len([f for f in first if f['correct']]),
-            'first_adjusted': len([f for f in first if f['correct']]) * (
-                    len([f for f in first if f['correct']]) / len(first)),
-            'both_completed': len(both),
-            'both_correct': len([f for f in both if f['correct']]),
-            'both_adjusted': len([f for f in both if f['correct']]) * (
-                        len([f for f in both if f['correct']]) / len(both)),
-            
+            "first_completed": len(first),
+            "first_correct": len([f for f in first if f["correct"]]),
+            "first_adjusted": len([f for f in first if f["correct"]])
+            * (len([f for f in first if f["correct"]]) / len(first)),
+            "both_completed": len(both),
+            "both_correct": len([f for f in both if f["correct"]]),
+            "both_adjusted": len([f for f in both if f["correct"]])
+            * (len([f for f in both if f["correct"]]) / len(both)),
         }

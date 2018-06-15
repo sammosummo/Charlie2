@@ -1,14 +1,14 @@
 class Test(object):
-
     def __init__(self):
-        self.attrib = 'hello'
+        self.attrib = "hello"
 
     def _decorator(foo):
-        def magic(self) :
+        def magic(self):
             print("start magic", self.attrib)
-            self.attrib = 'bye'
+            self.attrib = "bye"
             foo(self)
             print("end magic")
+
         return magic
 
     @_decorator
@@ -16,7 +16,7 @@ class Test(object):
         print("normal call", self.attrib)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     test = Test()
     test.bar()

@@ -10,7 +10,7 @@ from .paths import (
 )
 from .gui import GUIWidget
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPalette, QPixmap, QFont
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QPushButton, QDesktopWidget
 
 
@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
             self.test_names = []
 
         # start the app
+        self.ignore_close_event = False
         self.set_central_widget()
         self.show()  # maybe not necessary but better to be explicit!
 
@@ -89,10 +90,12 @@ class MainWindow(QMainWindow):
         under such circumstances.
 
         """
-        if self.gui and self.centralWidget() != self.gui_widget:
+        if self.ignore_close_event:
+            event.ignore()
+        elif self.gui and self.centralWidget() != self.gui_widget:
             self.test_names = []
             self.set_central_widget()
-            event.ignore()  # without this, Qt will still process close event
+            event.ignore()
         else:
             event.accept()
 
@@ -131,7 +134,7 @@ class ExpWidget(QWidget):
             self.setFixedSize(desktop_size)
             self.parent().setFixedSize(desktop_size)
         else:
-            size = (700, 700)
+            size = (900, 700)
             self.setFixedSize(*size)
             self.parent().setFixedSize(*size)
 
@@ -166,11 +169,17 @@ class ExpWidget(QWidget):
 
     def sleep(self, t):
         """PyQt-friendly sleep function."""
+        self.doing_trial = False
+        self.parent().ignore_close_event = True
         loop = QEventLoop()
-        QTimer.singleShot(t * 1000, loop.quit)
+        def f():
+            self.doing_trial = True
+            loop.quit()
+        QTimer.singleShot(t * 1000, f)
         loop.exec_()
+        self.parent().ignore_close_event = False
 
-    def delete_labels_and_buttons(self, delete=False):
+    def hide_labels_and_buttons(self, delete=False):
         """Hide and delete all label child widgets. I don't think any other kind of
         widget needs to be deleted/hidden.
 
@@ -183,7 +192,7 @@ class ExpWidget(QWidget):
 
     def display_instructions(self, message):
         """Display a set of instructions on the screen."""
-        self.delete_labels_and_buttons()
+        self.hide_labels_and_buttons()
         label = QLabel(message, self)
         label.setAlignment(Qt.AlignCenter)
         label.setFont(self.instructions_font)
@@ -269,34 +278,51 @@ class ExpWidget(QWidget):
         label.show()
         return label
 
-    def load_keyboard_arrow_keys(self, lc="", rc="", ypos=-225, text=True):
-        """Load left and right arrow keys."""
-        l = self.load_image(f"l{lc}.png")
-        self.move_widget(l, (-75, ypos))
-        l.hide()
-        r = self.load_image(f"r{rc}.png")
-        self.move_widget(r, (75, ypos))
-        r.hide()
-        if text:
-            a = self.load_text(self.instructions[2])
-            self.move_widget(a, (-75, ypos - 75))
-            a.hide()
-            b = self.load_text(self.instructions[3])
-            self.move_widget(b, (75, ypos - 75))
-            b.hide()
-            return l, r, a, b
-        else:
-            return l, r
+    def load_keyboard_arrow_keys(self, instructions, y=-225):
+        """Load keyboard arrow keys and optionally labelling text to be displayed
+        underneath. `instructions` must be an iterable of length 2 or 3. The length
+        determines how many arrow keys to draw. If any elements are set to None no label
+        is displayed.
 
-    def display_keyboard_arrow_keys(self, lc="", rc="", ypos=-225, text=True):
+        """
+        w = []
+        lx = -75
+        rx = 75
+        if len(instructions) == 3:
+            lx = -225
+            rx = 225
+        l = self.load_image("l.png")
+        self.move_widget(l, (lx, y))
+        l.hide()
+        w.append(l)
+        r = self.load_image("r.png")
+        self.move_widget(r, (rx, y))
+        r.hide()
+        w.append(r)
+        xs = [lx, rx]
+        if len(instructions) == 3:
+            d = self.load_image("d.png")
+            self.move_widget(d, (0, y))
+            d.hide()
+            w.append(d)
+            xs = [lx, 0, rx]
+        for x, instr in zip(xs, instructions):
+            if instr is not None:
+                a = self.load_text(instr)
+                self.move_widget(a, (x, y - 75))
+                a.hide()
+                w.append(a)
+        return w
+
+    def display_keyboard_arrow_keys(self, instructions, y=-225):
         """Draw left and right arrow keys."""
-        widgets = self.load_keyboard_arrow_keys(lc, rc, ypos, text)
+        widgets = self.load_keyboard_arrow_keys(self, instructions, y)
         [w.show() for w in widgets]
         return widgets
 
     def next_trial(self):
         """Just a wrapper around _step()"""
-        self.vprint('trial results:', self.data.current_trial_details)
+        self.vprint("trial results:", self.data.current_trial_details)
         self._step()
 
     def _step(self):
@@ -318,6 +344,9 @@ class ExpWidget(QWidget):
             if self.data.control is None:
                 self.vprint("this is the first trial; generating control list")
                 self.data.control = self.gen_control()
+                self.vprint("control list looks like this:")
+                for t in self.data.control:
+                    print('   ', t)
 
             # grab details of current trial from control list
             self.data.current_trial_details = self.data.control.pop(0)
@@ -344,7 +373,7 @@ class ExpWidget(QWidget):
         self.show_mouse()
         self.timed_out = False
         self.doing_trial = False
-        print('timed_out set to False, doing_trial set to False')
+        print("timed_out set to False, doing_trial set to False")
         self._stop_block_timeout()
         self.block()
         if self.block_silent:
@@ -365,7 +394,7 @@ class ExpWidget(QWidget):
         if self.data.first_trial:
 
             try:
-                if self.data.current_trial_details['block_type'] != 'practice':
+                if self.data.current_trial_details["block_type"] != "practice":
                     self.vprint("displaying countdown")
                     self.display_countdown_message()
             except KeyError:
@@ -373,11 +402,11 @@ class ExpWidget(QWidget):
                     self.display_countdown_message()
 
             if self.block_max_time:
-                self.vprint('block_max_time = %i s' % self.block_max_time)
+                self.vprint("block_max_time = %i s" % self.block_max_time)
                 self._start_block_timeout()
 
         self.doing_trial = True
-        self.vprint('doing_trial set to True')
+        self.vprint("doing_trial set to True")
         self.repaint()
         self.trial()
 
@@ -397,6 +426,7 @@ class ExpWidget(QWidget):
     def _stop_block_timeout(self):
         """Stop the timer."""
         if self.block_timeout_timer.isActive():
+            self.vprint('stopping block timeout timer')
             self.block_timeout_timer.stop()
 
     def _end_block_early(self):
@@ -445,6 +475,9 @@ class ExpWidget(QWidget):
         except IndexError as err:
             self.vprint(f"{err}, probably test timed out")
             return {}
+        except ZeroDivisionError as err:
+            self.vprint(f"{err}, probably test timed out")
+            return {}
 
     def block(self):
         """Override this method."""
@@ -480,10 +513,20 @@ class ExpWidget(QWidget):
         """Same as delete_labels().
 
         """
-        self.delete_labels_and_buttons(False)
+        self.hide_labels_and_buttons(False)
 
     def hide_mouse(self):
         self.setCursor(Qt.BlankCursor)
 
     def show_mouse(self):
         self.setCursor(Qt.ArrowCursor)
+
+    def make_black(self):
+        """Change the background colour to black and the default font colour to white.
+
+        """
+        self.setAutoFillBackground(True)
+        p = self.palette()
+        p.setColor(self.backgroundRole(), Qt.black)
+        p.setColor(QPalette.Text, Qt.white)
+        self.setPalette(p)

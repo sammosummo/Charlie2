@@ -1,9 +1,9 @@
 orientation
 trails
-digitsymbol
 visualmemory
+matrixreasoning
+digitsymbol
 facialmemory
 emotionrecognition
-matrixreasoning
-verbalworkingmemory
 verbalfluency
+verbalworkingmemory

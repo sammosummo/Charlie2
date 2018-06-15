@@ -3,8 +3,12 @@ instr = [
 
 On each trial you will see an image of a person's
 face. Your task is to judge how the person is
-feeling by clicking on the correct word. They will
-be either happy, sad, angry, afraid, or neutral (no
-emotion). Try to complete the task as quickly as you
-can without making mistakes."""
+feeling. They will be either angry, neutral (no
+emotion), or sad. Try to complete the task as
+quickly as you can without making mistakes.
+
+Press the button below to begin.""",
+    "Angry",
+    "Neutral",
+    "Sad",
 ]
