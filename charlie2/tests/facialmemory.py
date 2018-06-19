@@ -159,8 +159,8 @@ class Test(BaseTestWidget):
 
             # record the response
             response = dic[event.key()]
-            rt = self.trial_time.elapsed()
-            time_taken = self.block_time.elapsed()
+            rt = self._trial_time.elapsed()
+            time_taken = self._block_time.elapsed()
             correct = response == self.data.current_trial_details["face_type"]
             dic = {
                 "response": response,

@@ -1,32 +1,42 @@
 """Test of short-term visual memory
 
-This test is designed to measure the capacity of visual short-term memory for colours.
-It is based on the change-localisation task by Johnson et al. [1]. On each trial, the
-proband sees 5 circles, each with a random colour. All circles are removed, then
-reappear, but one has changed colour. The proband must click on/touch the changed
-circle. There are 30 trials, but after 10 trials, the test will start evaluating
-performance and will exit early if chance performance is detected.
+This test is designed to measure the capacity of visual short-term memory for colours
+using a change-localisation task similar to the one employed by Johnson et al. [1].
+On each trial, the proband sees 5 circles, each with a random colour. All circles are
+removed, then reappear, but one has changed colour. The proband must click on/touch the
+changed circle. There are 30 trials, but after 5 trials, the test will start evaluating
+performance and will exit early if chance performance is detected. There is a 30-s time
+limit on each trial and a 240-s time limit on the whole experiment.
 
 Summary statistics:
 
-    time_taken: time taken to complete the test (seconds).
-    correct: total number of correct trials.
+    completed (bool): Did the proband complete the test successfully?
+    time_taken (int): Time taken to complete the test (ms). If the test was not
+        completed but at least one trial was performed, this value is:
+            240000 + number of remaining trials * mean reaction time
+        If no trials were attempted, it is simply 0.
+    correct (int): Number of correct responses.
+    responses (int): Total number of responses.
 
+References:
 
+[1] Johnson, M.K., McMahon, R.P., Robinson, B.M., Harvey, A.N., Hahn, B., Leonard, C.J.,
+Luck, S.J., & Gold, J.M. (2013). The relationship between working memory capacity and
+broad measures of cognitive ability in healthy adults and people with schizophrenia.
+Neuropsychol, 27(2), 220-229.
 
 """
 from math import cos, sin, pi
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLabel
 from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(BaseTestWidget):
-    def gen_control(self):
+class TestWidget(BaseTestWidget):
+    def make_trials(self):
         """For this test, each potential correct click/touch is considered a trial.
 
         """
-        names = ["trial", "theta"]
+        names = ["trial_number", "theta"]
         thetas = [
             0.28335521,
             0.68132415,
@@ -66,6 +76,7 @@ class Test(BaseTestWidget):
         second block, check proband is performing at chance and quit if so.
 
         """
+        self.trial_max_time = .15
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
@@ -73,39 +84,40 @@ class Test(BaseTestWidget):
 
         """
         # grab trial details
-        trialn = self.data.current_trial_details["trial"]
-        theta0 = self.data.current_trial_details["theta"] * 2 * pi
+        tr = self.data.proc.current_trial.trial_number
+        th = self.data.proc.current_trial.theta * 2 * pi
 
         # prevent mouse clicks for now
         self.hide_mouse()
-        self.doing_trial = False
+        self.trial_on = False
 
         # clear the screen
         self.clear_screen()
-        self.sleep(.1)  # brief pause makes it less confusing when the new trial starts
+        self.sleep(1)  # makes it less confusing when the new trial starts
 
         # display the items
         self.labels = []
         delta = 2 * pi / 5
         for item in range(5):
-            theta = theta0 + delta * item
+            theta = th + delta * item
             x = 150 * sin(theta)
             y = 150 * cos(theta)
-            label = self.display_image("l%i_t%i_i%i.png" % (5, trialn, item), (x, y))
+            label = self.display_image("l%i_t%i_i%i.png" % (5, tr, item), (x, y + 75))
             self.labels.append(label)
-        self.sleep(.3)
+        self.sleep(1)
 
         # hide the items
         [label.hide() for label in self.labels]
-        self.sleep(.1)
+        self.sleep(1)
 
         # change the target
-        s = "l%i_t%i_i%i_r.png" % (5, trialn, 0)
-        pixmap = QPixmap(self.vis_stim_paths[s])
+        s = "l%i_t%i_i%i_r.png" % (5, tr, 0)
+        pixmap = QPixmap(self._vis_stim_paths[s])
         self.labels[0].setPixmap(pixmap)
 
         # display items again
         [label.show() for label in self.labels]
+        self.display_text(self.instructions[5], (0, -225))
 
         # set up zones
         self.make_zones(l.frameGeometry() for l in self.labels)
@@ -116,39 +128,64 @@ class Test(BaseTestWidget):
 
         # allow mouse clicks again
         self.show_mouse()
-        self.doing_trial = True
+        self.vprint('setting trial_on from test widget')
+        self.trial_on = True
+        print(self.trial_on)
 
     def mousePressEvent(self, event):
         """On mouse click/screen touch, check if it was inside the  item. If so,
         the trial is over. If not, register a miss or a non-target blaze.
 
         """
-        if self.doing_trial:
-
+        print(self.trial_on)
+        if self.trial_on:
             if any(event.pos() in z for z in self.zones):
-
-                # record the response
-                rt = self.trial_time.elapsed()
-                time_taken = self.block_time.elapsed()
+                self.data.proc.current_trial.rt = self._trial_time.elapsed()
+                self.data.proc.current_trial.time_elapsed = self._block_time.elapsed()
                 if event.pos() in self.target:
-                    correct = True
+                    self.data.proc.current_trial.correct = True
                 else:
-                    correct = False
-                dic = {"rt": rt, "time_taken": time_taken, "correct": correct}
-                self.data.current_trial_details.update(dic)
+                    self.data.proc.current_trial.correct = False
                 self.next_trial()
 
     def summarise(self):
-        """Simply count the number of correct trials and the time taken."""
-        return {
-            "time_taken": self.data.results[29]["time_taken"],
-            "correct": len([r for r in self.data.results if r["correct"]]),
-        }
+        """Summary statistics:
+
+            completed (bool): Did the proband complete the test successfully?
+            time_taken (int): Time taken to complete the test (ms). If the test was not
+                completed but at least one trial was performed, this value is:
+                    240000 + number of remaining trials * mean reaction time
+                If no trials were attempted, it is simply 0.
+            correct (int): Number of correct responses.
+            responses (int): Total number of responses.
+        """
+        print(vars(self.data.proc))
+        p = self.data.proc
+        if p.all_skipped:
+            dic = {"completed": False, "time_taken": 0, "correct": 0, "responses": 0}
+        elif p.any_skipped:
+            n = len(p.not_skipped_trials)
+            xbar = int(round(sum(trial.rt for trial in p.not_skipped_trials) / n))
+            dic = {
+                "completed": False,
+                "time_taken": 240000 + xbar * len(p.skipped_trials),
+                "correct": sum(t.correct for t in p.not_skipped_trials),
+                "responses": n
+            }
+        else:
+            dic = {
+                "completed": True,
+                "time_taken": p.completed_trials[-1].time_elapsed,
+                "correct": sum(t.correct for t in p.completed_trials),
+                "responses": len(p.completed_trials)
+            }
+        return dic
 
     def stopping_rule(self):
         """After five trials completed, exit if at chance."""
-        trialn = self.data.current_trial_details["trial"]
-        if trialn > 5:
-            ncorrect = len([r for r in self.data.results if r["correct"]])
-            pcorrect = ncorrect / trialn
-            return True if pcorrect <= .2 else False
+        if len(self.data.proc.completed_trials) > 5:
+            all_trials = self.data.proc.completed_trials
+            completed = [t for t in all_trials if not t.skipped]
+            correct = [t for t in completed if t.correct]
+            pc = len(correct) / len(all_trials)
+            return True if pc <= .2 else False

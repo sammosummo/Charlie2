@@ -8,4 +8,5 @@ color. Your task is to click on the circle that
 changed color
 
 Press the button below to begin.""",
+    "Which circle changed color?",
 ]

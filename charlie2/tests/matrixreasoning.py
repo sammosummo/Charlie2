@@ -78,8 +78,8 @@ class Test(BaseTestWidget):
 
                 # collect results
                 answer = self.data.current_trial_details['answer']
-                rt = self.trial_time.elapsed()
-                time_elapsed = self.block_time.elapsed()
+                rt = self._trial_time.elapsed()
+                time_elapsed = self._block_time.elapsed()
                 if event.pos() in self.zones[answer]:
                     correct = True
                 else:

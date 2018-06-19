@@ -34,36 +34,29 @@ class SimpleProcedure(object):
         else:
             self.current_trial = current_trial
 
-    def skip_block(self):
-        """Skip the current block. This involves moving all trials with the same
-        `block_number` as `current_trial` from `remaining_trials` to `completed_trials`
-        and marking them all as skipped.
+    def skip_current_trial(self):
+        """Set the current trial to skipped.
 
         """
-        # shortcuts
-        rts = self.remaining_trials
-        cts = self.completed_trials
-        ct = self.current_trial
+        self.current_trial.skipped = True
 
-        # find trials of current block
-        indices = [rts.index(t) for t in rts if t.block_number == ct.block_number]
+    def skip_block(self):
+        """Set all trials within the current block to skipped, including the current
+        trial.
 
-        # remove them one by one
-        for i in indices[::-1]:
-            t = rts.pop(i)
-            t.skipped = True
-            cts.append(t)
-
-        # set the current trial to skipped too
-        ct.skipped = True
+        """
+        for trial in self.remaining_trials:
+            if trial.block_number == self.current_block_number:
+                trial.skipped = True
+        self.skip_current_trial()
 
     def abort(self):
         """End test now. This involves placing the current trial back in the
         remaining trial list and setting `test_aborted` to True.
 
         """
-        self.test_aborted = True
         self.remaining_trials = [copy(self.current_trial)] + self.remaining_trials
+        self.test_aborted = True
 
     def __iter__(self):
         """Just returns itself."""
@@ -76,6 +69,11 @@ class SimpleProcedure(object):
         trial to completed trials.
 
         """
+        # move trial
+        if self.current_trial:
+            self.completed_trials.append(copy(self.current_trial))
+            self.current_trial = None
+
         # any trials left?
         if len(self.remaining_trials) == 0:
             self.test_completed = True
@@ -84,18 +82,43 @@ class SimpleProcedure(object):
         if self.test_aborted or self.test_completed:
             raise StopIteration
 
-        # move trial
-        if self.current_trial:
-
-            self.completed_trials.append(copy(self.current_trial))
-
         # get new trial
         self.current_trial = self.remaining_trials.pop(0)
 
-        # return the new trial
+        # should we skip the current trial?
+        if self.current_trial.skipped:
+            return self.__next__()  # recursive awesomeness!
+
         return self.current_trial
 
     @property
     def any_skipped(self):
         """:obj:`bool`: Where any trials skipped?"""
         return any(t.skipped for t in self.completed_trials)
+
+    @property
+    def all_skipped(self):
+        """:obj:`bool`: Where any trials skipped?"""
+        return all(t.skipped for t in self.completed_trials)
+
+    @property
+    def not_skipped_trials(self):
+        """:obj:`list`: List of trials that were not skipped."""
+        return [trial for trial in self.completed_trials if not trial.skipped]
+
+    @property
+    def skipped_trials(self):
+        """:obj:`list`: List of trials that were skipped."""
+        return [trial for trial in self.completed_trials if trial.skipped]
+
+    @property
+    def current_block_number(self):
+        """:obj:`int`: Block number of current trial."""
+        return self.current_trial.block_number
+
+    def trials_from_block(self, bn):
+        """Return all completed trials from a given block."""
+        return [trial for trial in self.completed_trials if trial.block_number == bn]
+
+
+

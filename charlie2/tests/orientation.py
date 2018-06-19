@@ -3,19 +3,22 @@
 This test is designed to be administered first in any battery. On each trial, the
 proband sees a red square positioned randomly on the screen. The task is to touch the
 square as quickly as possible. It is similar to the mouse practice task from [1]. There
-are 10 trials.
+are 10 trials. The test times out automatically after 30 s.
 
 Summary statistics:
 
     completed (bool): Did the proband complete the test successfully?
-    time_taken (int): Time taken to complete the test (ms).
-    total_misses (int): Total number of misses over all trials.
+    time_taken (int): Time taken to complete the test (ms). If the test was not
+        completed but at least one trial was performed, this value is:
+            30000 + number of remaining trials * mean reaction time
+        If no trials were attempted, it is simply 0.
+    responses (int): Total number of responses.
 
 References:
 
 [1] Gur, R.C., Ragland, D., Moberg, P.J., Turner, T.H., Bilker, W.B., Kohler, C.,
 Siegel, S.J., & Gur, R.E. (2001). Computerized neurocognitive scanning: I.
-Methodology and validation in healthy people. Neuropsychopharmacology, 25:766-776.
+Methodology and validation in healthy people. Neuropsychopharmacol, 25, 766-776.
 
 """
 from charlie2.tools.testwidget import BaseTestWidget
@@ -67,25 +70,38 @@ class TestWidget(BaseTestWidget):
         """
         if self.trial_on:  # only process mouse events during trials
             if event.pos() in self.zones[0]:
-                self.data.proc.current_trial.rt = self.trial_time.elapsed()
-                self.data.proc.current_trial.time_elapsed = self.block_time.elapsed()
+                self.data.proc.current_trial.rt = self._trial_time.elapsed()
+                self.data.proc.current_trial.time_elapsed = self._block_time.elapsed()
                 self.next_trial()
             else:
                 self.data.proc.current_trial.misses += 1
 
     def summarise(self):
-        """For this test, simply take the total amount of time elapsed since starting
-        the test on trial 10. Note that this is invalid if the proband did not complete
-        the test in one sitting.
+        """Summary statistics:
+
+            completed (bool): Did the proband complete the test successfully?
+            time_taken (int): Time taken to complete the test (ms). If the test was not
+                completed but at least one trial was performed, this value is:
+                    30000 + number of remaining trials * mean reaction time
+                If no trials were attempted, it is simply 0.
+                responses (int): Total number of responses.
 
         """
-        n_completed_trials = len(self.data.proc.completed_trials)
-        if not self.data.proc.any_skipped and n_completed_trials != 0:
+        p = self.data.proc
+        if p.all_skipped:
+            dic = {"completed": False, "time_taken": 0, "responses": 0}
+        elif p.any_skipped:
+            n = len(p.not_skipped_trials)
+            xbar = int(round(sum(trial.rt for trial in p.not_skipped_trials) / n))
             dic = {
-                "completed": True,
-                "time_taken": self.data.proc.completed_trials[-1].time_elapsed,
-                "total_misses": sum(t.misses for t in self.data.proc.completed_trials),
+                "completed": False,
+                "time_taken": 30000 + xbar * len(p.skipped_trials),
+                "responses": n,
             }
         else:
-            dic = {"completed": False}
+            dic = {
+                "completed": True,
+                "time_taken": p.completed_trials[-1].time_elapsed,
+                "responses": len(p.completed_trials),
+            }
         return dic
