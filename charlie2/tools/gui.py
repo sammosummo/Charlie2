@@ -18,7 +18,6 @@ from .paths import (
     get_tests_from_batch,
     batches_list,
 )
-from .data import make_df
 
 
 class GUIWidget(QWidget):
@@ -28,8 +27,10 @@ class GUIWidget(QWidget):
 
         """
         super(GUIWidget, self).__init__(parent=parent)
-        self.parent().setFixedSize(400, 600)
-        self.instructions = get_instructions("gui", self.parent().language)
+        self.args = self.parent().args
+        self.vprint = print if self.args.verbose else lambda *a, **k: None
+        self.vprint("GUI intialised")
+        self.instructions = get_instructions("gui", self.args.language)
         self.vbox = QVBoxLayout()
         self.img = QLabel(self)
         self.img.setPixmap(QPixmap(logo_path))
@@ -42,8 +43,8 @@ class GUIWidget(QWidget):
         self.proband_groupbox = QGroupBox(self.instructions[5])
         self.proband_grid = QGridLayout()
         self.proband_grid.addWidget(QLabel(self.instructions[6]), 0, 0)
-        self.proband_id_box = QLineEdit(self.parent().proband_id, self)
-        self.proband_id_box.textEdited.connect(self.set_proband_id)
+        self.proband_id_box = QLineEdit(self.args.proband_id, self)
+        self.proband_id_box.textEdited.connect(self._set_proband_id)
         self.proband_grid.addWidget(self.proband_id_box, 0, 1)
         self.proband_grid.addWidget(QLabel(self.instructions[7]), 2, 0, 1, 0)
         self.proband_groupbox.setLayout(self.proband_grid)
@@ -52,10 +53,14 @@ class GUIWidget(QWidget):
         self.options_groupbox = QGroupBox(self.instructions[8])
         self.options_grid = QGridLayout()
         self.fullscreen_checkbox = QCheckBox(self.instructions[9], self)
-        self.fullscreen_checkbox.setChecked(self.parent().fullscreen)
-        self.fullscreen_checkbox.stateChanged.connect(self.toggle_fullscreen)
+        self.fullscreen_checkbox.setChecked(self.args.fullscreen)
+        self.fullscreen_checkbox.stateChanged.connect(self._toggle_fullscreen)
         self.options_grid.addWidget(self.fullscreen_checkbox)
-        self.backup_checkbox = QCheckBox(self.instructions[10], self)
+        self.resume_checkbox = QCheckBox(self.instructions[10], self)
+        self.resume_checkbox.setChecked(self.args.resume)
+        self.resume_checkbox.stateChanged.connect(self._toggle_resume)
+        self.options_grid.addWidget(self.resume_checkbox)
+        self.backup_checkbox = QCheckBox(self.instructions[11], self)
         font = self.backup_checkbox.font()
         font.setStrikeOut(True)
         self.backup_checkbox.setFont(font)
@@ -64,62 +69,59 @@ class GUIWidget(QWidget):
         self.options_groupbox.setLayout(self.options_grid)
         self.vbox.addWidget(self.options_groupbox)
 
-        self.test_groupbox = QGroupBox(self.instructions[11])
+        self.test_groupbox = QGroupBox(self.instructions[12])
         self.test_grid = QGridLayout()
-        self.test_grid.addWidget(QLabel(self.instructions[12]), 0, 0)
+        self.test_grid.addWidget(QLabel(self.instructions[13]), 0, 0)
         self.test_name_box = QComboBox(self)
         self.test_name_box.addItems([""] + tests_list)
-        self.test_name_box.activated.connect(self.set_test_names_single)
+        self.test_name_box.activated.connect(self._set_test_names_single)
         self.test_grid.addWidget(self.test_name_box, 0, 1)
-        self.test_button = QPushButton(self.instructions[13], self)
-        self.test_button.clicked.connect(self.parent().set_central_widget)
+        self.test_button = QPushButton(self.instructions[14], self)
+        self.test_button.clicked.connect(self.parent().switch_central_widget)
         self.test_grid.addWidget(self.test_button, 1, 0, 1, 0)
         self.test_groupbox.setLayout(self.test_grid)
         self.vbox.addWidget(self.test_groupbox)
 
-        self.batch_groupbox = QGroupBox(self.instructions[14])
+        self.batch_groupbox = QGroupBox(self.instructions[15])
         self.batch_grid = QGridLayout()
-        self.batch_grid.addWidget(QLabel(self.instructions[15]), 0, 0)
+        self.batch_grid.addWidget(QLabel(self.instructions[16]), 0, 0)
         self.batch_name_box = QComboBox(self)
         self.batch_name_box.addItems([""] + batches_list)
-        self.batch_name_box.activated.connect(self.set_test_names_batch)
+        self.batch_name_box.activated.connect(self._set_test_names_batch)
         self.batch_grid.addWidget(self.batch_name_box, 0, 1)
-        self.batch_button = QPushButton(self.instructions[16], self)
-        self.batch_button.clicked.connect(self.parent().set_central_widget)
+        self.batch_button = QPushButton(self.instructions[17], self)
+        self.batch_button.clicked.connect(self.parent().switch_central_widget)
         self.batch_grid.addWidget(self.batch_button, 3, 0, 1, 0)
         self.batch_groupbox.setLayout(self.batch_grid)
         self.vbox.addWidget(self.batch_groupbox)
-
         self.setLayout(self.vbox)
-        self.show()
-        self.raise_()
 
-    def set_proband_id(self):
+    def _set_proband_id(self):
         """Change the proband ID."""
-        self.parent().proband_id = self.sender().text()
+        self.args.proband_id = self.sender().text()
 
-    def set_test_names_single(self):
+    def _set_test_names_single(self):
         """Set the next test to be the selected one."""
-        self.parent().test_names = [self.sender().currentText()]
+        self.args.test_names = [self.sender().currentText()]
 
-    def set_test_names_batch(self):
+    def _set_test_names_batch(self):
         """Load the test names from the selected batch file."""
         batch_file = self.sender().currentText()
-
         if batch_file:
-
-            self.parent().test_names = get_tests_from_batch(batch_file)
-
+            self.args.test_names = get_tests_from_batch(batch_file)
         else:
+            self.args.test_names = []
 
-            self.parent().test_names = []
-
-    def toggle_fullscreen(self, state):
-
+    def _toggle_fullscreen(self, state):
+        """Toggle fullscreen mode."""
         if state == Qt.Checked:
-
-            self.parent().fullscreen = True
-
+            self.args.fullscreen = True
         else:
+            self.args.fullscreen = False
 
-            self.parent().fullscreen = False
+    def _toggle_resume(self, state):
+        """Toggle resume mode."""
+        if state == Qt.Checked:
+            self.args.resume = True
+        else:
+            self.args.resume = False

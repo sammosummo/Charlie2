@@ -19,10 +19,10 @@ Antonio, TX: The Psychological Corporation.
 
 """
 from PyQt5.QtCore import QRect
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """
 
@@ -38,6 +38,7 @@ class Test(ExpWidget):
         """
 
         """
+        self.skip_countdowns = True
         self.block_max_time = 90
 
         if self.data.current_trial_details['block'] == 0:
@@ -57,9 +58,6 @@ class Test(ExpWidget):
         f = self.data.current_trial_details["array"]
         self.array = self.display_image(f, (0, -125))
 
-        print(self.array)
-        print(self.array.frameGeometry())
-
         # make zones
         rects = []
         for i in range(5):
@@ -70,14 +68,12 @@ class Test(ExpWidget):
             rects.append(QRect(x, y, w, h))
         self.make_zones(rects)
 
-        print(self.zones)
-
     def mousePressEvent(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
         record the trial as a success and move on.
 
         """
-        if self.doing_trial:
+        if self.trial_on:
             if any(event.pos() in z for z in self.zones):
 
                 # collect results

@@ -35,10 +35,10 @@ aging. Schizophr. Bull., 43(4), 814–823.
 
 """
 from PyQt5.QtCore import Qt
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """For this test, trials require the block number, trial number, digit, symbol,
         and whether the digit and symbol are the same. There is an arbitrarily large
@@ -1314,7 +1314,7 @@ class Test(ExpWidget):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
         dic = {Qt.Key_Left: True, Qt.Key_Right: False}
 
-        if self.doing_trial and event.key() in dic.keys():
+        if self.trial_on and event.key() in dic.keys():
 
             # record the response
             response = dic[event.key()]

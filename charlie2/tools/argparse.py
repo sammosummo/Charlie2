@@ -1,3 +1,8 @@
+"""Retrieve information from the command line. Args are imported into and become
+attributes of the MainWindow instance. These attributes can be overwritten by the
+GUIWidget instance if in GUI mode.
+
+"""
 from argparse import ArgumentParser
 from .recipes import str2bool
 
@@ -43,5 +48,12 @@ def get_parser():
     )
     parser.add_argument(
         "-v", "--verbose", type=str2bool, default=True, help="Verbose mode."
+    )
+    parser.add_argument(
+        "-r",
+        "--resume",
+        type=str2bool,
+        default=False,
+        help="Resume testing of a proband? (default is no).",
     )
     return parser

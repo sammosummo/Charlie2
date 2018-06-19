@@ -17,10 +17,10 @@ in neurocognitive studies. J. Neurosci. Methods, 115:137–143.
 
 """
 from PyQt5.QtCore import Qt
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """For this test, each potential correct click/touch is considered a trial.
 
@@ -68,7 +68,7 @@ class Test(ExpWidget):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
         dic = {Qt.Key_Left: 'angry', Qt.Key_Down: 'neutral', Qt.Key_Right: 'sad'}
 
-        if self.doing_trial and event.key() in dic.keys():
+        if self.trial_on and event.key() in dic.keys():
 
             # record the response
             response = dic[event.key()]

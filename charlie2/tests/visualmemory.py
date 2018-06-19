@@ -18,10 +18,10 @@ Summary statistics:
 from math import cos, sin, pi
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """For this test, each potential correct click/touch is considered a trial.
 
@@ -76,23 +76,13 @@ class Test(ExpWidget):
         trialn = self.data.current_trial_details["trial"]
         theta0 = self.data.current_trial_details["theta"] * 2 * pi
 
-        # check for chance level
-        if trialn > 10:
-            ncorrect = len([r for r in self.data.results if r["correct"]])
-            pcorrect = ncorrect / trialn
-            if pcorrect <= .2:
-                self.data.control = []
-                self.data.test_done = True
-                self.next_trial()
-                return  # stop the current trial
-
         # prevent mouse clicks for now
         self.hide_mouse()
         self.doing_trial = False
 
         # clear the screen
         self.clear_screen()
-        self.sleep(1)  # brief pause makes it less confusing when the new trial starts
+        self.sleep(.1)  # brief pause makes it less confusing when the new trial starts
 
         # display the items
         self.labels = []
@@ -103,11 +93,11 @@ class Test(ExpWidget):
             y = 150 * cos(theta)
             label = self.display_image("l%i_t%i_i%i.png" % (5, trialn, item), (x, y))
             self.labels.append(label)
-        self.sleep(3)
+        self.sleep(.3)
 
         # hide the items
         [label.hide() for label in self.labels]
-        self.sleep(1)
+        self.sleep(.1)
 
         # change the target
         s = "l%i_t%i_i%i_r.png" % (5, trialn, 0)
@@ -154,3 +144,11 @@ class Test(ExpWidget):
             "time_taken": self.data.results[29]["time_taken"],
             "correct": len([r for r in self.data.results if r["correct"]]),
         }
+
+    def stopping_rule(self):
+        """After five trials completed, exit if at chance."""
+        trialn = self.data.current_trial_details["trial"]
+        if trialn > 5:
+            ncorrect = len([r for r in self.data.results if r["correct"]])
+            pcorrect = ncorrect / trialn
+            return True if pcorrect <= .2 else False

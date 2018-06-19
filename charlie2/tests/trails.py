@@ -35,10 +35,10 @@ Trail Making Test. J Clin Psychol, 43(4):402–409.
 """
 from PyQt5.QtGui import QPainter, QPen
 from charlie2._scratch._trials import _charlie2_trials
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """For this test, each trial requires the block number (for indexing the on-
         screen instructions), the block type (practice blocks are not included in the
@@ -131,7 +131,7 @@ class Test(ExpWidget):
         the trial is over. If not, register a miss or a non-target blaze.
 
         """
-        if self.doing_trial:
+        if self.trial_on:
 
             if event.pos() in self.target_blaze:
 

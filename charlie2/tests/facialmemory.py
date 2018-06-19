@@ -20,10 +20,10 @@ and facial recognition tasks: Correlations with performance and ”effort”. Br
 
 """
 from PyQt5.QtCore import Qt
-from charlie2.tools.qt import ExpWidget
+from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(ExpWidget):
+class Test(BaseTestWidget):
     def gen_control(self):
         """For this test, each potential correct click/touch is considered a trial.
 
