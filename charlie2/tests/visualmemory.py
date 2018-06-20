@@ -76,7 +76,7 @@ class TestWidget(BaseTestWidget):
         second block, check proband is performing at chance and quit if so.
 
         """
-        self.trial_max_time = .15
+        self.trial_max_time = 15
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
@@ -104,11 +104,11 @@ class TestWidget(BaseTestWidget):
             y = 150 * cos(theta)
             label = self.display_image("l%i_t%i_i%i.png" % (5, tr, item), (x, y + 75))
             self.labels.append(label)
-        self.sleep(1)
+        self.sleep(1.5)
 
         # hide the items
         [label.hide() for label in self.labels]
-        self.sleep(1)
+        self.sleep(1.5)
 
         # change the target
         s = "l%i_t%i_i%i_r.png" % (5, tr, 0)

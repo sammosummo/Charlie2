@@ -6,7 +6,7 @@ from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
 from .argparse import get_parser
 from .gui import GUIWidget
-from .paths import get_test, get_tests_from_batch
+from .paths import get_test, get_tests_from_batch, get_error_messages
 
 
 class MainWindow(QMainWindow):
@@ -86,8 +86,10 @@ class MainWindow(QMainWindow):
             self.vprint("resumable?", self.args.resume)
             if not self.args.resume and data_exist:
                 self.vprint("displaying warning message")
-                message = QErrorMessage(self)
-                message.showMessage('oh no!')
+                message_box = QErrorMessage(self)
+                message = get_error_messages(self.args.language, 'proband_exists')
+                message = message % (self.args.proband_id, self.args.test_name)
+                message_box.showMessage(message)
                 self.switch_central_widget()
                 return
 

@@ -96,3 +96,8 @@ def get_aud_stim_paths(s):
     dic = _get_common_aud_stim_paths()
     dic.update(_get_aud_stim_paths(s))
     return dic
+
+
+def get_error_messages(lang, name):
+    """Return error message."""
+    return import_module(f'charlie2.instructions.{lang}.errors').__dict__[name]
