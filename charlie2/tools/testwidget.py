@@ -46,6 +46,10 @@ class BaseTestWidget(QWidget):
 
         self.setFocusPolicy(Qt.StrongFocus)  # required to accept keyboard events
 
+        # add a flag to the procedure to say that we resumed the test
+        if self.data.test_resumed and not self.data.test_completed:
+            self.data.proc.remaining_trials[0].resumed_from_here = True
+
     @property
     def trial_on(self):
         return self._trial_on
@@ -356,6 +360,54 @@ class BaseTestWidget(QWidget):
                     self.print("deleting", obj)
                     obj.deleteLater()
 
+    def basic_summary(self, trials=None, adjust_time_taken=False):
+        """Returns an basic set of summary statistics.
+
+        Args:
+            trials (:obj:`list` of :obj:`Trial`, optional): List of trials to analyse.
+                By default this is `self.completed_trials`, but doesn't have to be, for
+                example if condition-specific summaries are required.
+            adjust_time_taken (:obj:`bool`, optional): Apply adjustment to time_taken.
+
+        Returns:
+            dic (dict): dictionary of results.
+
+        """
+        if self.data.proc.all_skipped: return {'completed': False}
+
+        # get all completed trials
+        if trials is None:
+            trials = self.data.proc.completed_trials
+
+        # count responses and skips
+        not_skipped = [t for t in trials if not t.skipped]
+        dic = {
+            'completed': True,
+            'responses': len(not_skipped),
+            'any_skipped': self.data.proc.any_skipped,
+        }
+
+        # if not resumed, time_elapsed is easy
+        if not self.data.test_resumed:
+            dic['time_taken'] = trials[-1].time_elapsed
+
+        # if resumed, more complicated
+        else:
+            res = sum([t.time_elapsed for t in trials if 'resumed_from_here' in t])
+            dic['time_taken'] = trials[-1].time_elapsed + res
+
+        # accuracy
+        if 'correct' in trials[0]:
+            dic['correct'] = len([t for t in not_skipped if t.correct])
+
+        # adjust time_taken if trials skipped
+        if adjust_time_taken and self.data.proc.any_skipped:
+            skipped = [t for t in trials if t.skipped]
+            meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
+            dic['time_taken'] += meanrt * len(skipped)
+
+        return dic
+
     def _next_trial(self):
         """Move from one trial to the next, checking whether to skip the remainder of
         the block via `self.stopping_rule`."""
@@ -410,12 +462,16 @@ class BaseTestWidget(QWidget):
     def safe_close(self):
         """Safely clean up and save the data at the end of the test."""
         self.print("called safe_close()")
+        self.print('data look like this:')
+        self.print('   ', self.data.safe_vars)
         self._stop_block_timeout()
         self._stop_trial_timeout()
         if not self.data.proc.test_completed:
             self.print("aborting")
             self.data.proc.abort()
         summary = self.summarise()
+        summary['aborted'] = self.data.proc.test_aborted
+        summary['resumed'] = self.data.test_resumed
         self.print('summary looks like this:')
         self.print('   ', summary)
         self.data.summary.update(summary)
@@ -455,8 +511,9 @@ class BaseTestWidget(QWidget):
             self.print('countdown requested')
             self._display_countdown()
 
-        if self.block_max_time:
-            self._start_block_timeout()
+        if ftib:
+            if self.block_max_time:
+                self._start_block_timeout()
 
         self.repaint()
         self.trial_on = True
@@ -524,17 +581,19 @@ class BaseTestWidget(QWidget):
         dpct = self.data.proc.current_trial
         if self.trial_on:
             self.mousePressEvent_(event)
-            dpct.rt = self._trial_time.elapsed()
-            dpct.time_elapsed = self._block_time.elapsed()
-            if dpct.completed:
-                self._next_trial()
+            if dpct:
+                dpct.rt = self._trial_time.elapsed()
+                dpct.time_elapsed = self._block_time.elapsed()
+                if dpct.completed:
+                    self._next_trial()
 
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
         dpct = self.data.proc.current_trial
         if self.trial_on:
             self.keyReleaseEvent_(event)
-            dpct.rt = self._trial_time.elapsed()
-            dpct.time_elapsed = self._block_time.elapsed()
-            if dpct.completed:
-                self._next_trial()
+            if dpct:
+                dpct.rt = self._trial_time.elapsed()
+                dpct.time_elapsed = self._block_time.elapsed()
+                if dpct.completed:
+                    self._next_trial()

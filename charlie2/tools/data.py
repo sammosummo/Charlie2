@@ -112,8 +112,12 @@ class Data:
             self.last_loaded = datetime.now()
             self.previous_user_id = copy(self.current_user_id)
             self.current_user_id = getuser()
-            self.test_resumed = True
             self.to_log("data loaded.")
+            if self.test_completed and not self.test_resumed:
+                self.test_resumed = False
+                self.to_log("test was already completed.")
+            else:
+                self.test_resumed = True
             self.vprint("data loaded")
 
         else:

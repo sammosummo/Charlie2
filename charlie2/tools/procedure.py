@@ -56,6 +56,7 @@ class SimpleProcedure(object):
 
         """
         self.remaining_trials = [copy(self.current_trial)] + self.remaining_trials
+        self.current_trial = None
         self.test_aborted = True
 
     def __iter__(self):
@@ -70,9 +71,10 @@ class SimpleProcedure(object):
 
         """
         # move trial
-        if self.current_trial:
+        if self.current_trial and not self.test_aborted:
             self.completed_trials.append(copy(self.current_trial))
-            self.current_trial = None
+
+        self.current_trial = None
 
         # any trials left?
         if len(self.remaining_trials) == 0:
@@ -103,13 +105,21 @@ class SimpleProcedure(object):
 
     @property
     def not_skipped_trials(self):
-        """:obj:`list`: List of trials that were not skipped."""
-        return [trial for trial in self.completed_trials if not trial.skipped]
+        """:obj:`list`: List of trials that were not skipped and not "practice" trials,
+        if there were any."""
+        trials = [trial for trial in self.completed_trials if not trial.skipped]
+        if "block_type" in trials[0]:
+            trials = [trial for trial in trials if trial.block_type != "practice"]
+        return trials
 
     @property
     def skipped_trials(self):
-        """:obj:`list`: List of trials that were skipped."""
-        return [trial for trial in self.completed_trials if trial.skipped]
+        """:obj:`list`: List of trials that were skipped.and not "practice" trials,
+        if there were any."""
+        trials = [trial for trial in self.completed_trials if trial.skipped]
+        if "block_type" in trials[0]:
+            trials = [trial for trial in trials if trial.block_type != "practice"]
+        return trials
 
     @property
     def current_block_number(self):

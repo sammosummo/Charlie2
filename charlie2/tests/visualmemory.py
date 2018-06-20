@@ -29,8 +29,8 @@ Summary statistics
   trials.
 * `responses` (int): Total number of responses.
 
-References
-==========
+Reference
+=========
 
 .. [1] Johnson, M. K., McMahon, R. P., Robinson, B. M., Harvey, A. N., Hahn, B.,
   Leonard, C. J., Luck, S. J., & Gold, J. M. (2013). The relationship between working

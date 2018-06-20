@@ -1,62 +1,74 @@
-"""Matrix reasoning test.
+"""
+=====================
+Matrix reasoning test
+=====================
 
-This is identical to the matrix reasoning test from the WAIS-III [1]. On each trial, the
-proband sees a matrix with one missing item in the centre of the screen, and an array of
-alternatives below. The task is to select the correct element from the array by clicking
-within its area. There is one practice trial, which will not progress until the correct
-answer is selected. The test will terminate prematurely if four out of the last five
-trials were incorrect. Probands can sometimes spend minutes on single trials of this
-test. To try to prevent this, each trial has a time limit. The stimuli are taken
-direction from the WAIS-III.
+:Status: complete
+:Version: 2.0
+:Source: http://github.com/sammosummo/Charlie2/tests/maxtrixreasoning.py
 
-    time_taken: time taken to complete the test (seconds).
-    correct: total number of correct trials.
+Description
+===========
 
-References:
+This is identical to the matrix reasoning test from the WAIS-III [1]_. On each trial,
+the proband sees a matrix with one missing item in the centre of the screen, and an
+array of alternatives below. The task is to select the correct element from the array by
+clicking within its area. There is one practice trial, which will not progress until the
+correct answer is selected. The test will terminate prematurely if four out of the last
+five trials were incorrect. Probands can sometimes spend minutes on single trials of
+this test. To try to prevent this, each trial has a time limit of 45 seconds. The
+stimuli are taken direction from the WAIS-III.
 
-[1] The Psychological Corporation. (1997). WAIS-III/WMS-III technical manual. San
-Antonio, TX: The Psychological Corporation.
+
+Summary statistics
+==================
+
+* `completed` (bool): Did the proband complete the test successfully?
+* `time_taken` (int): Time taken to complete the entire test in ms. If the test was not
+  completed but at least one trial was performed, this value is the maximum time +
+  the number of remaining trials multiplied by the mean reaction time over the completed
+  trials.
+* `responses` (int): Total number of responses.
+
+Reference
+=========
+
+.. [1] The Psychological Corporation. (1997). WAIS-III/WMS-III technical manual. San
+  Antonio, TX: The Psychological Corporation.
 
 """
+__version__ = 2.0
+__status__ = 'complete'
+
+
 from PyQt5.QtCore import QRect
 from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(BaseTestWidget):
-    def gen_control(self):
-        """
+class TestWidget(BaseTestWidget):
 
-        """
-        answers = [
-            1, 3, 1, 3, 2, 0, 0, 2, 4, 4, 4, 1, 2, 0, 1, 3, 2, 0, 0, 3, 4, 4, 1,
-            1, 0, 4, 3, 2, 2, 3, 0, 3, 1, 2, 4
-        ]
-        return [{"trial": i, "block": i, "answer": a, "matrix": 'M%03d.png' % (i + 1),
-                 "array": 'M%03da.png' % (i + 1)} for i, a in enumerate(answers)]
+    def make_trials(self):
+        """For this test, all we need are the answers and path to the correct images."""
+        answers = [1, 3, 1, 3, 2, 0, 0, 2, 4, 4, 4, 1, 2, 0, 1, 3, 2, 0, 0, 3, 4, 4, 1,
+                   1, 0, 4, 3, 2, 2, 3, 0, 3, 1, 2, 4]
+        return [{"trial_number": i, "answer": answer, "matrix": 'M%03d.png' % (i + 1),
+                "array": 'M%03da.png' % (i + 1)} for i, answer in enumerate(answers)]
 
     def block(self):
-        """
-
-        """
-        self.skip_countdowns = True
-        self.block_max_time = 90
-
-        if self.data.current_trial_details['block'] == 0:
-            self.display_instructions_with_continue_button(self.instructions[4])
-        else:
-            self.block_silent = True
-            self.next_trial()
+        """Set the trial time limit and display instructions."""
+        self.trial_max_time = 45
+        self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
-        """"""
+        """Show matrix and array, set up zones."""
+        dpct = self.data.proc.current_trial
+
         # clear the screen
         self.clear_screen()
 
         # show matrix and array
-        f = self.data.current_trial_details["matrix"]
-        self.matrix = self.display_image(f, (0, 125))
-        f = self.data.current_trial_details["array"]
-        self.array = self.display_image(f, (0, -125))
+        self.matrix = self.display_image(dpct.matrix, (0, 125))
+        self.array = self.display_image(dpct.array, (0, -125))
 
         # make zones
         rects = []
@@ -68,44 +80,42 @@ class Test(BaseTestWidget):
             rects.append(QRect(x, y, w, h))
         self.make_zones(rects)
 
-    def mousePressEvent(self, event):
-        """On mouse click/screen touch, check if it was inside the target square. If so,
-        record the trial as a success and move on.
-
-        """
-        if self.trial_on:
-            if any(event.pos() in z for z in self.zones):
-
-                # collect results
-                answer = self.data.current_trial_details['answer']
-                rt = self._trial_time.elapsed()
-                time_elapsed = self._block_time.elapsed()
-                if event.pos() in self.zones[answer]:
-                    correct = True
-                else:
-                    correct = False
-                dic = {"rt": rt, "time_elapsed": time_elapsed, "correct": correct}
-                self.data.current_trial_details.update(dic)
-
-                # apply stopping rule
-                if len(self.data.results) >= 5:
-                    last_five_trials = [r for r in self.data.results][:5]
-                    ncorrect = len([r for r in last_five_trials if r["correct"]])
-                    if ncorrect <= 4:
-                        self.data.control = []
-                        self.data.test_done = True
-
-                # continue to next trial
-                self.next_trial()
+        # set the target
+        self.target = self.zones[dpct.answer]
 
     def summarise(self):
-        """For this test, simply take the total amount of time elapsed since starting
-        the test on trial 10. Note that this is invalid if the proband did not complete
-        the test in one sitting.
+        """See docstring for explanation."""
+        p = self.data.proc
+        if p.all_skipped:
+            dic = {"completed": False, "time_taken": 0, "correct": 0, "responses": 0}
+        elif p.any_skipped:
+            n = len(p.not_skipped_trials)
+            xbar = int(round(sum(trial.rt for trial in p.not_skipped_trials) / n))
+            dic = {
+                "completed": False,
+                "time_taken": 240000 + xbar * len(p.skipped_trials),
+                "correct": sum(t.correct for t in p.not_skipped_trials),
+                "responses": n
+            }
+        else:
+            dic = {
+                "completed": True,
+                "time_taken": p.completed_trials[-1].time_elapsed,
+                "correct": sum(t.correct for t in p.completed_trials),
+                "responses": len(p.completed_trials)
+            }
+        return dic
 
-        """
-        last_trial = self.data.results[-1]
-        return {
-            "time_taken": last_trial["time_elapsed"],
-            "correct": len([r for r in self.data.results if r["correct"]])
-        }
+    def mousePressEvent_(self, event):
+        """On mouse click/screen touch, check if it was inside the correct item."""
+        dpct = self.data.proc.current_trial
+        dpct.completed = any(event.pos() in z for z in self.zones)
+        dpct.correct = event.pos() in self.target
+
+    def stopping_rule(self):
+        """After five trials completed, exit if four or more were incorrect."""
+        if len(self.data.proc.completed_trials) > 5:
+            trials = self.data.proc.completed_trials[-5:]
+            completed = [t for t in trials if not t.skipped]
+            correct = len([t for t in completed if t.correct])
+            return True if correct <= 1 else False

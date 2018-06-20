@@ -66,24 +66,7 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dp = self.data.proc
-        if dp.all_skipped:
-            dic = {"completed": False, "time_taken": 0, "responses": 0}
-        elif dp.any_skipped:
-            n = len(dp.not_skipped_trials)
-            xbar = int(round(sum(trial.rt for trial in dp.not_skipped_trials) / n))
-            dic = {
-                "completed": False,
-                "time_taken": 30000 + xbar * len(dp.skipped_trials),
-                "responses": n,
-            }
-        else:
-            dic = {
-                "completed": True,
-                "time_taken": dp.completed_trials[-1].time_elapsed,
-                "responses": len(dp.completed_trials),
-            }
-        return dic
+        return self.basic_summary()
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
