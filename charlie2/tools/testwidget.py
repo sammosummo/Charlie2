@@ -120,7 +120,7 @@ class BaseTestWidget(QWidget):
         during this time.
 
         Args:
-            t (int): Time to sleep in seconds.
+            t (float): Time to sleep in seconds.
 
         """
         self.print("sleeping for %i s" % t)
@@ -521,14 +521,20 @@ class BaseTestWidget(QWidget):
 
     def mousePressEvent(self, event):
         """Overridden from `QtWidget`."""
+        dpct = self.data.proc.current_trial
         if self.trial_on:
             self.mousePressEvent_(event)
-            if self.data.proc.current_trial.completed:
+            dpct.rt = self._trial_time.elapsed()
+            dpct.time_elapsed = self._block_time.elapsed()
+            if dpct.completed:
                 self._next_trial()
 
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
+        dpct = self.data.proc.current_trial
         if self.trial_on:
             self.keyReleaseEvent_(event)
-            if self.data.proc.current_trial.completed:
+            dpct.rt = self._trial_time.elapsed()
+            dpct.time_elapsed = self._block_time.elapsed()
+            if dpct.completed:
                 self._next_trial()

@@ -1,26 +1,42 @@
-"""Orientation test.
+"""
+================
+Orientation test
+================
 
-This test is designed to be administered first in any battery. On each trial, the
+:Status: complete
+:Version: 2.0
+:Source: http://github.com/sammosummo/Charlie2/tests/orientation.py
+
+Description
+===========
+
+This simple test is designed to be administered first in any battery. On each trial, the
 proband sees a red square positioned randomly on the screen. The task is to touch the
-square as quickly as possible. It is similar to the mouse practice task from [1]. There
-are 10 trials. The test times out automatically after 30 s.
+square as quickly as possible. It is similar to the mouse practice task from [1]_. There
+are 10 trials in total and the test automatically quits after 30 s.
 
-Summary statistics:
+Summary statistics
+==================
 
-    completed (bool): Did the proband complete the test successfully?
-    time_taken (int): Time taken to complete the test (ms). If the test was not
-        completed but at least one trial was performed, this value is:
-            30000 + number of remaining trials * mean reaction time
-        If no trials were attempted, it is simply 0.
-    responses (int): Total number of responses.
+* `completed` (bool): Did the proband complete the test successfully?
+* `time_taken` (int): Time taken to complete the entire test in ms. If the test was not
+  completed but at least one trial was performed, this value is the maximum time +
+  the number of remaining trials multiplied by the mean reaction time over the completed
+  trials.
+* `responses` (int): Total number of responses.
 
-References:
+Reference
+=========
 
-[1] Gur, R.C., Ragland, D., Moberg, P.J., Turner, T.H., Bilker, W.B., Kohler, C.,
-Siegel, S.J., & Gur, R.E. (2001). Computerized neurocognitive scanning: I.
-Methodology and validation in healthy people. Neuropsychopharmacol, 25, 766-776.
+.. [1] Gur, R. C., Ragland, D., Moberg, P. J., Turner, T. H., Bilker, W. B., Kohler, C.,
+  Siegel, S. J., & Gur, R. E. (2001). Computerized neurocognitive scanning: I.
+  Methodology and validation in healthy people. Neuropsychopharmacol, 25, 766-776.
 
 """
+__version__ = 2.0
+__status__ = 'complete'
+
+
 from charlie2.tools.testwidget import BaseTestWidget
 
 
@@ -74,8 +90,6 @@ class TestWidget(BaseTestWidget):
         record the trial as a success and move on. If not, increase misses by 1."""
         dpct = self.data.proc.current_trial
         if event.pos() in self.zones[0]:
-            dpct.rt = self._trial_time.elapsed()
-            dpct.time_elapsed = self._block_time.elapsed()
             dpct.completed = True
         else:
             dpct.misses += 1

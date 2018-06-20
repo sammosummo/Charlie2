@@ -6,6 +6,7 @@ instr = [
 Distributed under {__license__} license
 For assistance, please contact {__email__}
 """,
+    'Tests',
     'Proband',
     'Enter ID:*',
     """* Using "TEST" (upper case, no quotation marks) as the
@@ -20,4 +21,7 @@ proband ID will result in no data being saved""",
     'Tests (batch)',
     'Select batch file:',
     'Run tests in batch mode',
+    'Docs',
+    'Select a test:',
+
 ]

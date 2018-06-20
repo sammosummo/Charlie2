@@ -1,12 +1,13 @@
 """Paths to all files.
 
 """
-import charlie2
 from pkgutil import iter_modules
 from os import listdir as ls
 from os.path import dirname, exists, join as pj
 from importlib import import_module
 from copy import copy
+import charlie2
+from docutils.core import publish_string
 
 
 _path = dirname(charlie2.__file__)
@@ -101,3 +102,10 @@ def get_aud_stim_paths(s):
 def get_error_messages(lang, name):
     """Return error message."""
     return import_module(f'charlie2.instructions.{lang}.errors').__dict__[name]
+
+def get_docstring_html(s):
+    """Return the docstring of a given test."""
+    d = import_module(f"charlie2.tests.{s}").__doc__
+    html = publish_string(source=d, writer_name='html').decode()
+    html = html[html.find('<body>') + 6:html.find('</body>')].strip()
+    return html
