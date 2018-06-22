@@ -30,14 +30,13 @@ correlated.
 Summary statistics
 ==================
 
-* `<num, let or numlet>_completed` (bool): Did the proband complete the test block
-  successfully?
-* `<num, let or numlet>_time_taken` (int): Time taken to complete the test block (ms).
-  If the block was not completed but at least one trial was performed, this value is the
-  maximum time + the number of remaining trials multiplied by the mean reaction time
-  over the completed trials.
-* `<num, let or numlet>_errors` (int): number of responses made inside incorrect blazes.
-* `<num, let or numlet>_responses` (int): Total number of responses.
+For `{x}` in [`num`, `let`, `numlet`]:
+
+* `{x}_completed` (bool): Did the proband complete the test?
+* `{x}_responses` (int): Total number of responses.
+* `{x}_any_skipped` (bool): Where any trials skipped?
+* `{x}_time_taken` (int): Time taken to complete the entire test in ms.
+* `resumed` (bool): Was this test resumed at some point?
 
 References
 ==========
@@ -125,38 +124,11 @@ class TestWidget(BaseTestWidget):
         names = {1: "num", 3: "let", 5: "numlet"}
         dic = {}
 
-        for block, name in names.items():
-
-            trials = self.data.proc.trials_from_block(block)
-            all_skipped = all(trial.skipped for trial in trials)
-            any_skipped = any(trial.skipped for trial in trials)
-
-            if all_skipped:
-                dic.update({
-                    f"{name}_completed": False,
-                    f"{name}_time_taken": 0,
-                    f"{name}_errors": 0,
-                    f"{name}_responses": 0
-                })
-
-            elif any_skipped:
-                ts = [t for t in trials if not t.skipped]
-                n = len([t for t in trials if t.skipped])
-                rt = int(round(sum(t.rt for t in ts) / len(ts)))
-                dic.update({
-                    f"{name}_completed": False,
-                    f"{name}_time_taken": 180000 + rt * n,
-                    f"{name}_errors": sum(t.errors for t in ts),
-                    f"{name}_responses": len(ts),
-                })
-
-            else:
-                dic.update({
-                    f"{name}_completed": True,
-                    f"{name}_time_taken": trials[-1].time_elapsed,
-                    f"{name}_errors": sum(t.errors for t in trials),
-                    f"{name}_responses": len(trials),
-                })
+        for b, n in names.items():
+            trials = [t for t in self.data.proc.completed_trials if t.block_number == b]
+            dic_ = self.basic_summary(trials=trials, adjust_time_taken=True)
+            dic_ = {n + '_' + k: v for k, v in dic_.items()}
+            dic.update(dic_)
 
         return dic
 

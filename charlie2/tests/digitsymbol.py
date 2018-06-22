@@ -1,6 +1,6 @@
 """
 ====================
-Digit -> symbol test
+Digit symbol test
 ====================
 
 :Status: complete
@@ -27,9 +27,11 @@ The blocks are identical in design.
 Summary statistics
 ==================
 
-* `block<num>_completed` (bool): Did the proband complete the block successfully?
-* `block<num>_responses` (int): Total number of responses.
-* `block<num>_correct` (int): Total number of correct responses.
+* `completed` (bool): Did the proband complete the test?
+* `responses` (int): Total number of responses.
+* `any_skipped` (bool): Where any trials skipped?
+* `correct` (int): How many trials correct?
+* `resumed` (bool): Was this test resumed at some point?
 
 References
 ==========
@@ -139,26 +141,7 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        p = self.data.proc
-        if p.all_skipped:
-            dic = {"completed": False, "correct": 0, "responses": 0}
-        elif p.any_skipped:
-            trials = [t for t in p.not_skipped_trials if t.block_type != "practice"]
-            n = len(trials)
-            xbar = int(round(sum(trial.rt for trial in trials) / n))
-            dic = {
-                "completed": False,
-                "correct": sum(t.correct for t in trials),
-                "responses": n
-            }
-        else:
-            trials = [t for t in p.not_skipped_trials if t.block_type != "practice"]
-            dic = {
-                "completed": True,
-                "correct": sum(t.correct for t in trials),
-                "responses": len(trials)
-            }
-        return dic
+        return self.basic_summary(adjust_time_taken=False)
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""

@@ -43,8 +43,8 @@ order. Let's practice."
 """,
     f"""Read this sequence out loud:
 
-{sequence}""",
-    f'Responded this: {response}',
+%s""",
+    f'Responded this: %s',
     f'Responded anything else',
 ]
 vwm_sequences = [
@@ -85,7 +85,7 @@ vwm_sequences = [
         '9PF4',
     ],
     [
-        'L2,'
+        'L2',
         '6P',
         'B5',
         'F7L',

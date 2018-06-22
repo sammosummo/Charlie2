@@ -20,12 +20,12 @@ original Penn test.
 Summary statistics
 ==================
 
-* `completed` (bool): Did the proband complete the test successfully?
-* `time_taken` (int): Time taken to complete the entire test in ms. If the test was not
-  completed but at least one trial was performed, this value is the maximum time +
-  the number of remaining trials multiplied by the mean reaction time over the completed
-  trials.
+* `completed` (bool): Did the proband complete the test?
 * `responses` (int): Total number of responses.
+* `any_skipped` (bool): Where any trials skipped?
+* `time_taken` (int): Time taken to complete the entire test in ms.
+* `correct` (int): How many trials correct?
+* `resumed` (bool): Was this test resumed at some point?
 
 Reference
 =========
@@ -44,11 +44,11 @@ from PyQt5.QtCore import Qt
 from charlie2.tools.testwidget import BaseTestWidget
 
 
-class Test(BaseTestWidget):
+class TestWidget(BaseTestWidget):
     def make_trials(self):
-        """For this test, each potential correct click/touch is considered a trial.
-
-        """
+        """For this test, there are "learning" trials, followed by "recognition" trials.
+        Learning trials require no input. Recognition trials can be either new or old
+        trials."""
         faces = [
             ["tar%02d.png" % (i + 1) for i in range(20)],
             [
@@ -79,51 +79,37 @@ class Test(BaseTestWidget):
         return details
 
     def block(self):
-        """If first block, display instructions and set trial time limit. If second
-        block, display instructions and set a different trial time limit."""
+        """The two blocks differ in terms thier duration. We use the `trial_max_time`
+        trick to implement this."""
         b = self.data.proc.current_trial.block_number
         self.display_instructions_with_continue_button(self.instructions[4 + b])
         self.trial_max_time = [2.5, 15][b]
 
-
     def trial(self):
-        """For this trial, cycle through trials in the first block and
-
-        """
+        """For each trial we display a face. If a "recognition" trial, we also display
+        the keyboard arrow keys."""
         dpct = self.data.proc.current_trial
         self.mouse_on = False
         self.clear_screen(delete=True)
         self.display_image(dpct.face, (0, 100))
-
-        if dpct.block_number == 1:
-            self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[2:4])
-
-    def keyReleaseEvent(self, event):
-        """For this trial, listen for left- and right-arrow keyboard key presses."""
-        dic = {Qt.Key_Left: 'old', Qt.Key_Right: 'new'}
-
-        if self.doing_trial and event.key() in dic.keys():
-
-# record the response
-response = dic[event.key()]
-rt = self._trial_time.elapsed()
-time_taken = self._block_time.elapsed()
-correct = response == self.data.current_trial_details["face_type"]
-dic = {
-"response": response,
-"rt": rt,
-"time_taken": time_taken,
-"correct": correct,
-}
-self.data.current_trial_details.update(dic)
-
-# move on
-self.next_trial()
+        if dpct.block_type == "recognition":
+            s = self.instructions[2:4]
+            print(s)
+            self.keyboard_keys = self.display_keyboard_arrow_keys(s)
 
     def summarise(self):
-        """Simply count the number of correct trials and the time taken."""
-        results = [r for r in self.data.results if r['block_type'] == 'recognition']
-        return {
-"time_taken": self.data.results[39]["time_taken"],
-"correct": len([r for r in results if r["correct"]]),
-        }
+        """See docstring for explanation. Here, we only want to analyse "recognition"
+        trials."""
+        trials = self.data.proc.completed_trials
+        trials = [t for t in trials if t.block_type == "recognition"]
+        return self.basic_summary(trials=trials)
+
+    def keyReleaseEvent_(self, event):
+        """For this trial, listen for left- and right-arrow keyboard key presses."""
+        dic = {Qt.Key_Left: 'old', Qt.Key_Right: 'new'}
+        dpct = self.data.proc.current_trial
+
+        if dpct.block_type == "recognition" and event.key() in dic:
+            dpct.rsp = dic[event.key()]
+            dpct.correct = dpct.rsp == dpct.face_type
+            dpct.completed = True

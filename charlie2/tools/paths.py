@@ -63,16 +63,19 @@ def get_instructions(s, lang):
 def _get_vis_stim_paths(s):
     """Return dict containing paths to visual stimuli."""
     p = pj(vis_stim_path, s)
-    if exists(p):
+    try:
         return {n: pj(p, n) for n in ls(p) if n.endswith(".png")}
-    else:
+    except FileNotFoundError:
         return {}
 
 
 def _get_aud_stim_paths(s):
     """Return dict containing paths to visual stimuli."""
-    p = pj(vis_stim_path, s)
-    return {n: pj(p, n) for n in ls(p) if n.endswith(".png")}
+    p = pj(aud_stim_path, s)
+    try:
+        return {n: pj(p, n) for n in ls(p) if n.endswith(".png")}
+    except FileNotFoundError:
+        return {}
 
 
 def _get_common_vis_stim_paths():
@@ -102,6 +105,7 @@ def get_aud_stim_paths(s):
 def get_error_messages(lang, name):
     """Return error message."""
     return import_module(f'charlie2.instructions.{lang}.errors').__dict__[name]
+
 
 def get_docstring_html(s):
     """Return the docstring of a given test."""

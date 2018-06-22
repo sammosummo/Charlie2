@@ -118,6 +118,9 @@ class GUIWidget(QWidget):
         self.docs_grid.addWidget(self.docs_name_box, 0, 1)
         self.docs_text_box = QTextBrowser()
         self.docs_grid.addWidget(self.docs_text_box, 1, 0, 1, 0)
+        self.test_button2 = QPushButton(self.instructions[15], self)
+        self.test_button2.clicked.connect(self.parent().switch_central_widget)
+        self.docs_grid.addWidget(self.test_button2, 3, 0, 2, 0)
         self.docs_tab.setLayout(self.docs_grid)
         self.tabs.addTab(self.docs_tab, self.instructions[19])
 

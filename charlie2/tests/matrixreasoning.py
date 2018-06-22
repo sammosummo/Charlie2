@@ -23,12 +23,12 @@ stimuli are taken direction from the WAIS-III.
 Summary statistics
 ==================
 
-* `completed` (bool): Did the proband complete the test successfully?
-* `time_taken` (int): Time taken to complete the entire test in ms. If the test was not
-  completed but at least one trial was performed, this value is the maximum time +
-  the number of remaining trials multiplied by the mean reaction time over the completed
-  trials.
+* `completed` (bool): Did the proband complete the test?
 * `responses` (int): Total number of responses.
+* `any_skipped` (bool): Where any trials skipped?
+* `time_taken` (int): Time taken to complete the entire test in ms.
+* `correct` (int): How many trials correct?
+* `resumed` (bool): Was this test resumed at some point?
 
 Reference
 =========
@@ -85,26 +85,7 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        p = self.data.proc
-        if p.all_skipped:
-            dic = {"completed": False, "time_taken": 0, "correct": 0, "responses": 0}
-        elif p.any_skipped:
-            n = len(p.not_skipped_trials)
-            xbar = int(round(sum(trial.rt for trial in p.not_skipped_trials) / n))
-            dic = {
-                "completed": False,
-                "time_taken": 240000 + xbar * len(p.skipped_trials),
-                "correct": sum(t.correct for t in p.not_skipped_trials),
-                "responses": n
-            }
-        else:
-            dic = {
-                "completed": True,
-                "time_taken": p.completed_trials[-1].time_elapsed,
-                "correct": sum(t.correct for t in p.completed_trials),
-                "responses": len(p.completed_trials)
-            }
-        return dic
+        return self.basic_summary()
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the correct item."""

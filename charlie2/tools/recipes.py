@@ -228,3 +228,7 @@ def charlie2_trials():
     return control
 
 
+def get_vwm_stimuli(lang):
+    from importlib import import_module
+    f = f"charlie2.instructions.{lang}.verbalworkingmemory"
+    return import_module(f).vwm_sequences

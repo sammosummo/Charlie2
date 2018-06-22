@@ -45,12 +45,15 @@ letter they start with.  You will have 60 seconds
 before I tell you to stop.  Do you have any
 questions? Ready? Begin."
 """,
-    'Click to begin trial',
+    'Begin trial',
     'Response options:',
     'Valid response',
     'Invalid response',
     'No. of responses recorded:',
     'Countdown:',
-    'Pause countdown',
+    'Pause trial',
+    'Continue trial',
     'End trial',
+    'Begin/Pause/Continue/End trial:',
+    'End trial now',
 ]

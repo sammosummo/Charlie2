@@ -40,6 +40,7 @@ class BaseTestWidget(QWidget):
         self.skip_countdown = False
         self.block_max_time = None
         self.trial_max_time = None
+        self.prevent_fullscreen = False
         self.zones = []
         self.save_after_each_trial = True
         self.instructions = get_instructions(self.args.test_name, self.args.language)
@@ -143,6 +144,9 @@ class BaseTestWidget(QWidget):
         Args:
             message (str): Message to display.
 
+        Returns:
+            label (QLabel): Object containing the message.
+
         """
         self.print('displaying the following message:')
         self.print("\n   ", message, "\n")
@@ -152,6 +156,7 @@ class BaseTestWidget(QWidget):
         label.setFont(self._instructions_font)
         label.resize(self.size())
         label.show()
+        return label
 
     def display_instructions_with_continue_button(self, message):
         """Display instructions with a continue button.
@@ -163,10 +168,15 @@ class BaseTestWidget(QWidget):
         Args:
             message (str): Message to display.
 
+        Returns:
+            label (QLabel): Object containing the message.
+            button (QPushButton): Button.
+
         """
-        self.display_instructions(message)
-        self._display_continue_button()
+        label = self.display_instructions(message)
+        button = self._display_continue_button()
         self.print("now waiting for continue button to be pressed")
+        return label, button
 
     def load_image(self, s):
         """Return an image.
@@ -323,7 +333,8 @@ class BaseTestWidget(QWidget):
             w (:obj:`list` of :obj:`QLabel`): The created labels.
 
         """
-        widgets = self.load_keyboard_arrow_keys(self, instructions, y)
+        print(instructions)
+        widgets = self.load_keyboard_arrow_keys(instructions, y)
         [w.show() for w in widgets]
         return widgets
 
@@ -346,19 +357,29 @@ class BaseTestWidget(QWidget):
     def clear_screen(self, delete=False):
         """Hide widgets.
         
-        Hides and optionally deletes all `QLabel` and `QPushButton` children of `self`.
+        Hides and optionally deletes all children of this widget.
         
         Args:
             delete (:obj:`bool`, optional): Delete the widgets as well.
         
         """
-        # TODO: Keep this updated with all gui widget types used. Programmatically?
-        for obj in self.children():
-            if isinstance(obj, QLabel) or isinstance(obj, QPushButton):
-                obj.hide()
-                if delete:
-                    self.print("deleting", obj)
-                    obj.deleteLater()
+        # for widgets  organized in a layout
+        if self.layout() is not None:
+            while self.layout().count():
+                item = self.layout().takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.hide()
+                    if delete:
+                        widget.deleteLater()
+                else:
+                    self.clearLayout(item.layout())
+        # for widgets not organized
+        for widget in self.children():
+            if hasattr(widget, 'hide'):
+                widget.hide()
+            if delete:
+                widget.deleteLater()
 
     def basic_summary(self, trials=None, adjust_time_taken=False):
         """Returns an basic set of summary statistics.
@@ -379,34 +400,65 @@ class BaseTestWidget(QWidget):
         if trials is None:
             trials = self.data.proc.completed_trials
 
+        skipped = [t for t in trials if t.skipped]
+        any_skipped = len(skipped) > 0
+
+        if all('block_type' in trial for trial in trials):
+            trials = [t for t in trials if t.block_type != "practice"]
+
         # count responses and skips
         not_skipped = [t for t in trials if not t.skipped]
         dic = {
             'completed': True,
             'responses': len(not_skipped),
-            'any_skipped': self.data.proc.any_skipped,
+            'any_skipped': any_skipped,
         }
 
-        # if not resumed, time_elapsed is easy
-        if not self.data.test_resumed:
+        # this is the easiest case
+        if not any_skipped and not self.data.test_resumed:
             dic['time_taken'] = trials[-1].time_elapsed
 
-        # if resumed, more complicated
-        else:
-            res = sum([t.time_elapsed for t in trials if 'resumed_from_here' in t])
+        # more complicated
+        elif not any_skipped and self.data.test_resumed:
+            idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
+            res = sum([trials[i].time_elapsed for i in idx])
             dic['time_taken'] = trials[-1].time_elapsed + res
+
+        # not meaningful
+        elif any_skipped and not adjust_time_taken:
+            pass
+
+        # adjustment
+        elif any_skipped and adjust_time_taken:
+            meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
+            dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
+
+        else:
+            raise AssertionError('should not be possible!')
 
         # accuracy
         if 'correct' in trials[0]:
             dic['correct'] = len([t for t in not_skipped if t.correct])
 
-        # adjust time_taken if trials skipped
-        if adjust_time_taken and self.data.proc.any_skipped:
-            skipped = [t for t in trials if t.skipped]
-            meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
-            dic['time_taken'] += meanrt * len(skipped)
-
         return dic
+
+    def display_trial_continue_button(self):
+        """Display a continue button
+
+        The button is connected to `self._next_trial` instead of `self._trial`. This
+        modification causes the button to **end** the current trial and move onto the
+        next one.
+
+        """
+        button = self._display_continue_button()
+        button.clicked.disconnect()
+        button.clicked.connect(self._next_trial)
+
+    def next_trial(self):
+        """Manually move on to next trial.
+
+        """
+        self._next_trial()
 
     def _next_trial(self):
         """Move from one trial to the next, checking whether to skip the remainder of
@@ -431,6 +483,7 @@ class BaseTestWidget(QWidget):
         y = self.frameGeometry().height() - (button.height() + 20)
         button.move(x, y)
         button.show()
+        return button
 
     def _display_countdown(self, t=5, s=.1):
         """Display the countdown timer."""
@@ -469,12 +522,12 @@ class BaseTestWidget(QWidget):
         if not self.data.proc.test_completed:
             self.print("aborting")
             self.data.proc.abort()
-        summary = self.summarise()
-        summary['aborted'] = self.data.proc.test_aborted
-        summary['resumed'] = self.data.test_resumed
-        self.print('summary looks like this:')
-        self.print('   ', summary)
-        self.data.summary.update(summary)
+        else:
+            summary = self.summarise()
+            summary['resumed'] = self.data.test_resumed
+            self.print('summary looks like this:')
+            self.print('   ', summary)
+            self.data.summary.update(summary)
         self.data.save()
         self.parent().switch_central_widget()
 
@@ -483,6 +536,7 @@ class BaseTestWidget(QWidget):
         the proband a break or display new instructions."""
         self.trial_on = False
         self._stop_block_timeout()
+        self._block_time.restart()
 
         if self.block_silent:
             self.print('this is a silent block')
@@ -501,10 +555,12 @@ class BaseTestWidget(QWidget):
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
         self._stop_trial_timeout()
+        self._trial_time.restart()
 
         self.print('now starting the actual trial')
         self.print('current trial looks like this:')
         self.print("   ", self.data.proc.current_trial)
+        self.print('currently the wdiget has the layout', self.layout())
 
         ftib = self.data.proc.current_trial.first_trial_in_block
         if ftib and not self.skip_countdown:

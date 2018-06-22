@@ -18,12 +18,12 @@ are 10 trials in total and the test automatically quits after 30 s.
 Summary statistics
 ==================
 
-* `completed` (bool): Did the proband complete the test successfully?
-* `time_taken` (int): Time taken to complete the entire test in ms. If the test was not
-  completed but at least one trial was performed, this value is the maximum time +
-  the number of remaining trials multiplied by the mean reaction time over the completed
-  trials.
+* `completed` (bool): Did the proband complete the test?
 * `responses` (int): Total number of responses.
+* `any_skipped` (bool): Where any trials skipped?
+* `time_taken` (int): Time taken to complete the entire test in ms.
+* `resumed` (bool): Was this test resumed at some point?
+
 
 Reference
 =========
@@ -57,6 +57,7 @@ class TestWidget(BaseTestWidget):
 
     def trial(self):
         """For this test, we simply show the square to be clicked/pressed."""
+        print(self.children())
         dpct = self.data.proc.current_trial
         self.clear_screen(delete=True)
         dpct.misses = 0
@@ -66,7 +67,7 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        return self.basic_summary()
+        return self.basic_summary(adjust_time_taken=True)
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
