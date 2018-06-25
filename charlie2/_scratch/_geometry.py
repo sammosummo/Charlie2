@@ -58,9 +58,15 @@ for load in [5]:
     for trial in range(30):
         # n_ = list(range(5, 12))
         # np.random.shuffle(n_)
+        clrs = []
         for item in range(load):
+            # if item == 0:
+            #     clrs.append(np.random.uniform(0, 1))
+            #     c = clrs[0]
+            # else:
+            #     while any(abs(c - c_) <= 0.01 for c_ in clrs):
             c = np.random.uniform(0, 1)
-            # c = 0.5
+            # clrs.append(c)
             f = "l%i_t%i_i%i.png" % (load, trial, item)
             make_item(c, f)
             if item == 0:
