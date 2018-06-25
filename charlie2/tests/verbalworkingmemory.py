@@ -73,8 +73,9 @@ class TestWidget(BaseTestWidget):
         return details
 
     def block(self):
-        """Display instructions to proband if this is the very first trial. Otherwise,
-        do nothing here."""
+        """Fro this test, display instructions fro experimenter to read out to proband.
+        If this is the very first trial, additionally display instructions to the
+        proband."""
         dpct = self.data.proc.current_trial
         self.skip_countdown = True
         s = self.instructions[5 + dpct.block_number]
@@ -90,7 +91,7 @@ class TestWidget(BaseTestWidget):
             b.clicked.connect(lambda: [a.hide(), b.hide(), btn.show(), label.show()])
 
     def trial(self):
-        """"""
+        """For this test, display the GUI."""
         dpct = self.data.proc.current_trial
 
         # calculate the corect answer
@@ -132,6 +133,8 @@ class TestWidget(BaseTestWidget):
         if dpct:
             dpct.correct = True
             dpct.completed = True
+            dpct.rt = self._trial_time.elapsed()
+            dpct.time_elapsed = self._block_time.elapsed()
             self.next_trial()
 
     def _incorrect(self):
@@ -139,20 +142,24 @@ class TestWidget(BaseTestWidget):
         if dpct:
             dpct.correct = False
             dpct.completed = True
+            dpct.rt = self._trial_time.elapsed()
+            dpct.time_elapsed = self._block_time.elapsed()
             self.next_trial()
 
     def summarise(self):
         """See docstring for explanation."""
         blocks = ['forward', 'backward', 'lns']
         dic = {}
+        cts = self.data.proc.completed_trials
         for b in blocks:
-            trials = [t for t in self.data.proc.completed_trials if t.block_type == b]
+            trials = [t for t in cts if t.block_type == b and t.completed is True]
+            for trial in trials: print(vars(trial))
             dic_ = self.basic_summary(trials=trials, adjust_time_taken=False)
-            dic_['responses'] += 1  # This task undercounts responses by 1.
+            # dic_['responses'] += 1  # This task undercounts responses by 1.
             if 'accuracy' in dic_: del dic_['accuracy']  # not meaningful
             if 'time_taken' in dic_: del dic_['time_taken']  # not meaningful
             trial = [t for t in trials if t.correct][-1]
-            dic_['k'] = trial[trial.length]
+            dic_['k'] = trial.length
             dic.update({f"{b}_{k}": v for k, v in dic_.items()})
         return dic
 

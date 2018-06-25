@@ -48,7 +48,6 @@ class SimpleProcedure(object):
         for trial in self.remaining_trials:
             if trial.block_number == self.current_block_number:
                 trial.skipped = True
-        self.skip_current_trial()
 
     def abort(self):
         """End test now. This involves placing the current trial back in the

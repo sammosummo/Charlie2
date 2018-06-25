@@ -122,6 +122,7 @@ class TestWidget(BaseTestWidget):
         """See docstring for explanation."""
         dic = self.basic_summary()
         dic['k'] = dic['accuracy'] * 5
+        return dic
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the correct item."""
