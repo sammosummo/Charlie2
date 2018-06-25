@@ -28,6 +28,11 @@ batches_list = [b for b in ls(batch_path) if b.endswith(".txt")]
 logo_path = pj(_path, "logo", "charlie.png")
 
 
+@property
+def pickles():
+    return [pj(pkl_path, p) for p in ls(pkl_path) if p.endswith('.pkl')]
+
+
 def is_test(s):
     """Returns True if `s` is an existing test."""
     return s in tests_list

@@ -7,7 +7,7 @@ from copy import copy
 from datetime import datetime
 from pickle import dump, load
 from getpass import getuser
-from os.path import exists
+from os.path import basename, exists
 
 
 class Data:
@@ -144,3 +144,16 @@ class Data:
         """Write the string to the log."""
         self.log[datetime.now()] = s
 
+
+def load_data_from_file(src):
+    """Return a data object reconstructed from the pickled object at `src`.
+
+    Args:
+        src (str): Path to pickled object.
+
+    Returns:
+        data (Data): Data object.
+
+    """
+    a, b = basename(src).split('_')
+    return Data(proband_id=a, test_name=b, remaining_trials=[], procedure=None)

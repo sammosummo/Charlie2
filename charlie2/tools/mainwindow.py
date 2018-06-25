@@ -4,7 +4,7 @@
 from sys import exit
 from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
-from .argparse import get_parser
+from .commandline import get_parser
 from .gui import GUIWidget
 from .paths import get_test, get_tests_from_batch, get_error_messages
 

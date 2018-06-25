@@ -19,9 +19,11 @@ proband ID will result in no data being saved""",
     'Select test:',
     'Run single test',
     'Tests (batch)',
-    'Select batch file:',
+    'Select batch file:*',
     'Run tests in batch mode',
     'Docs',
     'Select a test:',
-
+    """* Using "Cmd/Ctrl+Q" while in batch mode will skip to
+the next test, not exit completely""",
+    'Backup',
 ]

@@ -3,6 +3,7 @@ attributes of the MainWindow instance. These attributes can be overwritten by th
 GUIWidget instance if in GUI mode.
 
 """
+import argparse
 from argparse import ArgumentParser
 from .recipes import str2bool
 

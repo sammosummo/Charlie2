@@ -148,16 +148,18 @@ class TestWidget(BaseTestWidget):
         return dic
 
     def keyReleaseEvent_(self, event):
-        """For this trial, listen for left- and right-arrow keyboard key presses."""
+        """For this trial, listen for left- and right-arrow keyboard key
+        presses."""
         dpct = self.data.proc.current_trial
         dic = {Qt.Key_Left: True, Qt.Key_Right: False}
 
-        if dic.keys():
+        if event.key() in dic:
+
             dpct.rsp = dic[event.key()]
             dpct.correct = dpct.rsp == (dpct.symbol == dpct.digit)
             dpct.completed = True
 
-            # the following should prevent dozens of old labels being stored in memory
+            # should prevent dozens of old labels being stored in memory
             self.symbol.deleteLater()
             self.digit.deleteLater()
 
