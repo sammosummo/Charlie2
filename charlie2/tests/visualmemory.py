@@ -28,6 +28,8 @@ Summary statistics
 * `time_taken` (int): Time taken to complete the entire test in ms.
 * `correct` (int): How many trials correct?
 * `resumed` (bool): Was this test resumed at some point?
+* `accuracy` (float): proportion of correct responses.
+* `k` (float): Accuracy multiplied by 5.
 
 Reference
 =========
@@ -118,7 +120,8 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        return self.basic_summary()
+        dic = self.basic_summary()
+        dic['k'] = dic['accuracy'] * 5
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the correct item."""

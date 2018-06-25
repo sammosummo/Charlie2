@@ -11,7 +11,7 @@ Description
 ===========
 
 This simple test is designed to be administered first in any battery. On each trial, the
-proband sees a red square positioned randomly on the screen. The task is to touch the
+proband sees a red square positioned randomly on the screen. The task is to press the
 square as quickly as possible. It is similar to the mouse practice task from [1]_. There
 are 10 trials in total and the test automatically quits after 30 s.
 
@@ -23,6 +23,7 @@ Summary statistics
 * `any_skipped` (bool): Where any trials skipped?
 * `time_taken` (int): Time taken to complete the entire test in ms.
 * `resumed` (bool): Was this test resumed at some point?
+* `misses` (int): Number of presses in areas not inside the square.
 
 
 Reference
@@ -56,18 +57,18 @@ class TestWidget(BaseTestWidget):
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
-        """For this test, we simply show the square to be clicked/pressed."""
-        print(self.children())
+        """For this test, we simply show the square to be pressed."""
         dpct = self.data.proc.current_trial
         self.clear_screen(delete=True)
         dpct.misses = 0
-        pos = dpct.position
-        self.square = self.display_image("0_s.png", pos)
+        self.square = self.display_image("0_s.png", dpct.position)
         self.make_zones([self.square.frameGeometry()])
 
     def summarise(self):
         """See docstring for explanation."""
-        return self.basic_summary(adjust_time_taken=True)
+        dic = self.basic_summary(adjust_time_taken=True)
+        dic['misses'] = sum(t.misses for t in self.data.proc.completed_trials)
+        return dic
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,

@@ -29,9 +29,10 @@ Summary statistics
 
 * `completed` (bool): Did the proband complete the test?
 * `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
 * `correct` (int): How many trials correct?
 * `resumed` (bool): Was this test resumed at some point?
+* `accuracy` (float): proportion of correct responses.
+* `adjusted_score` (float): number of correct responses multiplied by accuracy.
 
 References
 ==========
@@ -111,7 +112,7 @@ class TestWidget(BaseTestWidget):
         if dpct.block_type == "practice":
             self.block_max_time = 20
         else:
-            self.block_max_time = 20
+            self.block_max_time = 90
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
         # load and move key symbols and digits
@@ -141,7 +142,10 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        return self.basic_summary(adjust_time_taken=False)
+        dic = self.basic_summary(adjust_time_taken=False)
+        del dic['any_skipped']  # obviously true for this test
+        dic['adjusted_score'] = dic['responses'] * dic['accuracy']
+        return dic
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""

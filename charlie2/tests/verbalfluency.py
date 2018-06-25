@@ -104,7 +104,7 @@ class TestWidget(BaseTestWidget):
         # set default values
         dpct.valid_responses = 0
         dpct.invalid_responses = 0
-        self._time_left = 6
+        self._time_left = 60
 
         # timer
         self.timer = QtCore.QTimer()

@@ -10,7 +10,7 @@ Trail-making test
 Description
 ===========
 
-In this task, the proband must click on circles drawn on the screen in a specified
+In this task, the proband must press the circles drawn on the screen in a specified
 order, making a 'trail' between them. There are a total of six blocks to the test, with
 varying numbers of trials in each block. In the first and second blocks, the proband
 draws a trail between consecutive numbers, starting with 1. In the third and fourth
@@ -36,6 +36,8 @@ For `{x}` in [`num`, `let`, `numlet`]:
 * `{x}_responses` (int): Total number of responses.
 * `{x}_any_skipped` (bool): Where any trials skipped?
 * `{x}_time_taken` (int): Time taken to complete the entire test in ms.
+* `{x}_blaze_errors` (int): Number of incorrect blazes pressed.
+* `{x}_misses` (int): Number of presses to areas not inside any blaze.
 * `resumed` (bool): Was this test resumed at some point?
 
 References
@@ -64,12 +66,12 @@ class TestWidget(BaseTestWidget):
         summary), the trial number (to indicate when a new block starts), the target
         blaze position (where a correct click/press should go), and the glyph (to load
         the correct image). This was complicated to generate and required many manual
-        edits, so was all done in a different script and simply imported here. """
+        edits, so was all done in a different script and simply imported here."""
         return charlie2_trials()
 
     def block(self):
-        """For this test, display instructions, pre-load the images, pre-move them, set
-        up zones, create a painter widget for drawing the trail."""
+        """For this test, display instructions, pre-load the images, set up zones, and
+        create a painter widget for drawing the trail."""
         dpct = self.data.proc.current_trial
         b = dpct.block_number
         
@@ -83,14 +85,14 @@ class TestWidget(BaseTestWidget):
             self.block_max_time = 180
 
         # find all trials in this block
-        trials = [dpct]  # bc first trial was popped
+        trials = [dpct]  # because first trial was popped
         trials += [t for t in self.data.proc.remaining_trials if t.block_number == b]
 
         # get their glyphs and positions
         glyphs = [t.glyph for t in trials]
         positions = [t.blaze_position for t in trials]
 
-        # load the blazes but don't show them
+        # load the blazes but don't show them yet
         self.rects = []
         self.images = []
         for glyph, pos in zip(glyphs, positions):
@@ -103,7 +105,7 @@ class TestWidget(BaseTestWidget):
         self.make_zones(self.rects)
 
     def trial(self):
-        """For this test, just listen for a mouse click within the target blaze."""
+        """For this test, just listen for a mouse press within the target blaze."""
         dpct = self.data.proc.current_trial
         
         # clear the screen but don't delete blazes
@@ -123,18 +125,18 @@ class TestWidget(BaseTestWidget):
         """See docstring for explanation."""
         names = {1: "num", 3: "let", 5: "numlet"}
         dic = {}
-
         for b, n in names.items():
             trials = [t for t in self.data.proc.completed_trials if t.block_number == b]
             dic_ = self.basic_summary(trials=trials, adjust_time_taken=True)
-            dic_ = {n + '_' + k: v for k, v in dic_.items()}
+            dic_ = {f"{n}_{k}": v for k, v in dic_.items()}
+            dic[f"{n}_blaze_errors"] = sum(t.errors for t in trials)
+            dic[f"{n}_misses"] = sum(t.misses for t in trials)
             dic.update(dic_)
-
         return dic
 
     def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the target blaze. If so,
-        the trial is over. If not, register a miss or a non-target blaze."""
+        """On press, check if it was inside the target blaze. If so, the trial is over.
+        If not, register a miss or a non-target blaze."""
         dpct = self.data.proc.current_trial
         if event.pos() in self.target_blaze:
             dpct.completed = True

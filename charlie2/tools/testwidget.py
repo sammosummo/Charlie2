@@ -439,6 +439,7 @@ class BaseTestWidget(QWidget):
         # accuracy
         if 'correct' in trials[0]:
             dic['correct'] = len([t for t in not_skipped if t.correct])
+            dic['accuracy'] = dic['correct'] / dic['responses']
 
         return dic
 
@@ -485,7 +486,7 @@ class BaseTestWidget(QWidget):
         button.show()
         return button
 
-    def _display_countdown(self, t=5, s=.1):
+    def _display_countdown(self, t=5, s=1):
         """Display the countdown timer."""
         self.print("displaying the countdown timer")
         for i in range(t):
@@ -635,7 +636,7 @@ class BaseTestWidget(QWidget):
     def mousePressEvent(self, event):
         """Overridden from `QtWidget`."""
         dpct = self.data.proc.current_trial
-        if self.trial_on:
+        if dpct and self.trial_on:
             self.mousePressEvent_(event)
             if dpct:
                 dpct.rt = self._trial_time.elapsed()
@@ -646,7 +647,7 @@ class BaseTestWidget(QWidget):
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
         dpct = self.data.proc.current_trial
-        if self.trial_on:
+        if dpct and self.trial_on:
             self.keyReleaseEvent_(event)
             if dpct:
                 dpct.rt = self._trial_time.elapsed()

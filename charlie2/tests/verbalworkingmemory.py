@@ -33,6 +33,7 @@ For `{x}` in [`forward`, `backward`, `lns`]:
 * `{x}_completed` (bool): Did the proband complete the test?
 * `{x}_correct` (int): Number of correct responses.
 * `{x}_responses` (int): Total number of responses in the block.
+* `{x}_k` (int): Length of the longest sequence reported.
 * `resumed` (bool): Was this test resumed at some point?
 
 
@@ -128,15 +129,17 @@ class TestWidget(BaseTestWidget):
 
     def _correct(self):
         dpct = self.data.proc.current_trial
-        dpct.correct = True
-        dpct.completed = True
-        self.next_trial()
+        if dpct:
+            dpct.correct = True
+            dpct.completed = True
+            self.next_trial()
 
     def _incorrect(self):
         dpct = self.data.proc.current_trial
-        dpct.correct = False
-        dpct.completed = True
-        self.next_trial()
+        if dpct:
+            dpct.correct = False
+            dpct.completed = True
+            self.next_trial()
 
     def summarise(self):
         """See docstring for explanation."""
@@ -145,7 +148,11 @@ class TestWidget(BaseTestWidget):
         for b in blocks:
             trials = [t for t in self.data.proc.completed_trials if t.block_type == b]
             dic_ = self.basic_summary(trials=trials, adjust_time_taken=False)
-            if 'time_taken' in dic_: del dic_['time_taken']
+            dic_['responses'] += 1  # This task undercounts responses by 1.
+            if 'accuracy' in dic_: del dic_['accuracy']  # not meaningful
+            if 'time_taken' in dic_: del dic_['time_taken']  # not meaningful
+            trial = [t for t in trials if t.correct][-1]
+            dic_['k'] = trial[trial.length]
             dic.update({f"{b}_{k}": v for k, v in dic_.items()})
         return dic
 

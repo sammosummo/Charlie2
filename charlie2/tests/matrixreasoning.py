@@ -28,6 +28,7 @@ Summary statistics
 * `any_skipped` (bool): Where any trials skipped?
 * `time_taken` (int): Time taken to complete the entire test in ms.
 * `correct` (int): How many trials correct?
+* `accuracy` (float): proportion of correct responses.
 * `resumed` (bool): Was this test resumed at some point?
 
 Reference

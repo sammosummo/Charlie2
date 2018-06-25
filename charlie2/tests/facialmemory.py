@@ -25,6 +25,7 @@ Summary statistics
 * `any_skipped` (bool): Where any trials skipped?
 * `time_taken` (int): Time taken to complete the entire test in ms.
 * `correct` (int): How many trials correct?
+* `accuracy` (float): proportion of correct responses.
 * `resumed` (bool): Was this test resumed at some point?
 
 Reference
@@ -106,7 +107,7 @@ class TestWidget(BaseTestWidget):
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
-        dic = {Qt.Key_Left: 'old', Qt.Key_Right: 'new'}
+        dic = {Qt.Key_Left: 'new', Qt.Key_Right: 'old'}
         dpct = self.data.proc.current_trial
 
         if dpct.block_type == "recognition" and event.key() in dic:
