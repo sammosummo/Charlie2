@@ -8,7 +8,7 @@ from charlie2.tools.mainwindow import MainWindow
 from charlie2.tools.paths import logo_path
 
 
-if __name__ == "__main__":
+def run_app():
 
     app = QApplication(argv)
     app.setWindowIcon(QIcon(logo_path))
