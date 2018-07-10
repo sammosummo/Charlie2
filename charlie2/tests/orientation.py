@@ -53,7 +53,7 @@ class TestWidget(BaseTestWidget):
     def block(self):
         """For this test, there is only one block. All we need to do is display the task
         instructions and initialise the block timeout timer."""
-        self.block_max_time = 30
+        self.block_max_time = 60
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
