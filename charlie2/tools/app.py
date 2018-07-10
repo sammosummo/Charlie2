@@ -14,6 +14,6 @@ def run_app():
     app = QApplication(argv)
     app.setWindowIcon(QIcon(logo_path))
     app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    app.setFont(QFont("sanserif", 14))
+    app.setFont(QFont("San Francisco", 15))
     ex = MainWindow()
     exit(app.exec_())
