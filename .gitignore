@@ -144,7 +144,6 @@ rsconnect/
 charlie2/.DS_Store
 charlie2/__pycache__/
 charlie2/_scratch/__pycache__/
-charlie2/data/
 charlie2/instructions/__pycache__/
 charlie2/instructions/en/__pycache__/
 charlie2/stimuli/.DS_Store
