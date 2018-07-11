@@ -1,7 +1,7 @@
 """Define the main Qt widget used for running tests.
 
 """
-from sys import exit
+from sys import exit, platform
 from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
 from .commandline import get_parser
@@ -60,7 +60,8 @@ class MainWindow(QMainWindow):
             self.vprint('sizing, centring, and showing the window in normal mode')
             if self.isFullScreen():
                 self.vprint('in full screen')
-                self._sleep(1)
+                if platform == "darwin":
+                    self._sleep(1)
                 self.showNormal()  # two calls needed here, unclear why
             self.setFixedSize(gui.sizeHint())
             self._centre()

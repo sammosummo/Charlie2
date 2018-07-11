@@ -48,18 +48,51 @@ class GUIWidget(QWidget):
 
         self.tabs = QTabWidget()
 
-        self.test_tab = QWidget()
-        self.test_tab_vbox = QVBoxLayout()
+        self.proband_tab = QWidget()
+        self.proband_tab_vbox = QVBoxLayout()
 
         self.proband_groupbox = QGroupBox(self.instructions[6])
         self.proband_grid = QGridLayout()
         self.proband_grid.addWidget(QLabel(self.instructions[7]), 0, 0)
-        self.proband_id_box = QLineEdit(self.args.proband_id, self)
-        self.proband_id_box.textEdited.connect(self._set_proband_id)
+        self.proband_id_box = QComboBox(self)
+        self.proband_id_box.setEditable(True)
+        self.proband_id_box.currentTextChanged.connect(self._set_proband_id)
+        self.proband_id_box.setCurrentText(self.args.proband_id)
         self.proband_grid.addWidget(self.proband_id_box, 0, 1)
         self.proband_grid.addWidget(QLabel(self.instructions[8]), 2, 0, 1, 0)
         self.proband_groupbox.setLayout(self.proband_grid)
-        self.test_tab_vbox.addWidget(self.proband_groupbox)
+        self.proband_tab_vbox.addWidget(self.proband_groupbox)
+        self.proband_tab.setLayout(self.proband_tab_vbox)
+        self.tabs.addTab(self.proband_tab, self.instructions[6])
+
+        self.addinf_groupbox = QGroupBox(self.instructions[23])
+        self.addinf_grid = QGridLayout()
+        self.addinf_grid.addWidget(QLabel(self.instructions[25]), 1, 0)
+        self.addinf_age_box = QComboBox(self)
+        self.addinf_age_box.setEditable(False)
+        self.addinf_age_box.addItems([str(i) for i in range(1, 101)])
+        self.addinf_age_box.currentTextChanged.connect(self._set_proband_id)
+        self.addinf_age_box.setCurrentIndex(49)
+        self.addinf_grid.addWidget(self.addinf_age_box, 1, 1)
+        self.addinf_grid.addWidget(QLabel(self.instructions[24]), 0, 0, 1, 0)
+        self.addinf_groupbox.setLayout(self.addinf_grid)
+        self.proband_tab_vbox.addWidget(self.addinf_groupbox)
+        self.addinf_grid.addWidget(QLabel(self.instructions[26]), 2, 0)
+        self.addinf_sex_box = QComboBox(self)
+        self.addinf_sex_box.setEditable(False)
+        self.addinf_sex_box.addItems(["Male", "Female"])
+        self.addinf_sex_box.currentTextChanged.connect(self._set_proband_id)
+        self.addinf_sex_box.setCurrentIndex(0)
+        self.addinf_grid.addWidget(self.addinf_sex_box, 2, 1)
+        self.addinf_grid.addWidget(QLabel(self.instructions[27]), 3, 0)
+        self.addinf_otherids_box = QComboBox(self)
+        self.addinf_otherids_box.setEditable(True)
+        self.addinf_otherids_box.currentTextChanged.connect(self._set_proband_id)
+        self.addinf_otherids_box.setCurrentIndex(0)
+        self.addinf_grid.addWidget(self.addinf_otherids_box, 3, 1)
+        
+        self.test_tab = QWidget()
+        self.test_tab_vbox = QVBoxLayout()
 
         self.options_groupbox = QGroupBox(self.instructions[9])
         self.options_grid = QGridLayout()
@@ -146,7 +179,8 @@ class GUIWidget(QWidget):
 
     def _set_proband_id(self):
         """Change the proband ID."""
-        self.args.proband_id = self.sender().text()
+        self.vprint("Proband ID changed to", self.proband_id_box.currentText())
+        self.args.proband_id = self.proband_id_box.currentText()
 
     def _set_test_names_single(self):
         """Set the next test to be the selected one."""
