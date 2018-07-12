@@ -110,7 +110,7 @@ class TestWidget(BaseTestWidget):
         dpct = self.data.proc.current_trial
         b = dpct.block_number
         if dpct.block_type == "practice":
-            self.block_max_time = 20
+            self.block_max_time = 30
         else:
             self.block_max_time = 90
         self.display_instructions_with_continue_button(self.instructions[4 + b])
@@ -158,6 +158,7 @@ class TestWidget(BaseTestWidget):
             dpct.rsp = dic[event.key()]
             dpct.correct = dpct.rsp == (dpct.symbol == dpct.digit)
             dpct.completed = True
+            print("time elapsed:", self._block_time.elapsed() / 1000)
 
             # should prevent dozens of old labels being stored in memory
             self.symbol.deleteLater()
