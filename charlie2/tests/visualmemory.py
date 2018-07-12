@@ -80,7 +80,7 @@ class TestWidget(BaseTestWidget):
 
         # clear the screen
         self.clear_screen()
-        self.sleep(1)  # makes it less confusing when the new trial starts
+        self.sleep(0.5)  # makes it less confusing when the new trial starts
 
         # display the items
         self.labels = []
@@ -92,7 +92,7 @@ class TestWidget(BaseTestWidget):
             s = "l%i_t%i_i%i.png" % (5, dpct.trial_number, item)
             label = self.display_image(s, (x, y + 75))
             self.labels.append(label)
-        self.sleep(1.5)
+        self.sleep(2)
 
         # hide the items
         [label.hide() for label in self.labels]
