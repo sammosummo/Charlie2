@@ -57,4 +57,13 @@ def get_parser():
         default=False,
         help="Resume testing of a proband? (default is no).",
     )
+    parser.add_argument(
+        "-a", "--proband_age", default="1", help="Age of proband."
+    )
+    parser.add_argument(
+        "-s", "--proband_sex", default="Male", help="Sex of proband."
+    )
+    parser.add_argument(
+        "-o", "--other_ids", default="", help="Other IDs."
+    )
     return parser

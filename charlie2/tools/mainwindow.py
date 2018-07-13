@@ -29,6 +29,9 @@ class MainWindow(QMainWindow):
         # empty properties to be modified later
         self.args.test_name = None
 
+        # convert other IDs to list
+        self.args.other_ids = set(self.args.other_ids.split())
+
         # modify test_names if in batch or gui modes
         if self.args.batch_name != "":
             self.args.test_names = get_tests_from_batch(self.batch_name)

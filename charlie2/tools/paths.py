@@ -29,8 +29,12 @@ logo_path = pj(_path, "logo", "charlie.png")
 
 
 @property
-def pickles():
+def data_pickles():
     return [pj(pkl_path, p) for p in ls(pkl_path) if p.endswith('.pkl')]
+
+
+def proband_pickles():
+    return [p.replace('.ppkl', '') for p in ls(pkl_path) if p.endswith('.ppkl')]
 
 
 def is_test(s):

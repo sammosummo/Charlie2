@@ -1,11 +1,11 @@
 import pickle
 from PyQt5.QtWidgets import QTableWidgetItem
-from .paths import pickles
+from .paths import data_pickles
 
 
 def _populate_table(table):
     """Fill a table"""
-    all_data = [pickle.load(f) for f in pickles]
+    all_data = [pickle.load(f) for f in data_pickles]
     all_keys = {k for dic in all_data for k in dic}
     for row, dic in enumerate(all_data):
         for col, key in all_keys:

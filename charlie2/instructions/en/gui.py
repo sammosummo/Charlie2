@@ -33,5 +33,8 @@ ensure the proband's cognitive data can be matched to their
 other data.""",
     "Age (years):",
     "Sex:",
-    "Other IDs (e.g., genetic):",
+    "More IDs (e.g., genetic):",
+    "Add",
+    "Remove",
+    "Save current selection"
 ]
