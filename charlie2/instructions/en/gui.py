@@ -13,11 +13,11 @@ For assistance, please contact {__email__}
 the proband ID will result in no data being saved. In this
 case, the fields below are irrelevant.""",
     'Options',
-    'Run tests in fullscreen',
-    'Resume a test or batch',
-    'Backup on exit [not yet implemented]',
+    'Run tests in full-screen mode',
+    'Resume a test or batch of tests',
+    'Auto-attempt backup on exit',
     'Test (single)',
-    'Select test:',
+    'Select single test:',
     'Run single test',
     'Tests (batch)',
     'Select batch file:*',
@@ -36,5 +36,18 @@ other data.""",
     "More IDs (e.g., genetic):",
     "Add",
     "Remove",
-    "Save current selection"
+    "Save current selection",
+    "Local data",
+    "Backed-up data",
+    "Status",
+    "Backup",
+    "Back up data now",
+    """No. data files: %i
+No. unique proband IDs: %i
+No. conflicts: %i""",
+    "Attempting backup (%i/5) ...",
+    "Backup succeeded.",
+    "Backup failed.",
+    "Local data files are up to date.",
+    "Local files are out of date."
 ]
