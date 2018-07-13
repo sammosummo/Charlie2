@@ -66,4 +66,7 @@ def get_parser():
     parser.add_argument(
         "-o", "--other_ids", default="", help="Other IDs."
     )
+    parser.add_argument(
+        "-k", "--auto_backup", type=str2bool, default=True, help="Enable auto-backups."
+    )
     return parser

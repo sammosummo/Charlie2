@@ -32,11 +32,12 @@ class GUIWidget(QWidget):
 
         """
         super(GUIWidget, self).__init__(parent=parent)
-        self.args = self.parent().args
-        self.vprint = print if self.args.verbose else lambda *a, **k: None
-        self.instructions = get_instructions("gui", self.args.language)
 
-        # graphical elements
+        self.args = self.parent().args
+        self.instructions = get_instructions("gui", self.args.language)
+        self.vprint = print if self.args.verbose else lambda *a, **k: None
+
+        # graphical elements -----------------------------------------------------------
 
         # layout
         self.vbox = QVBoxLayout()
@@ -209,7 +210,6 @@ class GUIWidget(QWidget):
         self.remote_data.setReadOnly(True)
         self.remote_data.setFont(QFont('Courier'))
         self.remote_data.setMaximumHeight(55)
-        
 
         # layout > tab > backup tab > status box
         self.status_groupbox = QGroupBox(self.instructions[33])
@@ -236,6 +236,153 @@ class GUIWidget(QWidget):
 
         # layout > tab > test tab > stretch factor
         self.backup_tab_vbox.addStretch(1)
+
+        # add functionality to graphical elements --------------------------------------
+
+        # layout > tab > proband tab > proband box > proband ID
+        self.proband_id_box.setCurrentText(self.args.proband_id)
+        self.proband_id_box.addItems(proband_pickles())
+        self.proband_id_box.currentTextChanged.connect(self._set_proband_id)
+
+        # layout > tab > proband tab > additional info box > age box
+        self.addinf_age_box.setCurrentText(self.args.proband_age)
+
+        # layout > tab > proband tab > additional info box > sex box
+        self.addinf_sex_box.setCurrentText(self.args.proband_sex)
+
+        # layout > tab > proband tab > additional info box > other IDs box
+        self.args.other_ids = set(self.args.other_ids)
+        self.addinf_otherids_box.addItems(self.args.other_ids)
+        #
+        # # layout > tab > proband tab > save box
+        # self.save_groupbox = QGroupBox(self.instructions[30])
+        # self.proband_tab_vbox.addWidget(self.save_groupbox)
+        # self.save_gird = QGridLayout()
+        # self.save_groupbox.setLayout(self.save_gird)
+        #
+        # # layout > tab > proband tab > save box > save button
+        # self.save_button = QPushButton(self.instructions[30])
+        # self.save_gird.addWidget(self.save_button, 0, 0)
+        #
+        # # layout > tab > proband tab > stretch factor
+        # self.proband_tab_vbox.addStretch(1)
+        #
+        # # layout > tab > test tab
+        # self.test_tab = QWidget()
+        # self.tabs.addTab(self.test_tab, self.instructions[5])
+        # self.test_tab_vbox = QVBoxLayout()
+        # self.test_tab.setLayout(self.test_tab_vbox)
+        #
+        # # layout > tab > test tab > options box
+        # self.options_groupbox = QGroupBox(self.instructions[9])
+        # self.test_tab_vbox.addWidget(self.options_groupbox)
+        # self.options_grid = QGridLayout()
+        # self.options_groupbox.setLayout(self.options_grid)
+        #
+        # # layout > tab > test tab > options box > full screen
+        # self.fullscreen_checkbox = QCheckBox(self.instructions[10], self)
+        # self.options_grid.addWidget(self.fullscreen_checkbox)
+        #
+        # # layout > tab > test tab > options box > resumable
+        # self.resume_checkbox = QCheckBox(self.instructions[11], self)
+        # self.options_grid.addWidget(self.resume_checkbox)
+        #
+        # # layout > tab > test tab > options box > backup
+        # self.backup_checkbox = QCheckBox(self.instructions[12], self)
+        # self.options_grid.addWidget(self.backup_checkbox)
+        #
+        # # layout > tab > test tab > test box
+        # self.test_groupbox = QGroupBox(self.instructions[13])
+        # self.test_tab_vbox.addWidget(self.test_groupbox)
+        # self.test_grid = QGridLayout()
+        # self.test_groupbox.setLayout(self.test_grid)
+        # self.test_grid.addWidget(QLabel(self.instructions[14]), 0, 0)
+        #
+        # # layout > tab > test tab > test box > select test menu
+        # self.test_name_box = QComboBox(self)
+        # self.test_grid.addWidget(self.test_name_box, 0, 1)
+        #
+        # # layout > tab > test tab > test box > run test button
+        # self.test_button = QPushButton(self.instructions[15], self)
+        # self.test_grid.addWidget(self.test_button, 1, 0, 1, 0)
+        #
+        # # layout > tab > test tab > batch box
+        # self.batch_groupbox = QGroupBox(self.instructions[16])
+        # self.test_tab_vbox.addWidget(self.batch_groupbox)
+        # self.batch_grid = QGridLayout()
+        # self.batch_groupbox.setLayout(self.batch_grid)
+        # self.batch_grid.addWidget(QLabel(self.instructions[17]), 0, 0)
+        #
+        # # layout > tab > test tab > test box > select batch file menu
+        # self.batch_name_box = QComboBox()
+        # self.batch_grid.addWidget(self.batch_name_box, 0, 1)
+        # self.batch_button = QPushButton(self.instructions[18], self)
+        # self.batch_grid.addWidget(self.batch_button, 3, 0, 1, 0)
+        # self.batch_grid.addWidget(QLabel(self.instructions[21]), 2, 0, 1, 0)
+        #
+        # # layout > tab > test tab > stretch factor
+        # self.test_tab_vbox.addStretch(1)
+        #
+        # # layout > tab > backup tab
+        # self.backup_tab = QWidget()
+        # self.tabs.addTab(self.backup_tab, self.instructions[22])
+        # self.backup_tab_vbox = QVBoxLayout()
+        # self.backup_tab.setLayout(self.backup_tab_vbox)
+        #
+        # # layout > tab > backup tab > local data box
+        # self.local_groupbox = QGroupBox(self.instructions[31])
+        # self.backup_tab_vbox.addWidget(self.local_groupbox)
+        # self.local_grid = QGridLayout()
+        # self.local_groupbox.setLayout(self.local_grid)
+        #
+        # # layout > tab > backup tab > local data box > local data
+        # self.local_data = QPlainTextEdit()
+        # self.local_grid.addWidget(self.local_data, 0, 0)
+        # self.local_data.setPlainText(self.instructions[36])
+        # self.local_data.setReadOnly(True)
+        # self.local_data.setFont(QFont('Courier'))
+        # self.local_data.setMaximumHeight(55)
+        #
+        # # layout > tab > backup tab > remote data box
+        # self.remote_groupbox = QGroupBox(self.instructions[32])
+        # self.backup_tab_vbox.addWidget(self.remote_groupbox)
+        # self.remote_grid = QGridLayout()
+        # self.remote_groupbox.setLayout(self.remote_grid)
+        #
+        # # layout > tab > backup tab > remote data box > remote data
+        # self.remote_data = QPlainTextEdit()
+        # self.remote_grid.addWidget(self.remote_data, 0, 0)
+        # self.remote_data.setPlainText(self.instructions[36])
+        # self.remote_data.setReadOnly(True)
+        # self.remote_data.setFont(QFont('Courier'))
+        # self.remote_data.setMaximumHeight(55)
+        #
+        # # layout > tab > backup tab > status box
+        # self.status_groupbox = QGroupBox(self.instructions[33])
+        # self.backup_tab_vbox.addWidget(self.status_groupbox)
+        # self.status_grid = QGridLayout()
+        # self.status_groupbox.setLayout(self.status_grid)
+        #
+        # # layout > tab > backup tab > status data box > status data
+        # self.status_data = QPlainTextEdit()
+        # self.status_grid.addWidget(self.status_data, 0, 0)
+        # self.status_data.setReadOnly(True)
+        # self.status_data.setFont(QFont('Courier'))
+        # self.status_data.setMaximumHeight(25)
+        #
+        # # layout > tab > backup tab > backup box
+        # self.backup_groupbox = QGroupBox(self.instructions[34])
+        # self.backup_tab_vbox.addWidget(self.backup_groupbox)
+        # self.backup_grid = QGridLayout()
+        # self.backup_groupbox.setLayout(self.backup_grid)
+        #
+        # # layout > tab > backup tab > backup box > backup button
+        # self.backup_button = QPushButton(self.instructions[35], self)
+        # self.backup_grid.addWidget(self.backup_button)
+        #
+        # # layout > tab > test tab > stretch factor
+        # self.backup_tab_vbox.addStretch(1)
+
 
 
 
@@ -323,22 +470,22 @@ class GUIWidget(QWidget):
     #     self.vbox.addWidget(self.tabs)
     #
     #
-    # def _set_proband_id(self):
-    #     """Change the proband ID."""
-    #     self.vprint("Proband ID changed to", self.proband_id_box.currentText())
-    #     self.args.proband_id = self.proband_id_box.currentText()
-    #     self.proband = Proband(**vars(self.args))
-    #
-    #     if self.args.proband_id in proband_pickles():
-    #         self.addinf_age_box.setCurrentText(self.proband.proband_age)
-    #         self.addinf_sex_box.setCurrentText(self.proband.proband_sex)
-    #         self.addinf_otherids_box.clear()
-    #         self.addinf_otherids_box.addItems(self.args.other_ids)
-    #         print(self.args)
-    #     else:
-    #         self.addinf_age_box.setCurrentIndex(0)
-    #         self.addinf_sex_box.setCurrentIndex(0)
-    #         self.addinf_otherids_box.clear()
+    def _set_proband_id(self):
+        """Change the current proband"""
+        self.vprint("Proband ID changed to", self.proband_id_box.currentText())
+        self.args.proband_id = self.proband_id_box.currentText()
+        self.proband = Proband(**vars(self.args))
+
+        if self.args.proband_id in proband_pickles():
+            self.addinf_age_box.setCurrentText(self.proband.proband_age)
+            self.addinf_sex_box.setCurrentText(self.proband.proband_sex)
+            self.addinf_otherids_box.clear()
+            self.addinf_otherids_box.addItems(self.args.other_ids)
+            print(self.args)
+        else:
+            self.addinf_age_box.setCurrentIndex(0)
+            self.addinf_sex_box.setCurrentIndex(0)
+            self.addinf_otherids_box.clear()
     #
     # def _set_proband_age(self):
     #     """Change the proband age."""

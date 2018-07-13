@@ -12,6 +12,7 @@ from docutils.core import publish_string
 
 _path = dirname(charlie2.__file__)
 data_path = pj(_path, "data")
+proband_path = pj(data_path, "probands")
 csv_path = pj(data_path, "csv")
 h5_path = pj(data_path, "h5")
 pkl_path = pj(data_path, "pkl")
@@ -27,14 +28,13 @@ batch_path = pj(_path, "batch")
 batches_list = [b for b in ls(batch_path) if b.endswith(".txt")]
 logo_path = pj(_path, "logo", "charlie.png")
 
-
 @property
 def data_pickles():
     return [pj(pkl_path, p) for p in ls(pkl_path) if p.endswith('.pkl')]
 
 
 def proband_pickles():
-    return [p.replace('.ppkl', '') for p in ls(pkl_path) if p.endswith('.ppkl')]
+    return [p.replace('.pkl', '') for p in ls(proband_path) if p.endswith('.pkl')]
 
 
 def is_test(s):

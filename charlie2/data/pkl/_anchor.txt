@@ -1,3 +1,0 @@
-This text file is not important.
-
-It simply forces github to create the parent directory.
