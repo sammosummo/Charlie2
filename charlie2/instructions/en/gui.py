@@ -11,7 +11,8 @@ For assistance, please contact {__email__}
     'Select or enter new ID:',
     """NOTE: Using "TEST" (upper case, no quotation marks) as
 the proband ID will result in no data being saved. In this
-case, the fields below are irrelevant.""",
+case, the fields below are ignored. Case sensitive. Alpha-
+numeric characters only.""",
     'Options',
     'Run tests in full-screen mode',
     'Resume a test or batch of tests',
@@ -22,7 +23,7 @@ case, the fields below are irrelevant.""",
     'Tests (batch)',
     'Select batch file:*',
     'Run tests in batch mode',
-    'Docs',
+    'Documentation for selected test:',
     'Select a test:',
     """* Using "Cmd+Q/Alt+F4" while in batch mode will skip to
 the next test, not exit completely.""",
@@ -33,7 +34,7 @@ ensure the proband's cognitive data can be matched to their
 other data.""",
     "Age (years):",
     "Sex:",
-    "More IDs (e.g., genetic):",
+    "More IDs (e.g., family ID):",
     "Add",
     "Remove",
     "Save current selection",
@@ -49,5 +50,9 @@ No. conflicts: %i""",
     "Backup succeeded.",
     "Backup failed.",
     "Local data files are up to date.",
-    "Local files are out of date."
+    "Local files are out of date.",
+    "Notes",
+    "Use the box below to add notes about the proband.",
+    "Save",
+    "Reset",
 ]

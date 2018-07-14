@@ -1,4 +1,5 @@
-from .data import Data
+from logging import getLogger
+from .data import TestData
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
 from .procedure import SimpleProcedure
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
@@ -6,50 +7,47 @@ from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 
 
+logger = getLogger(__name__)
+
+
 class BaseTestWidget(QWidget):
     def __init__(self, parent=None):
         """Base class for test widgets.
 
         This is not called directly, but contains methods which are inherited by all
-        tests which between them do much of the heavy lifting regarding  running tests,
-        storing the data, and so on.
+        tests which between them do much of the heavy lifting regarding running tests,
+        storing data, and so on.
 
         """
         super(BaseTestWidget, self).__init__(parent)
+        logger.info("test widget created")
 
-        self._vis_stim_paths = get_vis_stim_paths(self.parent().args.test_name)
-        self._aud_stim_paths = get_aud_stim_paths(self.parent().args.test_name)
-        self._instructions_font = QFont("Helvetica", 24)
+        self.vis_stim_paths = get_vis_stim_paths(self.parent().args.test_name)
+        self.aud_stim_paths = get_aud_stim_paths(self.parent().args.test_name)
+        self.instructions_font = QFont("Helvetica", 24)
         self._trial_on = False
         self._mouse_on = True
-        self._test_time = QTime()
-        self._block_time = QTime()
-        self._trial_time = QTime()
-        self._test_time.start()
-        self._block_time.start()
-        self._trial_time.start()
-        self._block_timeout_timer = QTimer()
-        self._trial_timeout_timer = QTimer()
-
+        self.test_time = QTime()
+        self.block_time = QTime()
+        self.trial_time = QTime()
         self.args = self.parent().args
-        self.args.remaining_trials = self.make_trials()
-        self.args.procedure = self.procedure()
-        self.data = Data(**vars(self.args))
-        self.print = print if self.args.verbose else lambda *a, **k: None
         self.block_silent = False
         self.skip_countdown = False
+        self.test_max_time = None
         self.block_max_time = None
         self.trial_max_time = None
-        self.prevent_fullscreen = False
+        self.data = TestData(**vars(self.args))
         self.zones = []
-        self.save_after_each_trial = True
         self.instructions = get_instructions(self.args.test_name, self.args.language)
 
-        self.setFocusPolicy(Qt.StrongFocus)  # required to accept keyboard events
+        self.setFocusPolicy(Qt.StrongFocus)
 
-        # add a flag to the procedure to say that we resumed the test
-        if self.data.test_resumed and not self.data.test_completed:
-            self.data.proc.remaining_trials[0].resumed_from_here = True
+    def begin(self):
+        """Start the test. This is called automatically by the parent widget. Don't call
+        it manually!
+
+        """
+        self._step()
 
     @property
     def trial_on(self):
@@ -63,11 +61,11 @@ class BaseTestWidget(QWidget):
         elif self.trial_max_time:
             self._start_trial_timeout()
         self._trial_on = value
-    
+
     @property
     def mouse_on(self):
         return self._mouse_on
-    
+
     @mouse_on.setter
     def mouse_on(self, value):
         assert isinstance(value, bool), "mouse_on must be a bool"
@@ -77,9 +75,11 @@ class BaseTestWidget(QWidget):
             self.setCursor(Qt.ArrowCursor)
         self._mouse_on = value
 
-    def procedure(self):
+    def get_procedure(self):
         """Override this method."""
-        return SimpleProcedure
+        logger.info("using a simple procedure (default)")
+        remaining_trials = self.make_trials()
+        return SimpleProcedure(remaining_trials)
 
     def make_trials(self):
         """Override this method."""
@@ -104,16 +104,16 @@ class BaseTestWidget(QWidget):
     def keyReleaseEvent_(self, event):
         """Override this method."""
         pass
-    
+
     def stopping_rule(self):
         """Override this method."""
         return False
 
     def begin(self):
         """Start the test.
-        
+
         This is called automatically. Don't call it manually!
-        
+
         """
         self._step()
 
@@ -128,7 +128,7 @@ class BaseTestWidget(QWidget):
             t (float): Time to sleep in seconds.
 
         """
-        self.print("sleeping for %i s" % t)
+        logger.info("sleeping for %i s" % t)
         self.parent().ignore_close_event = True
         loop = QEventLoop()
         QTimer.singleShot(t * 1000, loop.quit)
@@ -148,8 +148,8 @@ class BaseTestWidget(QWidget):
             label (QLabel): Object containing the message.
 
         """
-        self.print('displaying the following message:')
-        self.print("\n   ", message, "\n")
+        logger.info('displaying the following message:')
+        logger.info("\n   ", message, "\n")
         self.clear_screen()
         label = QLabel(message, self)
         label.setAlignment(Qt.AlignCenter)
@@ -175,7 +175,7 @@ class BaseTestWidget(QWidget):
         """
         label = self.display_instructions(message)
         button = self._display_continue_button()
-        self.print("now waiting for continue button to be pressed")
+        logger.info("now waiting for continue button to be pressed")
         return label, button
 
     def load_image(self, s):
@@ -345,10 +345,10 @@ class BaseTestWidget(QWidget):
 
         Args:
             rects (:obj:`list` of :obj:`QRect`): List of `QRects`.
-            reset (:obj:`bool`, optional): Remove previous items. 
+            reset (:obj:`bool`, optional): Remove previous items.
 
         """
-        
+
         if reset:
             self.zones = []
         for rect in rects:
@@ -356,12 +356,12 @@ class BaseTestWidget(QWidget):
 
     def clear_screen(self, delete=False):
         """Hide widgets.
-        
+
         Hides and optionally deletes all children of this widget.
-        
+
         Args:
             delete (:obj:`bool`, optional): Delete the widgets as well.
-        
+
         """
         # for widgets  organized in a layout
         if self.layout() is not None:
@@ -394,11 +394,11 @@ class BaseTestWidget(QWidget):
             dic (dict): dictionary of results.
 
         """
-        if self.data.proc.all_skipped: return {'completed': False}
+        if self.proc.all_skipped: return {'completed': False}
 
         # get all completed trials
         if trials is None:
-            trials = self.data.proc.completed_trials
+            trials = self.proc.completed_trials
 
         skipped = [t for t in trials if t.skipped]
         any_skipped = len(skipped) > 0
@@ -467,15 +467,15 @@ class BaseTestWidget(QWidget):
         if self.save_after_each_trial:
             self.data.save()
         if self.stopping_rule():
-            self.print('stopping rule failed')
-            self.data.proc.skip_block()
+            logger.info('stopping rule failed')
+            self.proc.skip_block()
         else:
-            self.print('stopping rule passed')
+            logger.info('stopping rule passed')
         self._step()
 
     def _display_continue_button(self):
         """Display a continue button."""
-        self.print('displaying the continue button')
+        logger.info('displaying the continue button')
         self.block_silent = False  # TODO: Do I need this?
         button = QPushButton(self.instructions[1], self)
         button.resize(button.sizeHint())
@@ -488,46 +488,53 @@ class BaseTestWidget(QWidget):
 
     def _display_countdown(self, t=5, s=1):
         """Display the countdown timer."""
-        self.print("displaying the countdown timer")
+        logger.info("displaying the countdown timer")
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
-
+    
     def _step(self):
         """Step forward in the test. This could mean displaying instructions at the
-        start of a block, starting the next trial, or continuing to the next test."""
-        self.print("stepping forward in test")
-        try:
-            next(self.data.proc)
+        start of a block, starting the next trial, or continuing to the next test.
 
-            if self.data.proc.current_trial.first_trial_in_block:
-                self.print("this is the first trial in a new block")
+        """
+        logger.info("stepping forward in test")
+
+        if self.data.test_resumed is False and self.data.test_completed is False:
+            logger.info("this is the very first trial, so creating a new procedure")
+            self.proc = self.get_procedure()
+
+        try:
+            next(self.proc)
+
+            if self.proc.current_trial.first_trial_in_block:
+                logger.info("this is the first trial in a new block")
                 self._block()
 
             else:
-                self.print("this is a regular trial")
+                logger.info("this is a regular trial")
                 self._trial()
 
         except StopIteration:
 
-            self.print("this test is over, moving on to next test")
+            logger.info("this test is over, moving on to next test")
             self.safe_close()
 
     def safe_close(self):
         """Safely clean up and save the data at the end of the test."""
-        self.print("called safe_close()")
-        self.print('data look like this:')
-        self.print('   ', self.data.safe_vars)
+        logger.info("called safe_close()")
+        logger.info('data look like this:')
+        logger.info('   ', self.data.safe_vars)
         self._stop_block_timeout()
         self._stop_trial_timeout()
-        if not self.data.proc.test_completed:
-            self.print("aborting")
-            self.data.proc.abort()
+        if not self.proc.test_completed:
+            logger.info("aborting")
+            self.proc.abort()
         else:
             summary = self.summarise()
             summary['resumed'] = self.data.test_resumed
-            self.print('summary looks like this:')
-            self.print('   ', summary)
+            logger.info('summary looks like this:')
+            logger.info('   ', summary)
             self.data.summary.update(summary)
         self.data.save()
         self.parent().switch_central_widget()
@@ -540,15 +547,15 @@ class BaseTestWidget(QWidget):
         self._block_time.restart()
 
         if self.block_silent:
-            self.print('this is a silent block')
+            logger.info('this is a silent block')
             self.skip_countdown = True
-            self.print('running _trial()')
+            logger.info('running _trial()')
             self._trial()
 
         else:
             self.mouse_on = True
-            self.print('this is a not a silent block')
-            self.print('running user-defined block()')
+            logger.info('this is a not a silent block')
+            logger.info('running user-defined block()')
             self.block()
 
     def _trial(self):
@@ -558,14 +565,14 @@ class BaseTestWidget(QWidget):
         self._stop_trial_timeout()
         self._trial_time.restart()
 
-        self.print('now starting the actual trial')
-        self.print('current trial looks like this:')
-        self.print("   ", self.data.proc.current_trial)
-        self.print('currently the wdiget has the layout', self.layout())
+        logger.info('now starting the actual trial')
+        logger.info('current trial looks like this:')
+        logger.info("   ", self.proc.current_trial)
+        logger.info('currently the wdiget has the layout', self.layout())
 
-        ftib = self.data.proc.current_trial.first_trial_in_block
+        ftib = self.proc.current_trial.first_trial_in_block
         if ftib and not self.skip_countdown:
-            self.print('countdown requested')
+            logger.info('countdown requested')
             self._display_countdown()
 
         if ftib:
@@ -581,14 +588,14 @@ class BaseTestWidget(QWidget):
         btt = self._block_timeout_timer
         try:
             btt.timeout.disconnect()
-            self.print("disconnecting block timeout timer")
+            logger.info("disconnecting block timeout timer")
         except TypeError:
-            self.print("block timeout timer wasn't connected to anything")
+            logger.info("block timeout timer wasn't connected to anything")
             pass
         btt.timeout.connect(self._end_block_early)
-        self.print("connected block timeout timer")
+        logger.info("connected block timeout timer")
         btt.start(self.block_max_time * 1000)
-        self.print("block timeout timer started")
+        logger.info("block timeout timer started")
 
     def _start_trial_timeout(self):
         """Initialise a timer which automatically ends the block after time elapses."""
@@ -599,43 +606,43 @@ class BaseTestWidget(QWidget):
             pass
         ttt.timeout.connect(self._end_trial_early)
         ttt.start(self.trial_max_time * 1000)
-        self.print("trial timeout timer started")
+        logger.info("trial timeout timer started")
 
     def _stop_block_timeout(self):
         """Stop the block timeout timer."""
         btt = self._block_timeout_timer
         if btt.isActive():
-            self.print('stopping the block timeout timer')
+            logger.info('stopping the block timeout timer')
             btt.stop()
         else:
-            self.print("requested to stop the block timeout timer, but wasn't not on")
+            logger.info("requested to stop the block timeout timer, but wasn't not on")
 
     def _stop_trial_timeout(self):
         """Stop the trial timeout timer."""
         ttt = self._trial_timeout_timer
         if ttt.isActive():
-            self.print('stopping the trial timeout timer')
+            logger.info('stopping the trial timeout timer')
             ttt.stop()
         else:
-            self.print("requested to stop the trial timeout timer, but wasn't not on")
+            logger.info("requested to stop the trial timeout timer, but wasn't not on")
 
     def _end_block_early(self):
         """End the block early."""
-        self.print('block timed out')
-        self.data.proc.skip_block()
-        self.print('skipping block in procedure')
+        logger.info('block timed out')
+        self.proc.skip_block()
+        logger.info('skipping block in procedure')
         self._next_trial()
 
     def _end_trial_early(self):
         """End the trial early."""
-        self.print('trial timed out')
-        self.data.proc.skip_current_trial()
-        self.print('skipping trial in procedure')
+        logger.info('trial timed out')
+        self.proc.skip_current_trial()
+        logger.info('skipping trial in procedure')
         self._next_trial()
 
     def mousePressEvent(self, event):
         """Overridden from `QtWidget`."""
-        dpct = self.data.proc.current_trial
+        dpct = self.proc.current_trial
         if dpct and self.trial_on:
             self.mousePressEvent_(event)
             if dpct:
@@ -646,7 +653,7 @@ class BaseTestWidget(QWidget):
 
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
-        dpct = self.data.proc.current_trial
+        dpct = self.proc.current_trial
         if dpct and self.trial_on:
             self.keyReleaseEvent_(event)
             if dpct:

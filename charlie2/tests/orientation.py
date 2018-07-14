@@ -1,9 +1,9 @@
 """
-================
-Orientation test
-================
+===========
+Orientation
+===========
 
-:Status: complete
+:Status: production
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/orientation.py
 
@@ -13,7 +13,7 @@ Description
 This simple test is designed to be administered first in any battery. On each trial, the
 proband sees a red square positioned randomly on the screen. The task is to press the
 square as quickly as possible. It is similar to the mouse practice task from [1]_. There
-are 10 trials in total and the test automatically quits after 30 s.
+are 10 trials in total and the test automatically exits after 60 s.
 
 Summary statistics
 ==================
@@ -35,24 +35,32 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
 
+from logging import getLogger
 from charlie2.tools.testwidget import BaseTestWidget
+
+
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
 
     def make_trials(self):
         """For this test, all we need is the trial number and position of the square on
-        each trial."""
+        each trial.
+
+        """
         pos = [(-122, -53), (-40, 19), (78, -85), (251, 296), (136, -203), (-42, 255),
                (294, -221), (108, 155), (-207, -54), (95, 215)]
         return [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
 
     def block(self):
         """For this test, there is only one block. All we need to do is display the task
-        instructions and initialise the block timeout timer."""
+        instructions and initialise the block timeout timer.
+
+        """
         self.block_max_time = 60
         self.display_instructions_with_continue_button(self.instructions[4])
 
@@ -72,7 +80,9 @@ class TestWidget(BaseTestWidget):
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
-        record the trial as a success and move on. If not, increase misses by 1."""
+        record the trial as a success and move on. If not, increase misses by 1.
+
+        """
         dpct = self.data.proc.current_trial
         if event.pos() in self.zones[0]:
             dpct.completed = True

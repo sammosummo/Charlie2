@@ -1,6 +1,6 @@
 """
 ===================
-verbal-fluency test
+Verbal-fluency test
 ===================
 
 :Status: complete

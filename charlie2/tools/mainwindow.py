@@ -1,12 +1,16 @@
 """Define the main Qt widget used for running tests.
 
 """
+from logging import getLogger
 from sys import exit, platform
 from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
 from .commandline import get_parser
 from .gui import GUIWidget
 from .paths import get_test, get_tests_from_batch, get_error_messages
+
+
+logger = getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
@@ -19,106 +23,101 @@ class MainWindow(QMainWindow):
 
         """
         super(MainWindow, self).__init__(parent)
+        logger.info("main window created")
 
-        # get command-line args
+        # format/get command-line arguments
         self.args = get_parser().parse_args()
-
-        # print if verbose mode
-        self.vprint = print if self.args.verbose else lambda *a, **k: None
-
-        # empty properties to be modified later
-        self.args.test_name = None
-
-        # convert other IDs to list
-        self.args.other_ids = set(self.args.other_ids.split())
-
-        # modify test_names if in batch or gui modes
+        self.args.test_name = None  # empty properties to be modified later
+        if isinstance(self.args.other_ids, str):
+            self.args.other_ids = set(self.args.other_ids.split())
         if self.args.batch_name != "":
             self.args.test_names = get_tests_from_batch(self.batch_name)
         if self.args.gui:
             self.args.test_names = []
+        logger.info("command-line arguments are: %s" % str(vars(self.args)))
 
-        # used for fullscreen mode
+        # used for full-screen mode
         self.desktop_size = QDesktopWidget().availableGeometry().size()
+        logger.info("desktop dimensions: %s" % str(self.desktop_size))
 
-        # start the app
+        # start the app proper
         self.ignore_close_event = False
         self.switch_central_widget()
 
     def switch_central_widget(self):
-        """Show the GUI, move from one test to another, or close the app.
-
-        This method also checks whether a test should be resumed.
+        """Show the GUI, move from one test to another, or close the app. This method
+        also checks whether a test should be resumed.
 
         """
-        self.vprint("switching the central widget")
+        logger.info("called switch_central_widget()")
         self.args.test_names = [s for s in self.args.test_names if s]
-        self.vprint("test list looks like this:", self.args.test_names)
+        logger.info("test list looks like this: %s" % str(self.args.test_names))
 
         if len(self.args.test_names) == 0 and self.args.gui:
 
-            self.vprint("no tests; gui mode")
+            logger.info("no tests; in gui mode")
             gui = GUIWidget(self)
 
-            self.vprint('sizing, centring, and showing the window in normal mode')
+            logger.info("sizing, centring, and showing the window in normal mode")
             if self.isFullScreen():
-                self.vprint('in full screen')
+                logger.info("in full screen")
                 if platform == "darwin":
+                    logger.info("running on macOS, so sleeping for 1 second")
                     self._sleep(1)
                 self.showNormal()  # two calls needed here, unclear why
             self.setFixedSize(gui.sizeHint())
             self._centre()
             self.showNormal()
 
-            self.vprint("showing the gui")
+            logger.info("showing the gui")
             self.setCentralWidget(gui)
 
         elif len(self.args.test_names) > 0:
 
-            self.vprint("at least one test")
+            logger.info("at least one test")
             self.args.test_name = self.args.test_names.pop(0)
 
-            self.vprint("initalising %s" % self.args.test_name)
+            logger.info("initalising %s" % self.args.test_name)
             w = get_test(self.args.test_name)
             widget = w(self)
 
-            self.vprint("checking whether there are data already")
-            d = widget.data
-            data_exist = any([d.test_completed, d.test_resumed, d.test_aborted])
-            self.vprint("answer is", data_exist)
+            logger.info("checking whether there are data already")
+            data_exist = any([widget.data.test_completed, widget.data.test_resumed])
+            logger.info("answer is %s" % data_exist)
 
-            self.vprint("resumable?", self.args.resume)
-            if not self.args.resume and data_exist:
-                self.vprint("displaying warning message")
-                message_box = QErrorMessage(self)
-                message = get_error_messages(self.args.language, 'proband_exists')
-                message = message % (self.args.proband_id, self.args.test_name)
-                message_box.showMessage(message)
-                self.switch_central_widget()
-                return
+            if data_exist:
+                logger.info("resumable? %s" % self.args.resume)
+                if not self.args.resume:
+                    logger.info("displaying warning message")
+                    message_box = QErrorMessage(self)
+                    message = get_error_messages(self.args.language, 'proband_exists')
+                    message = message % (self.args.proband_id, self.args.test_name)
+                    message_box.showMessage(message)
+                    self.switch_central_widget()
+                    return
 
             if not self.args.fullscreen:
-                self.vprint('sizing, centring, and showing the window in normal mode')
+                logger.info('sizing, centring, and showing the window in normal mode')
                 self.setFixedSize(900, 700)
                 widget.setFixedSize(900, 700)
                 self._centre()
                 self.showNormal()
 
             else:
-                self.vprint('showing the window in fullscreen mode')
+                logger.info('showing the window in fullscreen mode')
                 self.setFixedSize(self.desktop_size)
                 widget.setFixedSize(self.desktop_size)
                 self.showFullScreen()
 
-            self.vprint("showing the test")
+            logger.info("showing the test")
             self.setCentralWidget(widget)
 
-            self.vprint("starting the test")
+            logger.info("starting the test")
             widget.begin()
 
         else:
 
-            self.vprint("no tests; no gui; closing")
+            logger.info("no tests; no gui; closing")
             exit()
 
     def _centre(self):
@@ -151,15 +150,15 @@ class MainWindow(QMainWindow):
         If in batch mode, a close event will kill the current test, not the whole batch.
 
         """
-        self.vprint("close event encountered in main window")
+        logger.info("close event encountered in main window")
         if self.ignore_close_event:
-            self.vprint("ignoring close event")
+            logger.info("ignoring close event")
             event.ignore()
         else:
             if isinstance(self.centralWidget(), GUIWidget):
-                self.vprint("at the gui, so properly closing")
+                logger.info("at the gui, so properly closing")
                 exit()
             else:
-                self.vprint("at a test, safely closing")
+                logger.info("at a test, safely closing")
                 self.centralWidget().safe_close()
                 event.ignore()

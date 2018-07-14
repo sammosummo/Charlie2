@@ -100,7 +100,7 @@ class TestWidget(BaseTestWidget):
 
         # change the target
         s = "l%i_t%i_i%i_r.png" % (5, dpct.trial_number, 0)
-        pixmap = QPixmap(self._vis_stim_paths[s])
+        pixmap = QPixmap(self.vis_stim_paths[s])
         self.labels[0].setPixmap(pixmap)
 
         # display items again

@@ -67,6 +67,9 @@ def get_parser():
         "-o", "--other_ids", default="", help="Other IDs."
     )
     parser.add_argument(
-        "-k", "--auto_backup", type=str2bool, default=True, help="Enable auto-backups."
+        "-k", "--autobackup", type=str2bool, default=True, help="Enable autobackups."
+    )
+    parser.add_argument(
+        "-n", "--notes", default="", help="Notes about proband."
     )
     return parser

@@ -158,7 +158,7 @@ class TestWidget(BaseTestWidget):
             dpct.rsp = dic[event.key()]
             dpct.correct = dpct.rsp == (dpct.symbol == dpct.digit)
             dpct.completed = True
-            print("time elapsed:", self._block_time.elapsed() / 1000)
+            print("time elapsed:", self.block_time.elapsed() / 1000)
 
             # should prevent dozens of old labels being stored in memory
             self.symbol.deleteLater()

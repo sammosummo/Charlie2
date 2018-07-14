@@ -133,8 +133,8 @@ class TestWidget(BaseTestWidget):
         if dpct:
             dpct.correct = True
             dpct.completed = True
-            dpct.rt = self._trial_time.elapsed()
-            dpct.time_elapsed = self._block_time.elapsed()
+            dpct.rt = self.trial_time.elapsed()
+            dpct.time_elapsed = self.block_time.elapsed()
             self.next_trial()
 
     def _incorrect(self):
@@ -142,8 +142,8 @@ class TestWidget(BaseTestWidget):
         if dpct:
             dpct.correct = False
             dpct.completed = True
-            dpct.rt = self._trial_time.elapsed()
-            dpct.time_elapsed = self._block_time.elapsed()
+            dpct.rt = self.trial_time.elapsed()
+            dpct.time_elapsed = self.block_time.elapsed()
             self.next_trial()
 
     def summarise(self):

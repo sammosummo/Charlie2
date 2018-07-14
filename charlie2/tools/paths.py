@@ -13,6 +13,7 @@ from docutils.core import publish_string
 _path = dirname(charlie2.__file__)
 data_path = pj(_path, "data")
 proband_path = pj(data_path, "probands")
+test_data_path = pj(data_path, "tests")
 csv_path = pj(data_path, "csv")
 h5_path = pj(data_path, "h5")
 pkl_path = pj(data_path, "pkl")

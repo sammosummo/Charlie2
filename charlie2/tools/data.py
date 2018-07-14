@@ -4,17 +4,24 @@ proband-generated data.
 """
 from datetime import datetime
 from getpass import getuser
+from logging import getLogger
 from os.path import exists, join as pj
 from pickle import load, dump
 from socket import gethostname
-from .paths import proband_path
+from .paths import proband_path, test_data_path
 
 
-class Proband:
+logger = getLogger(__name__)
+forbidden_ids = {"TEST", ""}
+this_user = getuser()
+this_computer = gethostname()
+
+
+class ProbandData:
     def __init__(self, **kwargs):
-        """Create a proband object.
+        """Create a proband data object.
 
-        Proband objects contain information about the current proband, such as their ID,
+        These objects contain information about the current proband, such as their ID,
         when they were tested, etc. This information is saved in a special .pkl file
         (really just a pickled python dictionary). When the object is initialised, it
         will try to load any pre-existing information about the proband, which can be
@@ -25,39 +32,100 @@ class Proband:
                 the default value is used, the data will not be saved anywhere.
 
         """
+        logger.info("initialising a ProbandData object with kwargs: %s" % str(kwargs))
         self.data = {}
         self.data.update(kwargs)
         if "proband_id" not in kwargs:
             self.data["proband_id"] = "TEST"
-        self.data["current_computer_id"] = gethostname()
-        self.data["current_user_id"] = getuser()
+        self.data["current_computer_id"] = this_computer
+        self.data["current_user_id"] = this_user
         self.data["filename"] = self.data["proband_id"] + ".pkl"
         self.data["path"] = pj(proband_path, self.data["filename"])
-        self.load()
         self.__dict__.update(self.data)
+        self.load()
+        logger.info("after fully initialising, object looks like this: %s" % self.data)
 
     def load(self):
         """Load pre-existing data (and update current data) if any exist."""
+        logger.info("called load()")
         if exists(self.path):
+            logger.info("file exists")
             prev_data = load(open(self.path, "rb"))
             self.data.update(prev_data)
             self.data["previous_computer_id"] = prev_data["current_computer_id"]
             self.data["previous_user_id"] = prev_data["current_user_id"]
             self.data["last_loaded"] = datetime.now()
-            self.data["current_computer_id"] = gethostname()
-            self.data["current_user_id"] = getuser()
+            self.data["current_computer_id"] = this_computer
+            self.data["current_user_id"] = this_user
         else:
+            logger.info("file does not exist")
             self.data["created"] = datetime.now()
-            self.data["original_computer_id"] = gethostname()
-            self.data["original_user_id"] = getuser()
+            self.data["original_computer_id"] = this_computer
+            self.data["original_user_id"] = this_user
+        logger.info("current data file updated to %s" % self.data)
         self.__dict__.update(self.data)
 
     def save(self):
         """Dump the data. Don't do this if proband ID is TEST."""
-        if self.proband_id != "TEST":
+        logger.info("called save()")
+        if self.proband_id.upper() not in forbidden_ids:
+            logger.info("saving the data")
             self.data["saved"] = datetime.now()
             dump(self.data, open(self.path, "wb"))
             self.__dict__.update(self.data)
+        else:
+            logger.info("not saving the data")
+
+
+class TestData(ProbandData):
+    def __init__(self, **kwargs):
+        """Create a test data object.
+
+        Similar to ProbandData but for individual tests. Contains all the necessary
+        information for a proband to perform/resume a test, and to calculate summary
+        statistics. This information is saved in a special .pkl file (really just a
+        pickled python dictionary). When the object is initialised, it will try to load
+        any pre-existing information about the proband, which can be overwritten if
+        necessary.
+
+        Kwargs:
+            proband_id (:obj"`str`, optional): Proband's ID. Defaults to `"TEST"`. If
+                the default value is used, the data will not be saved anywhere.
+            test_name (str): Name of the test. This must match the name of the .py file
+                in the test subdirectory (without the .py extenstion).
+
+        """
+        logger.info("initialising a TestData object with kwargs: %s" % str(kwargs))
+        assert "test_name" in kwargs, "Missing test_name keyword argument"
+
+        logger.info("initialising a corresponding ProbandData object")
+        ProbandData(**kwargs).save()
+
+        self.data = {}
+        self.data.update(kwargs)
+        if "proband_id" not in kwargs:
+            self.data["proband_id"] = "TEST"
+        self.data["current_computer_id"] = this_computer
+        self.data["current_user_id"] = this_user
+        self.data["filename"] = \
+            self.data["proband_id"] + "_" + self.data["test_name"] + ".pkl"
+        self.data["path"] = pj(test_data_path, self.data["filename"])
+        self.__dict__.update(self.data)
+        self.load()
+        logger.info("after fully initialising, object looks like this: %s" % self.data)
+
+        if exists(self.path):
+            logger.info("since file already exists, setting test_resumed to True")
+            self.data["test_resumed"] = True
+
+        else:
+
+            logger.info("since file doesn't exists, setting test_resumed to False")
+            self.data["test_resumed"] = False
+            logger.info("since file doesn't exists, setting test_completed to False")
+            self.data["test_completed"] = False
+
+        self.__dict__.update(self.data)
 
 
 
