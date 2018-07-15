@@ -23,7 +23,7 @@ from .paths import (
     get_tests_from_batch,
     batches_list,
     get_docstring_html,
-    proband_pickles
+    proband_pickles,
 )
 
 
@@ -35,10 +35,10 @@ class GUIWidget(QWidget):
         """
         super(GUIWidget, self).__init__(parent=parent)
 
-        self.args = self.parent().args
-        self.instructions = get_instructions("gui", self.args.language)
-        self.proband = ProbandData(**vars(self.args))
-        self.vprint = print if self.args.verbose else lambda *a, **k: None
+        self.kwds = self.parent().kwds
+        self.instructions = get_instructions("gui", self.kwds.language)
+        self.proband = ProbandData(**vars(self.kwds))
+        self.vprint = print if self.kwds.verbose else lambda *a, **k: None
 
         # graphical elements
 
@@ -163,7 +163,7 @@ class GUIWidget(QWidget):
         self.test_grid.addWidget(QLabel(self.instructions[19]), 1, 0, 1, 0)
         self.docs_text_box = QTextBrowser()
         self.test_grid.addWidget(self.docs_text_box, 2, 0, 1, 0)
-        self.docs_text_box.setMaximumHeight(80)
+        self.docs_text_box.setMaximumHeight(70)
 
         # layout > tab > test tab > test box > run test button
         self.test_button = QPushButton(self.instructions[15], self)
@@ -220,8 +220,8 @@ class GUIWidget(QWidget):
         self.local_grid.addWidget(self.local_data, 0, 0)
         self.local_data.setPlainText(self.instructions[36])
         self.local_data.setReadOnly(True)
-        self.local_data.setFont(QFont('Courier'))
-        self.local_data.setMaximumHeight(55)
+        self.local_data.setFont(QFont("Courier"))
+        self.local_data.setMaximumHeight(60)
 
         # layout > tab > backup tab > remote data box
         self.remote_groupbox = QGroupBox(self.instructions[32])
@@ -234,8 +234,8 @@ class GUIWidget(QWidget):
         self.remote_grid.addWidget(self.remote_data, 0, 0)
         self.remote_data.setPlainText(self.instructions[36])
         self.remote_data.setReadOnly(True)
-        self.remote_data.setFont(QFont('Courier'))
-        self.remote_data.setMaximumHeight(55)
+        self.remote_data.setFont(QFont("Courier"))
+        self.remote_data.setMaximumHeight(60)
 
         # layout > tab > backup tab > status box
         self.status_groupbox = QGroupBox(self.instructions[33])
@@ -247,8 +247,8 @@ class GUIWidget(QWidget):
         self.status_data = QPlainTextEdit()
         self.status_grid.addWidget(self.status_data, 0, 0)
         self.status_data.setReadOnly(True)
-        self.status_data.setFont(QFont('Courier'))
-        self.status_data.setMaximumHeight(25)
+        self.status_data.setFont(QFont("Courier"))
+        self.status_data.setMaximumHeight(30)
 
         # layout > tab > backup tab > backup box
         self.backup_groupbox = QGroupBox(self.instructions[34])
@@ -279,11 +279,11 @@ class GUIWidget(QWidget):
         self.notes_resetbtn.clicked.connect(self._reset_notes)
 
         # layout > tab > test tab > options
-        self.fullscreen_checkbox.setChecked(self.args.fullscreen)
+        self.fullscreen_checkbox.setChecked(self.kwds.fullscreen)
         self.fullscreen_checkbox.stateChanged.connect(self._toggle_fullscreen)
-        self.resume_checkbox.setChecked(self.args.resume)
+        self.resume_checkbox.setChecked(self.kwds.resume)
         self.resume_checkbox.stateChanged.connect(self._toggle_resume)
-        self.autobackup_checkbox.setChecked(self.args.autobackup)
+        self.autobackup_checkbox.setChecked(self.kwds.autobackup)
         self.autobackup_checkbox.stateChanged.connect(self._toggle_autobackup)
 
         # layout > tab > test tab > individual test
@@ -293,101 +293,96 @@ class GUIWidget(QWidget):
 
     def _reset_addinfo(self):
         """Reset the additional proband information (age, sex, other IDs, and notes)."""
-        self.args.proband_age = "1"
-        self.args.proband_sex = "Male"
-        self.args.other_ids = set()
-        self.args.notes = ""
+        self.kwds.proband_age = "1"
+        self.kwds.proband_sex = "Male"
+        self.kwds.other_ids = set()
+        self.kwds.notes = ""
 
     def _update_gui(self, caller=None):
         """Update the information in the GUI."""
         if caller != "proband":
             self.proband_id_box.clear()
-            self.proband_id_box.addItems(['TEST'] + sorted(proband_pickles()))
-            self.proband_id_box.setCurrentText(self.args.proband_id)
-        self.addinf_age_box.setCurrentText(self.args.proband_age)
-        self.addinf_sex_box.setCurrentText(self.args.proband_sex)
+            self.proband_id_box.addItems(["TEST"] + sorted(proband_pickles()))
+            self.proband_id_box.setCurrentText(self.kwds.proband_id)
+        self.addinf_age_box.setCurrentText(self.kwds.proband_age)
+        self.addinf_sex_box.setCurrentText(self.kwds.proband_sex)
         self.addinf_otherids_box.clear()
-        self.addinf_otherids_box.addItems(sorted(self.args.other_ids))
+        self.addinf_otherids_box.addItems(sorted(self.kwds.other_ids))
         self.addinf_otherids_box.setCurrentText("")
-        self.notes_box.setPlainText(self.args.notes)
+        self.notes_box.setPlainText(self.kwds.notes)
 
     def _set_proband(self, s):
         """Change the current proband."""
         if match("^[a-zA-Z0-9_]*$", s):
-            self.args.proband_id = s
-            self.proband = ProbandData(**vars(self.args))
+            self.kwds.proband_id = s
+            self.proband = ProbandData(**vars(self.kwds))
             if s in proband_pickles():
-                self.args.__dict__.update(**self.proband.data)
+                self.kwds.__dict__.update(**self.proband.data)
             else:
                 self._reset_addinfo()
             self._update_gui("proband")
 
     def _set_age(self, s):
         """Change the proband age."""
-        self.args.proband_age = s
+        self.kwds.proband_age = s
 
     def _set_sex(self, s):
         """Change the proband sex."""
-        self.args.proband_sex = s
+        self.kwds.proband_sex = s
 
     def _add_other_id(self):
         """Add other ID to other-IDs set."""
         s = self.addinf_otherids_box.currentText()
-        if s and match("^[a-zA-Z0-9_]*$", s) and s not in self.args.other_ids:
-            self.args.other_ids.add(s)
+        if s and match("^[a-zA-Z0-9_]*$", s) and s not in self.kwds.other_ids:
+            self.kwds.other_ids.add(s)
             self.addinf_otherids_box.addItem(s)
 
     def _rm_other_id(self):
         """Add other ID to other IDs set."""
         s = self.addinf_otherids_box.currentText()
-        if s in self.args.other_ids:
-            self.args.other_ids.remove(s)
+        if s in self.kwds.other_ids:
+            self.kwds.other_ids.remove(s)
             self.addinf_otherids_box.removeItem(self.addinf_otherids_box.findText(s))
 
     def _save_notes(self):
         """Save the notes."""
-        self.args.notes = self.notes_box.toPlainText()
+        self.kwds.notes = self.notes_box.toPlainText()
         self._save_proband()
 
     def _reset_notes(self):
         """Reset the notes."""
-        self.notes_box.setPlainText(self.args.notes)
+        self.notes_box.setPlainText(self.kwds.notes)
 
     def _save_proband(self):
         """Save the current selection."""
-        self.proband.data.update(**vars(self.args))
+        self.proband.data.update(**vars(self.kwds))
         self.proband.save()
-        if self.proband_id_box.findText(self.args.proband_id) == -1:
-            self.proband_id_box.addItem(self.args.proband_id)
+        if self.proband_id_box.findText(self.kwds.proband_id) == -1:
+            self.proband_id_box.addItem(self.kwds.proband_id)
 
     def _toggle_fullscreen(self, state):
         """Toggle fullscreen mode."""
         if state == Qt.Checked:
-            self.args.fullscreen = True
+            self.kwds.fullscreen = True
         else:
-            self.args.fullscreen = False
+            self.kwds.fullscreen = False
 
     def _toggle_resume(self, state):
         """Toggle resume mode."""
         if state == Qt.Checked:
-            self.args.resume = True
+            self.kwds.resume = True
         else:
-            self.args.resume = False
-    
+            self.kwds.resume = False
+
     def _toggle_autobackup(self, state):
         """Toggle autobackup mode."""
         if state == Qt.Checked:
-            self.args.autobackup = True
+            self.kwds.autobackup = True
         else:
-            self.args.autobackup = False
+            self.kwds.autobackup = False
 
     def _set_test_name(self):
         """Set the next test to be the selected one."""
-        self.args.test_names = [self.sender().currentText()]
-        s = get_docstring_html(self.args.test_names[0])
+        self.kwds.test_names = [self.sender().currentText()]
+        s = get_docstring_html(self.kwds.test_names[0])
         self.docs_text_box.setText(s)
-
-
-
-
-

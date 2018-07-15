@@ -29,13 +29,14 @@ batch_path = pj(_path, "batch")
 batches_list = [b for b in ls(batch_path) if b.endswith(".txt")]
 logo_path = pj(_path, "logo", "charlie.png")
 
+
 @property
 def data_pickles():
-    return [pj(pkl_path, p) for p in ls(pkl_path) if p.endswith('.pkl')]
+    return [pj(pkl_path, p) for p in ls(pkl_path) if p.endswith(".pkl")]
 
 
 def proband_pickles():
-    return [p.replace('.pkl', '') for p in ls(proband_path) if p.endswith('.pkl')]
+    return [p.replace(".pkl", "") for p in ls(proband_path) if p.endswith(".pkl")]
 
 
 def is_test(s):
@@ -114,12 +115,12 @@ def get_aud_stim_paths(s):
 
 def get_error_messages(lang, name):
     """Return error message."""
-    return import_module(f'charlie2.instructions.{lang}.errors').__dict__[name]
+    return import_module(f"charlie2.instructions.{lang}.errors").__dict__[name]
 
 
 def get_docstring_html(s):
     """Return the docstring of a given test."""
     d = import_module(f"charlie2.tests.{s}").__doc__
-    html = publish_string(source=d, writer_name='html').decode()
-    html = html[html.find('<body>') + 6:html.find('</body>')].strip()
+    html = publish_string(source=d, writer_name="html").decode()
+    html = html[html.find("<body>") + 6 : html.find("</body>")].strip()
     return html

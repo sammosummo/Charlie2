@@ -52,8 +52,8 @@ class TestWidget(BaseTestWidget):
         each trial.
 
         """
-        pos = [(-122, -53), (-40, 19), (78, -85), (251, 296), (136, -203), (-42, 255),
-               (294, -221), (108, 155), (-207, -54), (95, 215)]
+        pos = [(-122, -53), (-40, 19), (78, -85), (351, 296), (136, -203), (-42, 255),
+               (294, -221), (308, 155), (-407, -54), (95, 215)]
         return [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
 
     def block(self):
@@ -61,15 +61,15 @@ class TestWidget(BaseTestWidget):
         instructions and initialise the block timeout timer.
 
         """
-        self.block_max_time = 60
+        self.block_deadline = 60 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
         """For this test, we simply show the square to be pressed."""
-        dpct = self.data.proc.current_trial
+        self.trial_deadline = 10 * 1000
         self.clear_screen(delete=True)
-        dpct.misses = 0
-        self.square = self.display_image("0_s.png", dpct.position)
+        self.current_trial.misses = 0
+        self.square = self.display_image("0_s.png", self.current_trial.position)
         self.make_zones([self.square.frameGeometry()])
 
     def summarise(self):

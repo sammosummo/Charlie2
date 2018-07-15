@@ -2,12 +2,12 @@
 
 """
 from copy import copy
-from charlie2.tools.trial import Trial
 
 
 class SimpleProcedure(object):
-    def __init__(self, remaining_trials, completed_trials=[], current_trial=None,
-                 **kwargs):
+    def __init__(
+        self, remaining_trials, completed_trials=[], current_trial=None, **kwargs
+    ):
         """Create a simple procedure.
 
         A procedure is a special iterator over trials. A "simple" procedure starts at
@@ -22,9 +22,9 @@ class SimpleProcedure(object):
         """
         # parse all kwargs, add defaults if missing
         self.__dict__.update(kwargs)
-        if 'test_aborted' not in kwargs:
+        if "test_aborted" not in kwargs:
             self.test_aborted = False
-        if 'test_completed' not in kwargs:
+        if "test_completed" not in kwargs:
             self.test_completed = False
 
         # convert dicts to trials
@@ -129,6 +129,3 @@ class SimpleProcedure(object):
     def trials_from_block(self, bn):
         """Return all completed trials from a given block."""
         return [trial for trial in self.completed_trials if trial.block_number == bn]
-
-
-

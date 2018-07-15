@@ -3,8 +3,10 @@
 """
 from logging import getLogger
 from sys import exit, platform
+from os.path import exists
 from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
+from .data import TestData
 from .commandline import get_parser
 from .gui import GUIWidget
 from .paths import get_test, get_tests_from_batch, get_error_messages
@@ -25,22 +27,21 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(parent)
         logger.info("main window created")
 
-        # format/get command-line arguments
-        self.args = get_parser().parse_args()
-        self.args.test_name = None  # empty properties to be modified later
-        if isinstance(self.args.other_ids, str):
-            self.args.other_ids = set(self.args.other_ids.split())
-        if self.args.batch_name != "":
-            self.args.test_names = get_tests_from_batch(self.batch_name)
-        if self.args.gui:
-            self.args.test_names = []
-        logger.info("command-line arguments are: %s" % str(vars(self.args)))
+        logger.info("parsing and formatting command-line arguments")
+        self.kwds = get_parser().parse_args()
+        self.kwds.test_name = None
+        if isinstance(self.kwds.other_ids, str):
+            self.kwds.other_ids = set(self.kwds.other_ids.split())
+        if self.kwds.batch_name != "":
+            self.kwds.test_names = get_tests_from_batch(self.batch_name)
+        if self.kwds.gui:
+            self.kwds.test_names = []
+        logger.info("command-line arguments are: %s" % str(vars(self.kwds)))
 
-        # used for full-screen mode
         self.desktop_size = QDesktopWidget().availableGeometry().size()
         logger.info("desktop dimensions: %s" % str(self.desktop_size))
 
-        # start the app proper
+        logger.info("starting the app proper")
         self.ignore_close_event = False
         self.switch_central_widget()
 
@@ -50,10 +51,10 @@ class MainWindow(QMainWindow):
 
         """
         logger.info("called switch_central_widget()")
-        self.args.test_names = [s for s in self.args.test_names if s]
-        logger.info("test list looks like this: %s" % str(self.args.test_names))
+        self.kwds.test_names = [s for s in self.kwds.test_names if s]
+        logger.info("test list looks like this: %s" % str(self.kwds.test_names))
 
-        if len(self.args.test_names) == 0 and self.args.gui:
+        if len(self.kwds.test_names) == 0 and self.kwds.gui:
 
             logger.info("no tests; in gui mode")
             gui = GUIWidget(self)
@@ -72,39 +73,39 @@ class MainWindow(QMainWindow):
             logger.info("showing the gui")
             self.setCentralWidget(gui)
 
-        elif len(self.args.test_names) > 0:
+        elif len(self.kwds.test_names) > 0:
 
             logger.info("at least one test")
-            self.args.test_name = self.args.test_names.pop(0)
+            self.kwds.test_name = self.kwds.test_names.pop(0)
 
-            logger.info("initalising %s" % self.args.test_name)
-            w = get_test(self.args.test_name)
-            widget = w(self)
-
-            logger.info("checking whether there are data already")
-            data_exist = any([widget.data.test_completed, widget.data.test_resumed])
+            logger.info("checking whether there are data for this proband and test")
+            data_exist = exists(TestData(**vars(self.kwds)).path)
             logger.info("answer is %s" % data_exist)
 
             if data_exist:
-                logger.info("resumable? %s" % self.args.resume)
-                if not self.args.resume:
+                logger.info("resumable? %s" % self.kwds.resume)
+                if not self.kwds.resume:
                     logger.info("displaying warning message")
                     message_box = QErrorMessage(self)
-                    message = get_error_messages(self.args.language, 'proband_exists')
-                    message = message % (self.args.proband_id, self.args.test_name)
+                    message = get_error_messages(self.kwds.language, "proband_exists")
+                    message = message % (self.kwds.proband_id, self.kwds.test_name)
                     message_box.showMessage(message)
                     self.switch_central_widget()
                     return
 
-            if not self.args.fullscreen:
-                logger.info('sizing, centring, and showing the window in normal mode')
-                self.setFixedSize(900, 700)
-                widget.setFixedSize(900, 700)
+            logger.info("initalising %s" % self.kwds.test_name)
+            w = get_test(self.kwds.test_name)
+            widget = w(self)
+
+            if not self.kwds.fullscreen:
+                logger.info("sizing, centring, and showing the window in normal mode")
+                self.setFixedSize(1000, 750)
+                widget.setFixedSize(1000, 750)
                 self._centre()
                 self.showNormal()
 
             else:
-                logger.info('showing the window in fullscreen mode')
+                logger.info("showing the window in fullscreen mode")
                 self.setFixedSize(self.desktop_size)
                 widget.setFixedSize(self.desktop_size)
                 self.showFullScreen()

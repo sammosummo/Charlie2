@@ -18,4 +18,3 @@ def _populate_table(table):
                         pass
                 item = QTableWidgetItem(item)
                 table.setItem(row, col, item)
-
