@@ -75,8 +75,8 @@ class TestWidget(BaseTestWidget):
         dpct = self.data.proc.current_trial
 
         # prevent mouse clicks for now
-        self.mouse_on = False
-        self.trial_on = False
+        self.mouse_visible = False
+        self.performing_trial = False
 
         # clear the screen
         self.clear_screen()
@@ -115,8 +115,8 @@ class TestWidget(BaseTestWidget):
         self.lures = self.zones[1:]
 
         # allow mouse clicks again
-        self.mouse_on = True
-        self.trial_on = True
+        self.mouse_visible = True
+        self.performing_trial = True
 
     def summarise(self):
         """See docstring for explanation."""

@@ -66,25 +66,25 @@ class TestWidget(BaseTestWidget):
 
     def trial(self):
         """For this test, we simply show the square to be pressed."""
-        self.trial_deadline = 10 * 1000
+        self.trial_deadline = 30 * 1000
         self.clear_screen(delete=True)
-        self.current_trial.misses = 0
-        self.square = self.display_image("0_s.png", self.current_trial.position)
-        self.make_zones([self.square.frameGeometry()])
-
-    def summarise(self):
-        """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
-        dic['misses'] = sum(t.misses for t in self.data.proc.completed_trials)
-        return dic
+        self.procedure.current_trial.attempts = 0
+        square = self.display_image("0_s.png", self.procedure.current_trial.position)
+        self.make_zones([square.frameGeometry()])
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
         record the trial as a success and move on. If not, increase misses by 1.
 
         """
-        dpct = self.data.proc.current_trial
         if event.pos() in self.zones[0]:
-            dpct.completed = True
+            self.procedure.current_trial.correct = True
+            self.procedure.current_trial.trial_status = "completed"
         else:
-            dpct.misses += 1
+            self.procedure.current_trial.attempts += 1
+
+    def summarise(self):
+        """See docstring for explanation."""
+        dic = self.basic_summary(adjust_time_taken=True)
+        dic["attempts"] = sum(t["attempts"] for t in self.procedure.completed_trials)
+        return dic

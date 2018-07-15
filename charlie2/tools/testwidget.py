@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging import getLogger
 from .data import TestData, SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
@@ -26,8 +27,6 @@ class BaseTestWidget(QWidget):
         self.vis_stim_paths = get_vis_stim_paths(self.kwds.test_name)
         self.aud_stim_paths = get_aud_stim_paths(self.kwds.test_name)
         self.instructions_font = QFont("Helvetica", 26)
-        self._trial_on = False
-        self._mouse_on = True
         self.test_time = QTime()
         self.test_deadline_timer = None
         self.block_time = QTime()
@@ -43,8 +42,13 @@ class BaseTestWidget(QWidget):
         self.instructions = get_instructions(self.kwds.test_name, self.kwds.language)
         self.data = None
         self.procedure = None
+        self.remaining_trials = None
         self.current_trial = None
+        self.completed_trials = None
         self.setFocusPolicy(Qt.StrongFocus)
+
+        self._performing_trial = False
+        self._mouse_visible = True
 
     def begin(self):
         """Start the test."""
@@ -58,7 +62,10 @@ class BaseTestWidget(QWidget):
         logger.info("initialising a procedure object")
         proc = self.get_procedure()
         self.procedure = proc(**self.data.data)
-
+        logger.info("creating shortucts to procedure trial lists in testwidget")
+        self.remaining_trials = self.procedure.remaining_trials
+        self.current_trial = self.procedure.current_trial
+        self.completed_trials = self.procedure.completed_trials
         logger.info("intialising a test deadline of %s ms" % self.test_deadline)
         self.test_deadline_timer = QDeadlineTimer(self.test_deadline)
         self._step()
@@ -118,95 +125,78 @@ class BaseTestWidget(QWidget):
         """Runs at the start of a new trial. Displays the countdown if first in a new
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
-        self.current_trial = self.procedure.current_trial
-        logger.info("current trial looks like this: %s" % self.current_trial)
-        first_trial = self.current_trial.trial_number == 0
-        if first_trial and not self.skip_countdown:
+        logger.info("current trial looks like this: %s" % self.procedure.current_trial)
+        if self.procedure.current_trial.trial_number == 0 and not self.skip_countdown:
             logger.info("countdown requested")
             self._display_countdown()
         self.repaint()
-        self.trial()
+        self.performing_trial = True
         logger.info("intialising a trial deadline of %s ms" % self.trial_deadline)
         self.trial_deadline_timer = QDeadlineTimer(self.trial_deadline)
+        self.trial()
 
-    #
-    # def safe_close(self):
-    #     """Safely clean up and save the data at the end of the test."""
-    #     logger.info("called safe_close()")
-    #     logger.info('data look like this: %s' % str(self.data.data))
-    #     logger.info("checking whether the test was completed properly")
-    #     if not self.procedure.test_completed:
-    #         logger.info("it wasn't (user aborted)")
-    #         self.procedure.abort()
-    #     else:
-    #         logger.info("it was")
-    #         logger.info("calculating a summary")
-    #         summary = self.summarise()
-    #
-    #         logger.info('summary looks like this:')
-    #         logger.info('   ', summary)
-    #         self.data.summary.update(summary)
-    #     self.data.save()
-    #     self.parent().switch_central_widget()
+    def safe_close(self):
+        """Safely clean up and save the data at the end of the test."""
+        logger.info("called safe_close()")
+        logger.info("updating TestData trial lists to reflect contents of procedure")
+        self.data.data["remaining_trials"] = self.procedure.remaining_trials
+        self.data.data["completed_trials"] = self.procedure.completed_trials
+        if self.procedure.current_trial is not None:
+            logger.debug(self.data.data["current_trial"])
+            self.data.data["current_trial"] = vars(self.procedure.current_trial)
+        else:
+            self.data.data["current_trial"] = self.procedure.current_trial
+        logger.info('data look like this: %s' % str(self.data.data))
+        logger.info("trying to summarise performance on the test")
+        summary = self.summarise()
+        logger.info("updating TestData to include summary")
+        self.data.data["summary"] = summary
+        self.data.save()
+        logger.info("all done, so switching the central widget")
+        self.parent().switch_central_widget()
 
-    # @property
-    # def trial_on(self):
-    #     return self._trial_on
-    #
-    # @trial_on.setter
-    # def trial_on(self, value):
-    #     assert isinstance(value, bool), "trial_on must be a bool"
-    #     if value is False:
-    #         self._stop_trial_deadline()
-    #     elif self.trial_max_time:
-    #         self._start_trial_deadline()
-    #     self._trial_on = value
-    #
-    # @property
-    # def mouse_on(self):
-    #     return self._mouse_on
-    #
-    # @mouse_on.setter
-    # def mouse_on(self, value):
-    #     assert isinstance(value, bool), "mouse_on must be a bool"
-    #     if value is False:
-    #         self.setCursor(Qt.BlankCursor)
-    #     else:
-    #         self.setCursor(Qt.ArrowCursor)
-    #     self._mouse_on = value
-    #
+    @property
+    def performing_trial(self):
+        return self._performing_trial
 
-    #
+    @performing_trial.setter
+    def performing_trial(self, value):
+        assert isinstance(value, bool), "performing_trial must be a bool"
+        # if value is False:
+        #     self._stop_trial_deadline()
+        # elif self.trial_max_time:
+        #     self._start_trial_deadline()
+        self._performing_trial = value
 
-    #
-    # def trial(self):
-    #     """Override this method."""
-    #     raise AssertionError("trial must be overridden")
-    #
-    # def summarise(self):
-    #     """Override this method."""
-    #     raise AssertionError("summarise must be overridden")
-    #
-    # def mousePressEvent_(self, event):
-    #     """Override this method."""
-    #     pass
-    #
-    # def keyReleaseEvent_(self, event):
-    #     """Override this method."""
-    #     pass
-    #
-    # def stopping_rule(self):
-    #     """Override this method."""
-    #     return False
-    #
-    # def begin(self):
-    #     """Start the test.
-    #
-    #     This is called automatically. Don't call it manually!
-    #
-    #     """
-    #     self._step()
-    #
+    @property
+    def mouse_visible(self):
+        return self._mouse_visible
+
+    @mouse_visible.setter
+    def mouse_visible(self, value):
+        assert isinstance(value, bool), "mouse_visible must be a bool"
+        if value is False:
+            self.setCursor(Qt.BlankCursor)
+        else:
+            self.setCursor(Qt.ArrowCursor)
+        self._mouse_visible = value
+
+    def trial(self):
+        """Override this method."""
+        raise AssertionError("trial must be overridden")
+
+    def summarise(self):
+        """Override this method."""
+        raise AssertionError("summarise must be overridden")
+
+    def mousePressEvent_(self, event):
+        """Override this method."""
+        pass
+
+    def keyReleaseEvent_(self, event):
+        """Override this method."""
+        pass
+
     def sleep(self, t):
         """Sleep for `t` ms.
 
@@ -216,8 +206,8 @@ class BaseTestWidget(QWidget):
 
         Args:
             t (float): Time to sleep in seconds.
-    #
-    #     """
+
+        """
         logger.info("sleeping for %i s" % t)
         self.parent().ignore_close_event = True
         loop = QEventLoop()
@@ -470,98 +460,8 @@ class BaseTestWidget(QWidget):
             if delete:
                 widget.deleteLater()
 
-    #
-    # def basic_summary(self, trials=None, adjust_time_taken=False):
-    #     """Returns an basic set of summary statistics.
-    #
-    #     Args:
-    #         trials (:obj:`list` of :obj:`Trial`, optional): List of trials to analyse.
-    #             By default this is `self.completed_trials`, but doesn't have to be, for
-    #             example if condition-specific summaries are required.
-    #         adjust_time_taken (:obj:`bool`, optional): Apply adjustment to time_taken.
-    #
-    #     Returns:
-    #         dic (dict): dictionary of results.
-    #
-    #     """
-    #     if self.procedure.all_skipped: return {'completed': False}
-    #
-    #     # get all completed trials
-    #     if trials is None:
-    #         trials = self.procedure.completed_trials
-    #
-    #     skipped = [t for t in trials if t.skipped]
-    #     any_skipped = len(skipped) > 0
-    #
-    #     if all('block_type' in trial for trial in trials):
-    #         trials = [t for t in trials if t.block_type != "practice"]
-    #
-    #     # count responses and skips
-    #     not_skipped = [t for t in trials if not t.skipped]
-    #     dic = {
-    #         'completed': True,
-    #         'responses': len(not_skipped),
-    #         'any_skipped': any_skipped,
-    #     }
-    #
-    #     # this is the easiest case
-    #     if not any_skipped and not self.data.test_resumed:
-    #         dic['time_taken'] = trials[-1].time_elapsed
-    #
-    #     # more complicated
-    #     elif not any_skipped and self.data.test_resumed:
-    #         idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
-    #         res = sum([trials[i].time_elapsed for i in idx])
-    #         dic['time_taken'] = trials[-1].time_elapsed + res
-    #
-    #     # not meaningful
-    #     elif any_skipped and not adjust_time_taken:
-    #         pass
-    #
-    #     # adjustment
-    #     elif any_skipped and adjust_time_taken:
-    #         meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
-    #         dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
-    #
-    #     else:
-    #         raise AssertionError('should not be possible!')
-    #
-    #     # accuracy
-    #     if 'correct' in trials[0]:
-    #         dic['correct'] = len([t for t in not_skipped if t.correct])
-    #         dic['accuracy'] = dic['correct'] / dic['responses']
-    #
-    #     return dic
-    #
-    # def display_trial_continue_button(self):
-    #     """Display a continue button
-    #
-    #     The button is connected to `self._next_trial` instead of `self._trial`. This
-    #     modification causes the button to **end** the current trial and move onto the
-    #     next one.
-    #
-    #     """
-    #     button = self._display_continue_button()
-    #     button.clicked.disconnect()
-    #     button.clicked.connect(self._next_trial)
-    #
-    # def next_trial(self):
-    #     """Manually move on to next trial.
-    #
-    #     """
-    #     self._next_trial()
-    #
-    # def _next_trial(self):
-    #     """Move from one trial to the next, checking whether to skip the remainder of
-    #     the block via `self.stopping_rule`."""
-    #     if self.save_after_each_trial:
-    #         self.data.save()
-    #     if self.stopping_rule():
-    #         logger.info('stopping rule failed')
-    #         self.procedure.skip_block()
-    #     else:
-    #         logger.info('stopping rule passed')
-    #     self._step()
+    def basic_summary(self, **kwds):
+        return {}
 
     def _display_continue_button(self):
         """Display a continue button."""
@@ -588,88 +488,44 @@ class BaseTestWidget(QWidget):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
 
-    #
+    def _add_timing_details(self):
+        """Gathers some details about the current state from the various timers."""
+        logger.info("adding timing details to current_trial")
+        dic = {
+            "timestamp": str(datetime.now()),
+            "test_time_elapsed_ms": self.test_time.elapsed(),
+            "test_deadline_ms": self.test_deadline_timer.deadline(),
+            "test_deadline_expired": self.test_deadline_timer.hasExpired(),
+            "test_deadline_remaining_ms": self.test_deadline_timer.remainingTime(),
+            "block_time_elapsed_ms": self.block_time.elapsed(),
+            "block_deadline_ms": self.block_deadline_timer.deadline(),
+            "block_deadline_expired": self.block_deadline_timer.hasExpired(),
+            "block_deadline_remaining_ms": self.block_deadline_timer.remainingTime(),
+            "trial_time_elapsed_ms": self.trial_time.elapsed(),
+            "trial_deadline_ms": self.trial_deadline_timer.deadline(),
+            "trial_deadline_expired": self.trial_deadline_timer.hasExpired(),
+            "trial_deadline_remaining_ms": self.trial_deadline_timer.remainingTime(),
+        }
+        self.procedure.current_trial.update(dic)
 
-    #
+    def mousePressEvent(self, event):
+        """Overridden from `QtWidget`."""
+        logger.info("mouse press event occurred, so checking if performing a trial")
+        logger.info("answer is %s" % str(self.performing_trial))
+        if self.performing_trial:
+            self.mousePressEvent_(event)
+            self._add_timing_details()
+            if self.procedure.current_trial.trial_status == "completed":
+                logger.info("current_trial was completed successfully")
+                self._step()
 
-    #
-
-    #
-    # def _start_block_deadline(self):
-    #     """Initialise a timer which automatically ends the block after time elapses."""
-    #     btt = self._block_deadline_timer
-    #     try:
-    #         btt.deadline.disconnect()
-    #         logger.info("disconnecting block deadline timer")
-    #     except TypeError:
-    #         logger.info("block deadline timer wasn't connected to anything")
-    #         pass
-    #     btt.deadline.connect(self._end_block_early)
-    #     logger.info("connected block deadline timer")
-    #     btt.start(self.block_max_time * 1000)
-    #     logger.info("block deadline timer started")
-    #
-    # def _start_trial_deadline(self):
-    #     """Initialise a timer which automatically ends the block after time elapses."""
-    #     ttt = self._trial_deadline_timer
-    #     try:
-    #         ttt.deadline.disconnect()
-    #     except TypeError:
-    #         pass
-    #     ttt.deadline.connect(self._end_trial_early)
-    #     ttt.start(self.trial_max_time * 1000)
-    #     logger.info("trial deadline timer started")
-    #
-    # def _stop_block_deadline(self):
-    #     """Stop the block deadline timer."""
-    #     btt = self._block_deadline_timer
-    #     if btt.isActive():
-    #         logger.info('stopping the block deadline timer')
-    #         btt.stop()
-    #     else:
-    #         logger.info("requested to stop the block deadline timer, but wasn't not on")
-    #
-    # def _stop_trial_deadline(self):
-    #     """Stop the trial deadline timer."""
-    #     ttt = self._trial_deadline_timer
-    #     if ttt.isActive():
-    #         logger.info('stopping the trial deadline timer')
-    #         ttt.stop()
-    #     else:
-    #         logger.info("requested to stop the trial deadline timer, but wasn't not on")
-    #
-    # def _end_block_early(self):
-    #     """End the block early."""
-    #     logger.info('block timed out')
-    #     self.procedure.skip_block()
-    #     logger.info('skipping block in procedure')
-    #     self._next_trial()
-    #
-    # def _end_trial_early(self):
-    #     """End the trial early."""
-    #     logger.info('trial timed out')
-    #     self.procedure.skip_current_trial()
-    #     logger.info('skipping trial in procedure')
-    #     self._next_trial()
-    #
-    # def mousePressEvent(self, event):
-    #     """Overridden from `QtWidget`."""
-    #     dpct = self.procedure.current_trial
-    #     if dpct and self.trial_on:
-    #         self.mousePressEvent_(event)
-    #         if dpct:
-    #             dpct.rt = self._trial_time.elapsed()
-    #             dpct.time_elapsed = self._block_time.elapsed()
-    #             if dpct.completed:
-    #                 self._next_trial()
-    #
-    # def keyReleaseEvent(self, event):
-    #     """Overridden from `QtWidget`."""
-    #     dpct = self.procedure.current_trial
-    #     if dpct and self.trial_on:
-    #         self.keyReleaseEvent_(event)
-    #         if dpct:
-    #             dpct.rt = self._trial_time.elapsed()
-    #             dpct.time_elapsed = self._block_time.elapsed()
-    #             if dpct.completed:
-    #                 self._next_trial()
+    def keyReleaseEvent(self, event):
+        """Overridden from `QtWidget`."""
+        logger.info("mouse press event occurred, so checking if performing a trial")
+        logger.info("answer is %s" % str(self.performing_trial))
+        if self.performing_trial:
+            self.keyReleaseEvent_(event)
+            self._add_timing_details()
+            if self.procedure.current_trial.trial_status == "completed":
+                logger.info("current_trial was completed successfully")
+                self._step()

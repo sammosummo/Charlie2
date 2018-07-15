@@ -130,7 +130,7 @@ class TestWidget(BaseTestWidget):
     def trial(self):
         """Fairly simple for this test."""
         dpct = self.data.proc.current_trial
-        self.mouse_on = False
+        self.mouse_visible = False
         self.clear_screen()
 
         # draw key and keyboard keys

@@ -1,3 +1,153 @@
+def basic_summary(self, trials=None, adjust_time_taken=False):
+    """Returns an basic set of summary statistics.
+
+    Args:
+        trials (:obj:`list` of :obj:`Trial`, optional): List of trials to analyse.
+            By default this is `self.completed_trials`, but doesn't have to be, for
+            example if condition-specific summaries are required.
+        adjust_time_taken (:obj:`bool`, optional): Apply adjustment to time_taken.
+
+    Returns:
+        dic (dict): dictionary of results.
+
+    """
+    if self.procedure.all_skipped:
+        return {'completed': False}
+
+    # get all completed trials
+    if trials is None:
+        trials = self.procedure.completed_trials
+
+    skipped = [t for t in trials if t.skipped]
+    any_skipped = len(skipped) > 0
+
+    if all('block_type' in trial for trial in trials):
+        trials = [t for t in trials if t.block_type != "practice"]
+
+    # count responses and skips
+    not_skipped = [t for t in trials if not t.skipped]
+    dic = {
+        'completed': True,
+        'responses': len(not_skipped),
+        'any_skipped': any_skipped,
+    }
+
+    # this is the easiest case
+    if not any_skipped and not self.data.test_resumed:
+        dic['time_taken'] = trials[-1].time_elapsed
+
+    # more complicated
+    elif not any_skipped and self.data.test_resumed:
+        idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
+        res = sum([trials[i].time_elapsed for i in idx])
+        dic['time_taken'] = trials[-1].time_elapsed + res
+
+    # not meaningful
+    elif any_skipped and not adjust_time_taken:
+        pass
+
+    # adjustment
+    elif any_skipped and adjust_time_taken:
+        meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
+        dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
+
+    else:
+        raise AssertionError('should not be possible!')
+
+    # accuracy
+    if 'correct' in trials[0]:
+        dic['correct'] = len([t for t in not_skipped if t.correct])
+        dic['accuracy'] = dic['correct'] / dic['responses']
+
+    return dic
+
+
+
+
+
+
+# logger.info("loading and converting trials")
+# self.remaining_trials = [Trial(t) for t in kwds["remaining_trials"]]
+# self.current_trial = kwds["current_trial"]
+# if self.current_trial is not None:
+#     self.current_trial = Trial(self.current_trial)
+# else:
+#     self.current_trial = self.current_trial
+# self.completed_trials = [Trial(t) for t in kwds["completed_trials"]]
+#     self.__dict__.update(kwds)
+#     if "test_aborted" not in kwargs:
+#         self.test_aborted = False
+#     if "test_completed" not in kwargs:
+#         self.test_completed = False
+#
+#     # convert dicts to trials
+#     self.remaining_trials = [Trial(t) for t in remaining_trials]
+#     self.completed_trials = [Trial(t) for t in completed_trials]
+#
+#
+# def skip_current_trial(self):
+#     """Set the current trial to skipped.
+#
+#     """
+#     self.current_trial.skipped = True
+#
+# def skip_block(self):
+#     """Set all trials within the current block to skipped, including the current
+#     trial.
+#
+#     """
+#     for trial in self.remaining_trials:
+#         if trial.block_number == self.current_block_number:
+#             trial.skipped = True
+#
+# def abort(self):
+#     """End test now. This involves placing the current trial back in the
+#     remaining trial list and setting `test_aborted` to True.
+#
+#     """
+#     self.remaining_trials = [copy(self.current_trial)] + self.remaining_trials
+#     self.current_trial = None
+#     self.test_aborted = True
+#
+
+#
+    # @property
+    # def any_skipped(self):
+    #     """:obj:`bool`: Where any trials skipped?"""
+    #     return any(t.skipped for t in self.completed_trials)
+    #
+    # @property
+    # def all_skipped(self):
+    #     """:obj:`bool`: Where any trials skipped?"""
+    #     return all(t.skipped for t in self.completed_trials)
+    #
+    # @property
+    # def not_skipped_trials(self):
+    #     """:obj:`list`: List of trials that were not skipped and not "practice" trials,
+    #     if there were any."""
+    #     trials = [trial for trial in self.completed_trials if not trial.skipped]
+    #     if "block_type" in trials[0]:
+    #         trials = [trial for trial in trials if trial.block_type != "practice"]
+    #     return trials
+    #
+    # @property
+    # def skipped_trials(self):
+    #     """:obj:`list`: List of trials that were skipped.and not "practice" trials,
+    #     if there were any."""
+    #     trials = [trial for trial in self.completed_trials if trial.skipped]
+    #     if "block_type" in trials[0]:
+    #         trials = [trial for trial in trials if trial.block_type != "practice"]
+    #     return trials
+    #
+    # @property
+    # def current_block_number(self):
+    #     """:obj:`int`: Block number of current trial."""
+    #     return self.current_trial.block_number
+    #
+    # def trials_from_block(self, bn):
+    #     """Return all completed trials from a given block."""
+    #     return [trial for trial in self.completed_trials if trial.block_number == bn]
+
 #         s = "%s_%s" % (self.proband_id, self.test_name)
 #         self.pkl_name = f"{s}.pkl"
 #         self.csv_name = f"{s}.csv"
@@ -299,7 +449,7 @@
 
 #
 #
-# self.trial_on = False
+# self.performing_trial = False
 #
 # self._stop_trial_deadline()
 # self._trial_time.restart()

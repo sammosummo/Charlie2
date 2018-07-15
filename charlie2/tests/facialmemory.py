@@ -90,7 +90,7 @@ class TestWidget(BaseTestWidget):
         """For each trial we display a face. If a "recognition" trial, we also display
         the keyboard arrow keys."""
         dpct = self.data.proc.current_trial
-        self.mouse_on = False
+        self.mouse_visible = False
         self.clear_screen(delete=True)
         self.display_image(dpct.face, (0, 100))
         if dpct.block_type == "recognition":

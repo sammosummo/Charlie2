@@ -1,4 +1,4 @@
-"""Defines  custom data structures.
+"""Defines custom data structures.
 
 """
 from datetime import datetime
@@ -32,12 +32,12 @@ class Trial(dict):
         logger.info("trial object created")
 
         logger.info("checking the trial object contains trial_number")
-        assert "trial_number" in self.__dict__, "must contain 'trial_number'"
-        assert isinstance(self.trial_number, int), "'trial_number' must be an int"
+        assert "trial_number" in self.__dict__, "must contain trial_number"
+        assert isinstance(self.trial_number, int), "trial_number must be an int"
 
         logger.info("adding default attributes")
         defaults = {
-            "block_number": 0, "trial_status": "pending","practice_trial": False
+            "block_number": 0, "trial_status": "pending", "practice_trial": False
         }
         for k, v in defaults.items():
             if k not in self.__dict__:
@@ -177,7 +177,7 @@ class SimpleProcedure:
 
         A procedure is a special iterator over trials. A "simple" procedure starts at
         the first trial and moves forward one trial at each iteration until there are
-        no trials remaining or the procedure is aborted.
+        no trials remaining.
 
         """
         logger.info("initialising a SimpleProcedure object with kwds: %s" % str(kwds))
@@ -197,50 +197,6 @@ class SimpleProcedure:
         self.current_trial = kwds["current_trial"]
         self.completed_trials = kwds["completed_trials"]
 
-
-        # logger.info("loading and converting trials")
-        # self.remaining_trials = [Trial(t) for t in kwds["remaining_trials"]]
-        # self.current_trial = kwds["current_trial"]
-        # if self.current_trial is not None:
-        #     self.current_trial = Trial(self.current_trial)
-        # else:
-        #     self.current_trial = self.current_trial
-        # self.completed_trials = [Trial(t) for t in kwds["completed_trials"]]
-    #     self.__dict__.update(kwds)
-    #     if "test_aborted" not in kwargs:
-    #         self.test_aborted = False
-    #     if "test_completed" not in kwargs:
-    #         self.test_completed = False
-    #
-    #     # convert dicts to trials
-    #     self.remaining_trials = [Trial(t) for t in remaining_trials]
-    #     self.completed_trials = [Trial(t) for t in completed_trials]
-    #
-    #
-    # def skip_current_trial(self):
-    #     """Set the current trial to skipped.
-    #
-    #     """
-    #     self.current_trial.skipped = True
-    #
-    # def skip_block(self):
-    #     """Set all trials within the current block to skipped, including the current
-    #     trial.
-    #
-    #     """
-    #     for trial in self.remaining_trials:
-    #         if trial.block_number == self.current_block_number:
-    #             trial.skipped = True
-    #
-    # def abort(self):
-    #     """End test now. This involves placing the current trial back in the
-    #     remaining trial list and setting `test_aborted` to True.
-    #
-    #     """
-    #     self.remaining_trials = [copy(self.current_trial)] + self.remaining_trials
-    #     self.current_trial = None
-    #     self.test_aborted = True
-    #
     def __iter__(self):
         """Just returns itself."""
         return self
@@ -259,87 +215,81 @@ class SimpleProcedure:
 
         """
         if len(self.remaining_trials) == 0:
-
             logger.info("remaining_trials is empty, test must be completed")
             raise StopIteration
 
-        if self.test_resumed:
-
-            logger.info("test was resumed but not flagged as completed")
-            assert isinstance(self.current_trial, dict), "current_trial is not a dict"
-            logger.info("converting the pre-existing current trial")
-            self.current_trial = Trial(self.current_trial)
-
-        else:
-
-            logger.info("test was neither resumed nor flagged as completed")
-            assert self.current_trial is None, "current_trial is not None"
-
-            if len(self.remaining_trials) == 0:
-
-                logger.info("no remaining trials, so flagging as completed")
-                self.test_completed = True
-                raise StopIteration
-
-                logger.info("popping from remaining_trials")
+        if self.current_trial is None:
+            logger.info("no current_trial, so popping new one from remaining_trials")
             self.current_trial = Trial(self.remaining_trials.pop(0))
+        else:
+            logger.info("there is a current_trial; what is it?")
+            logger.info("current_trial is a %s" % str(type(self.current_trial)))
+            if isinstance(self.current_trial, Trial):
+                logger.info("must have been created in this session, so moving on")
+                logger.info("appending to completed_trials")
+                if self.current_trial.trial_status != "skipped":
+                    self.current_trial.trial_status = "completed"
+                self.completed_trials.append(vars(self.current_trial))
+                logger.info("and popping new one from remaining_trials")
+                self.current_trial = Trial(self.remaining_trials.pop(0))
+            elif isinstance(self.current_trial, dict):
+                logger.info("must have been loaded from file, so using it")
+                self.current_trial = Trial(self.current_trial)
 
-        # move trial
-        if self.current_trial and not self.test_aborted:
-            self.completed_trials.append(copy(self.current_trial))
 
-        self.current_trial = None
+        self.current_trial["resumed"] = False
+        logger.info("should this trial be skipped?")
+        if self.current_trial.trial_status == "skipped":
+            logger.info("yes, so recursively iterating again")
+            return self.__next__()
+        else:
+            logger.info("no, so returning this trial: %s" % str(self.current_trial))
+            return self.current_trial
 
-        # any trials left?
-        if len(self.remaining_trials) == 0:
-            self.test_completed = True
 
-        # stop iterator
-        if self.test_aborted or self.test_completed:
-            raise StopIteration
 
-        # get new trial
-        self.current_trial = self.remaining_trials.pop(0)
 
-        # should we skip the current trial?
-        if self.current_trial.skipped:
-            return self.__next__()  # recursive awesomeness!
 
-        return self.current_trial
-    #
-    # @property
-    # def any_skipped(self):
-    #     """:obj:`bool`: Where any trials skipped?"""
-    #     return any(t.skipped for t in self.completed_trials)
-    #
-    # @property
-    # def all_skipped(self):
-    #     """:obj:`bool`: Where any trials skipped?"""
-    #     return all(t.skipped for t in self.completed_trials)
-    #
-    # @property
-    # def not_skipped_trials(self):
-    #     """:obj:`list`: List of trials that were not skipped and not "practice" trials,
-    #     if there were any."""
-    #     trials = [trial for trial in self.completed_trials if not trial.skipped]
-    #     if "block_type" in trials[0]:
-    #         trials = [trial for trial in trials if trial.block_type != "practice"]
-    #     return trials
-    #
-    # @property
-    # def skipped_trials(self):
-    #     """:obj:`list`: List of trials that were skipped.and not "practice" trials,
-    #     if there were any."""
-    #     trials = [trial for trial in self.completed_trials if trial.skipped]
-    #     if "block_type" in trials[0]:
-    #         trials = [trial for trial in trials if trial.block_type != "practice"]
-    #     return trials
-    #
-    # @property
-    # def current_block_number(self):
-    #     """:obj:`int`: Block number of current trial."""
-    #     return self.current_trial.block_number
-    #
-    # def trials_from_block(self, bn):
-    #     """Return all completed trials from a given block."""
-    #     return [trial for trial in self.completed_trials if trial.block_number == bn]
+        # if self.test_resumed:
+        #
+        #     logger.info("test was resumed but not flagged as completed")
+        #     assert isinstance(self.current_trial, dict), "current_trial is not a dict"
+        #     logger.info("converting the pre-existing current trial")
+        #     self.current_trial = Trial(self.current_trial)
+        #
+        # else:
+        #
+        #     logger.info("test was neither resumed nor flagged as completed")
+        #     assert self.current_trial is None, "current_trial is not None"
+        #
+        #     if len(self.remaining_trials) == 0:
+        #
+        #         logger.info("no remaining trials, so flagging as completed")
+        #         self.test_completed = True
+        #         raise StopIteration
+        #
+        #         logger.info("popping from remaining_trials")
+        #     self.current_trial = Trial(self.remaining_trials.pop(0))
+        #
+        # # move trial
+        # if self.current_trial and not self.test_aborted:
+        #     self.completed_trials.append(copy(self.current_trial))
+        #
+        # self.current_trial = None
+        #
+        # # any trials left?
+        # if len(self.remaining_trials) == 0:
+        #     self.test_completed = True
+        #
+        # # stop iterator
+        # if self.test_aborted or self.test_completed:
+        #     raise StopIteration
+        #
+        # # get new trial
+        # self.current_trial = self.remaining_trials.pop(0)
+        #
+        # # should we skip the current trial?
+        # if self.current_trial.skipped:
+        #     return self.__next__()  # recursive awesomeness!
+        #
+        # return self.current_trial

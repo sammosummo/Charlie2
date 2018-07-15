@@ -1,5 +1,0 @@
-"""Defines the trial class.
-
-"""
-
-

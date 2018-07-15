@@ -77,7 +77,7 @@ class TestWidget(BaseTestWidget):
     def trial(self):
         """For this trial, show the face and three keyboard arrow keys."""
         dpct = self.data.proc.current_trial
-        self.mouse_on = False
+        self.mouse_visible = False
         self.clear_screen(delete=True)
         self.display_image(dpct.face, (0, 100))
         self.keyboard_keys = self.display_keyboard_arrow_keys(self.instructions[5:8])
