@@ -2,7 +2,7 @@ from datetime import datetime
 from logging import getLogger
 from .data import TestData, SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
-from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint, QDeadlineTimer
+from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 
@@ -28,16 +28,13 @@ class BaseTestWidget(QWidget):
         self.aud_stim_paths = get_aud_stim_paths(self.kwds.test_name)
         self.instructions_font = QFont("Helvetica", 26)
         self.test_time = QTime()
-        self.test_deadline_timer = None
         self.block_time = QTime()
-        self.block_deadline_timer = None
         self.trial_time = QTime()
-        self.trial_deadline_timer = None
         self.silent_block = False
         self.skip_countdown = False
-        self.test_deadline = QDeadlineTimer.Forever
-        self.block_deadline = QDeadlineTimer.Forever
-        self.trial_deadline = QDeadlineTimer.Forever
+        self.test_deadline = None
+        self.block_deadline = None
+        self.trial_deadline = None
         self.zones = []
         self.instructions = get_instructions(self.kwds.test_name, self.kwds.language)
         self.data = None
@@ -66,8 +63,8 @@ class BaseTestWidget(QWidget):
         self.remaining_trials = self.procedure.remaining_trials
         self.current_trial = self.procedure.current_trial
         self.completed_trials = self.procedure.completed_trials
-        logger.info("intialising a test deadline of %s ms" % self.test_deadline)
-        self.test_deadline_timer = QDeadlineTimer(self.test_deadline)
+        logger.info("initialising the test timer")
+        self.test_time.start()
         self._step()
 
     def _step(self):
@@ -89,6 +86,7 @@ class BaseTestWidget(QWidget):
                 self._trial()
         except StopIteration:
             logger.warning("failed to iterate (hopefully) bc this is end of test")
+            self.performing_trial = False
             self.safe_close()
 
     def get_procedure(self):
@@ -114,8 +112,8 @@ class BaseTestWidget(QWidget):
             logger.info("this is a not a silent block")
             logger.info("running block()")
             self.block()
-        logger.info("intialising a block deadline of %s ms" % self.block_deadline)
-        self.block_deadline_timer = QDeadlineTimer(self.block_deadline)
+        logger.info("initialising the block timer")
+        self.block_time.start()
 
     def block(self):
         """Override this method."""
@@ -131,8 +129,8 @@ class BaseTestWidget(QWidget):
             self._display_countdown()
         self.repaint()
         self.performing_trial = True
-        logger.info("intialising a trial deadline of %s ms" % self.trial_deadline)
-        self.trial_deadline_timer = QDeadlineTimer(self.trial_deadline)
+        logger.info("initialising the trial timer")
+        self.trial_time.start()
         self.trial()
 
     def safe_close(self):
@@ -142,8 +140,7 @@ class BaseTestWidget(QWidget):
         self.data.data["remaining_trials"] = self.procedure.remaining_trials
         self.data.data["completed_trials"] = self.procedure.completed_trials
         if self.procedure.current_trial is not None:
-            logger.debug(self.data.data["current_trial"])
-            self.data.data["current_trial"] = vars(self.procedure.current_trial)
+            self.data.data["current_trial"] = dict(self.procedure.current_trial)
         else:
             self.data.data["current_trial"] = self.procedure.current_trial
         logger.info('data look like this: %s' % str(self.data.data))
@@ -487,6 +484,42 @@ class BaseTestWidget(QWidget):
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
+    
+    @property
+    def _test_time_left(self):
+        if self.test_deadline:
+            return self.test_deadline - self.test_time.elapsed()
+        else:
+            return None
+    
+    @property
+    def _test_time_up(self):
+        if self._test_time_left:
+            return self._test_time_left <= 0
+
+    @property
+    def _block_time_left(self):
+        if self.block_deadline:
+            return self.block_deadline - self.block_time.elapsed()
+        else:
+            return None
+
+    @property
+    def _block_time_up(self):
+        if self._block_time_left:
+            return self._block_time_left <= 0
+
+    @property
+    def _trial_time_left(self):
+        if self.trial_deadline:
+            return self.trial_deadline - self.trial_time.elapsed()
+        else:
+            return None
+
+    @property
+    def _trial_time_up(self):
+        if self._trial_time_left:
+            return self._trial_time_left <= 0
 
     def _add_timing_details(self):
         """Gathers some details about the current state from the various timers."""
@@ -494,17 +527,14 @@ class BaseTestWidget(QWidget):
         dic = {
             "timestamp": str(datetime.now()),
             "test_time_elapsed_ms": self.test_time.elapsed(),
-            "test_deadline_ms": self.test_deadline_timer.deadline(),
-            "test_deadline_expired": self.test_deadline_timer.hasExpired(),
-            "test_deadline_remaining_ms": self.test_deadline_timer.remainingTime(),
             "block_time_elapsed_ms": self.block_time.elapsed(),
-            "block_deadline_ms": self.block_deadline_timer.deadline(),
-            "block_deadline_expired": self.block_deadline_timer.hasExpired(),
-            "block_deadline_remaining_ms": self.block_deadline_timer.remainingTime(),
             "trial_time_elapsed_ms": self.trial_time.elapsed(),
-            "trial_deadline_ms": self.trial_deadline_timer.deadline(),
-            "trial_deadline_expired": self.trial_deadline_timer.hasExpired(),
-            "trial_deadline_remaining_ms": self.trial_deadline_timer.remainingTime(),
+            "test_time_left_ms": self._test_time_left,
+            "block_time_left_ms": self._block_time_left,
+            "trial_time_left_ms": self._trial_time_left,
+            "test_time_up_ms": self._test_time_up,
+            "block_time_up_ms": self._block_time_up,
+            "trial_time_up_ms": self._trial_time_up,
         }
         self.procedure.current_trial.update(dic)
 
@@ -517,7 +547,7 @@ class BaseTestWidget(QWidget):
             self._add_timing_details()
             if self.procedure.current_trial.trial_status == "completed":
                 logger.info("current_trial was completed successfully")
-                self._step()
+                self._next_trial()
 
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
@@ -528,4 +558,12 @@ class BaseTestWidget(QWidget):
             self._add_timing_details()
             if self.procedure.current_trial.trial_status == "completed":
                 logger.info("current_trial was completed successfully")
-                self._step()
+                self._next_trial()
+
+    def _next_trial(self):
+        """Moves on to the next trial."""
+        logger.info("called _next_trial()")
+        logger.info("saving a csv of the completed trials")
+        a = [dict(self.procedure.current_trial)]
+        self.data.save_as_csv(self.procedure.completed_trials + a)
+        self._step()

@@ -7,7 +7,8 @@ from logging import getLogger
 from os.path import exists, join as pj
 from pickle import load, dump
 from socket import gethostname
-from .paths import proband_path, test_data_path
+import pandas as pd
+from .paths import proband_path, test_data_path, csv_path
 
 
 logger = getLogger(__name__)
@@ -146,6 +147,7 @@ class TestData(ProbandData):
             self.data["proband_id"] + "_" + self.data["test_name"] + ".pkl"
         )
         self.data["path"] = pj(test_data_path, self.data["filename"])
+        self.data["csv"] = pj(csv_path, self.data["filename"]).replace(".pkl", ".csv")
         self.update()
         self.load()
         if exists(self.path):
@@ -169,6 +171,11 @@ class TestData(ProbandData):
         assert "current_trial" in self.data, "Missing current_trial"
         assert "completed_trials" in self.data, "Missing completed_trials"
         self.update()
+
+    def save_as_csv(self, lst):
+        """Output the list of dicts as a csv."""
+        df = pd.DataFrame(lst)
+        df.to_csv(self.data["csv"])
 
 
 class SimpleProcedure:
@@ -202,29 +209,24 @@ class SimpleProcedure:
         return self
 
     def __next__(self):
-        """Iterate one trial.
-
-        Iterating involves the following steps:
-
-        1. If test was resumed and not completed, convert the current_trial dict to a
-            Trial.
-        Move current_trial to completed_trials, if there is one.
-        remaining and flagging the procedure as complete if so; (2) stopping the
-        iterator if the procedure is aborted or complete; and (3) moving the current
-        trial to completed trials.
-
-        """
+        """Iterate one trial."""
         if len(self.remaining_trials) == 0:
+
             logger.info("remaining_trials is empty, test must be completed")
             raise StopIteration
 
         if self.current_trial is None:
+
             logger.info("no current_trial, so popping new one from remaining_trials")
             self.current_trial = Trial(self.remaining_trials.pop(0))
+
         else:
+
             logger.info("there is a current_trial; what is it?")
             logger.info("current_trial is a %s" % str(type(self.current_trial)))
+
             if isinstance(self.current_trial, Trial):
+
                 logger.info("must have been created in this session, so moving on")
                 logger.info("appending to completed_trials")
                 if self.current_trial.trial_status != "skipped":
@@ -232,12 +234,12 @@ class SimpleProcedure:
                 self.completed_trials.append(vars(self.current_trial))
                 logger.info("and popping new one from remaining_trials")
                 self.current_trial = Trial(self.remaining_trials.pop(0))
+
             elif isinstance(self.current_trial, dict):
+
                 logger.info("must have been loaded from file, so using it")
                 self.current_trial = Trial(self.current_trial)
 
-
-        self.current_trial["resumed"] = False
         logger.info("should this trial be skipped?")
         if self.current_trial.trial_status == "skipped":
             logger.info("yes, so recursively iterating again")
@@ -245,51 +247,3 @@ class SimpleProcedure:
         else:
             logger.info("no, so returning this trial: %s" % str(self.current_trial))
             return self.current_trial
-
-
-
-
-
-        # if self.test_resumed:
-        #
-        #     logger.info("test was resumed but not flagged as completed")
-        #     assert isinstance(self.current_trial, dict), "current_trial is not a dict"
-        #     logger.info("converting the pre-existing current trial")
-        #     self.current_trial = Trial(self.current_trial)
-        #
-        # else:
-        #
-        #     logger.info("test was neither resumed nor flagged as completed")
-        #     assert self.current_trial is None, "current_trial is not None"
-        #
-        #     if len(self.remaining_trials) == 0:
-        #
-        #         logger.info("no remaining trials, so flagging as completed")
-        #         self.test_completed = True
-        #         raise StopIteration
-        #
-        #         logger.info("popping from remaining_trials")
-        #     self.current_trial = Trial(self.remaining_trials.pop(0))
-        #
-        # # move trial
-        # if self.current_trial and not self.test_aborted:
-        #     self.completed_trials.append(copy(self.current_trial))
-        #
-        # self.current_trial = None
-        #
-        # # any trials left?
-        # if len(self.remaining_trials) == 0:
-        #     self.test_completed = True
-        #
-        # # stop iterator
-        # if self.test_aborted or self.test_completed:
-        #     raise StopIteration
-        #
-        # # get new trial
-        # self.current_trial = self.remaining_trials.pop(0)
-        #
-        # # should we skip the current trial?
-        # if self.current_trial.skipped:
-        #     return self.__next__()  # recursive awesomeness!
-        #
-        # return self.current_trial
