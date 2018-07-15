@@ -1,9 +1,9 @@
 """
-====================
-Digit symbol test
-====================
+============
+Digit symbol
+============
 
-:Status: complete
+:Status: production
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/digitsymbol.py
 

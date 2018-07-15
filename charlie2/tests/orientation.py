@@ -18,9 +18,8 @@ are 10 trials in total and the test automatically exits after 60 s.
 Summary statistics
 ==================
 
-* `completed` (bool): Did the proband complete the test?
-* `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
+* `completed_trials` (int): Number of completed trials.
+* `skipped_skipped` (int): Number of skipped trials (e.g., due to time out).
 * `time_taken` (int): Time taken to complete the entire test in ms.
 * `resumed` (bool): Was this test resumed at some point?
 * `misses` (int): Number of presses in areas not inside the square.

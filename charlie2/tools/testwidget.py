@@ -458,7 +458,90 @@ class BaseTestWidget(QWidget):
                 widget.deleteLater()
 
     def basic_summary(self, **kwds):
-        return {}
+        """Returns an basic set of summary statistics.
+
+        Returns:
+            dic (dict): dictionary of results.
+
+        """
+        trials = self.procedure.completed_trials
+        if "trials" in kwds:
+            trials = kwds["trials"]
+        np_trials = [t for t in trials if not t["practice_trial"]]
+        completed_trials = [t for t in np_trials if t["trial_status"] == "completed"]
+        correct_trials = [t for t in completed_trials if t["correct"]]
+        skipped_trials = [t for t in np_trials if t["trial_status"] == "skipped"]
+        meanrt = sum([t["trial_time_elapsed_ms"] for t in correct_trials]) / len(
+            correct_trials)
+        last_trial = completed_trials[-1]
+        dic = {
+            "total_trials": len(np_trials),
+            "completed_trials": len(completed_trials),
+            "correct_trials": len(correct_trials),
+            "skipped_trials": len(skipped_trials),
+            "accuracy": len(correct_trials) / len(completed_trials),
+            "mean_rt_correct_ms": meanrt,
+            "mean_rt_correct_ms_adj": None,
+            "time_elapsed_ms": last_trial["block_time_elapsed_ms"],
+        }
+        if "adjust_rts" in
+
+        # dic["skipped_trials"] = len([
+        #     t for t in trials if t["trial_status"] == "skipped"
+        # ])
+        #
+        # if "group_by" not in kwds:
+        #     trials = [t.update({"": 0} for t in trials}]
+        #
+        # if self.procedure.all_skipped:
+        #     return {'completed': False}
+        #
+        # # get all completed trials
+        # if trials is None:
+        #     trials = self.procedure.completed_trials
+        #
+        # skipped = [t for t in trials if t.skipped]
+        # any_skipped = len(skipped) > 0
+        #
+        # if all('block_type' in trial for trial in trials):
+        #     trials = [t for t in trials if t.block_type != "practice"]
+        #
+        # # count responses and skips
+        # not_skipped = [t for t in trials if not t.skipped]
+        # dic = {
+        #     'completed': True,
+        #     'responses': len(not_skipped),
+        #     'any_skipped': any_skipped,
+        # }
+        #
+        # # this is the easiest case
+        # if not any_skipped and not self.data.test_resumed:
+        #     dic['time_taken'] = trials[-1].time_elapsed
+        #
+        # # more complicated
+        # elif not any_skipped and self.data.test_resumed:
+        #     idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
+        #     res = sum([trials[i].time_elapsed for i in idx])
+        #     dic['time_taken'] = trials[-1].time_elapsed + res
+        #
+        # # not meaningful
+        # elif any_skipped and not adjust_time_taken:
+        #     pass
+        #
+        # # adjustment
+        # elif any_skipped and adjust_time_taken:
+        #     meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
+        #     dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
+        #
+        # else:
+        #     raise AssertionError('should not be possible!')
+        #
+        # # accuracy
+        # if 'correct' in trials[0]:
+        #     dic['correct'] = len([t for t in not_skipped if t.correct])
+        #     dic['accuracy'] = dic['correct'] / dic['responses']
+
+        return dic
 
     def _display_continue_button(self):
         """Display a continue button."""
