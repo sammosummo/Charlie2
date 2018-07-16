@@ -249,9 +249,6 @@ class SimpleProcedure(Proband):
 
     def save_completed_trials_as_csv(self):
         """Output the list of dicts as a csv."""
-        logger.debug(self.data["remaining_trials"])
-        logger.debug(self.data["current_trial"])
-        logger.debug(self.data["completed_trials"])
         df = pd.DataFrame(self.data["completed_trials"])
         try:
             df.set_index("trial_number", inplace=True)
@@ -264,3 +261,20 @@ class SimpleProcedure(Proband):
         """Save the summary as a csv"""
         s = pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
         self.update()
+
+    def skip_current_block(self, reason):
+        """Set all trials in remaining_trials in the current block, including
+        current_trial, to skipped."""
+        logger.debug("current_trial type: %s" % str(type(self.data["current_trial"])))
+        b = self.data["current_trial"].block_number
+        logger.debug("current block number: %s" % str(b))
+        self.data["current_trial"].status = "skipped"
+        for i, t in enumerate(self.data["remaining_trials"]):
+            logger.debug("trial %s" % str(t))
+            if "block_number" in t:
+                if t["block_number"] == b:
+                    self.data["remaining_trials"][i]["status"] = "skipped"
+                    self.data["remaining_trials"][i]["reason_skipped"] = "timeout"
+            else:
+                self.data["remaining_trials"][i]["status"] = "skipped"
+            logger.debug("trial %s" % str(t))

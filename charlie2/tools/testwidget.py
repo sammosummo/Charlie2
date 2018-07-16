@@ -40,6 +40,7 @@ class BaseTestWidget(QWidget):
         self.test_timer.setSingleShot(True)
         self.block_timer = QTimer()
         self.block_timer.setSingleShot(True)
+        self.block_timer.timeout.connect(self._block_timeout)
         self.trial_timer = QTimer()
         self.trial_timer.setSingleShot(True)
         self.trial_timer.timeout.connect(self._trial_timeout)
@@ -48,6 +49,7 @@ class BaseTestWidget(QWidget):
         self.data = None
         self.setFocusPolicy(Qt.StrongFocus)
 
+        self._performing_block = False
         self._performing_trial = False
         self._mouse_visible = True
 
@@ -91,6 +93,7 @@ class BaseTestWidget(QWidget):
     def _block(self):
         """Runs at the start of a new block of trials. Typically this is used to give
         the proband a break or display new instructions."""
+        self._performing_block = False
         logger.info("checking if this is a silent block")
         if self.silent_block:
             logger.info("this is indeed a silent block")
@@ -102,8 +105,6 @@ class BaseTestWidget(QWidget):
             logger.info("this is a not a silent block")
             logger.info("running block()")
             self.block()
-        logger.info("initialising the block timer")
-        self.block_time.start()
 
     def block(self):
         """Override this method."""
@@ -119,6 +120,9 @@ class BaseTestWidget(QWidget):
             logger.info("countdown requested")
             self._display_countdown()
         self.repaint()
+        if self.data.data["current_trial"].first_trial_in_block is True:
+            logger.info("this is the first trial in a new block")
+            self.performing_block = True
         self.performing_trial = True
         self.trial()
 
@@ -158,6 +162,29 @@ class BaseTestWidget(QWidget):
         if value is True and deadline:
             logger.info("trial deadline: %s" % str(self.trial_deadline))
             logger.info("starting one-shot trial timer")
+            timer.start(deadline)
+
+    @property
+    def performing_block(self):
+        return self._performing_block
+
+    @performing_block.setter
+    def performing_block(self, value):
+        assert isinstance(value, bool), "performing_block must be a bool"
+        self._performing_block = value
+        time = self.block_time
+        timer = self.block_timer
+        deadline = self.block_deadline
+        if timer.isActive():
+            logger.info("stopping block timer")
+            timer.stop()
+        if value is True:
+            logger.info("performing_block set to True")
+            logger.info("starting the block time")
+            time.start()
+        if value is True and deadline:
+            logger.info("block deadline: %s" % str(self.block_deadline))
+            logger.info("starting one-shot block timer")
             timer.start(deadline)
 
     @property
@@ -323,7 +350,7 @@ class BaseTestWidget(QWidget):
 
         """
         label = QLabel(s, self)
-        label.setFont(self._instructions_font)
+        label.setFont(self.instructions_font)
         label.setAlignment(Qt.AlignCenter)
         label.resize(label.sizeHint())
         label.hide()
@@ -613,4 +640,10 @@ class BaseTestWidget(QWidget):
         logger.info("timing out the current trial")
         self.data.data["current_trial"].status = 'skipped'
         self.data.data["current_trial"].reason_skipped = 'timeout'
+        self._next_trial()
+
+    def _block_timeout(self):
+        """End a trial early because it had timed out."""
+        logger.info("timing out the current block")
+        self.data.skip_current_block('timeout')
         self._next_trial()

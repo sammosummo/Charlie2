@@ -34,7 +34,7 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = 'complete'
 
 
 from logging import getLogger
@@ -61,7 +61,6 @@ class TestWidget(BaseTestWidget):
 
         """
         self.block_deadline = 60 * 1000
-        self.trial_deadline = 2 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):

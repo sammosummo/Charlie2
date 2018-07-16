@@ -10,7 +10,9 @@ middle of the screen. Your task is to decide
 whether they make a correct pair. Respond 'Yes' if
 they do, and 'No' if they don't.
 
-Press the button below to begin.""",
+This task uses the keyboard.
+
+Press the space bar to begin.""",
 
     """Digit-symbol test, part 2 (real test)
 
@@ -20,7 +22,9 @@ and there is no feedback. Try to complete the task
 as quickly as you can within 90 seconds, without
 making mistakes.
 
-Press the button below to begin.""",
+This task uses the keyboard.
+
+Press the space bar to begin.""",
 
     """Digit-symbol test, part 3 (real test)
 
@@ -29,7 +33,9 @@ the same as the the last time. Try to complete the
 task as quickly as you can within 90 seconds
 without making mistakes.
  
-Press the button below to begin.""",
+This task uses the keyboard.
+
+Press the space bar to begin.""",
     "Correct! :)",
     "Incorrect! :(",
 ]
