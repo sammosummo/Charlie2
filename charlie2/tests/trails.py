@@ -56,10 +56,11 @@ __status__ = 'production'
 
 from logging import getLogger
 from PyQt5.QtGui import QPainter, QPen
-from charlie2.tools.recipes import charlie2_trials
 from charlie2.tools.testwidget import BaseTestWidget
-from charlie2
+from charlie2.recipes.trails import trails
 
+
+logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -70,30 +71,21 @@ class TestWidget(BaseTestWidget):
         blaze position (where a correct click/press should go), and the glyph (to load
         the correct image). This was complicated to generate and required many manual
         edits, so was all done in a different script and simply imported here."""
-        return charlie2_trials()
+        return trails()
 
     def block(self):
         """For this test, display instructions, pre-load the images, set up zones, and
         create a painter widget for drawing the trail."""
-        dpct = self.data.proc.current_trial
-        b = dpct.block_number
-        
-        # display instructions; do this first
+        b = self.data.current_trial.block_number
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
-        # time limits depend on block type
-        if dpct.block_type == "practice":
-            self.block_max_time = 30
-        else:
-            self.block_max_time = 180
-
         # find all trials in this block
-        trials = [dpct]  # because first trial was popped
-        trials += [t for t in self.data.proc.remaining_trials if t.block_number == b]
+        trials = [self.data.current_trial]  # because first trial was popped
+        trials += [t for t in self.data.remaining_trials if t["block_number"] == b]
 
         # get their glyphs and positions
-        glyphs = [t.glyph for t in trials]
-        positions = [t.blaze_position for t in trials]
+        glyphs = [t["glyph"] for t in trials]
+        positions = [t["blaze_position"] for t in trials]
 
         # load the blazes but don't show them yet
         self.rects = []
@@ -109,55 +101,52 @@ class TestWidget(BaseTestWidget):
 
     def trial(self):
         """For this test, just listen for a mouse press within the target blaze."""
-        dpct = self.data.proc.current_trial
-        
-        # clear the screen but don't delete blazes
-        self.clear_screen()
+        self.clear_screen(delete=False)
 
         # show the blazes
         [img.show() for img in self.images]
 
         # reset click/press counters
-        dpct.misses = 0
-        dpct.errors = 0
-
-        # set target blaze
-        self.target_blaze = self.rects[dpct.trial_number]
-
-    def summarise(self):
-        """See docstring for explanation."""
-        names = {1: "num", 3: "let", 5: "numlet"}
-        dic = {}
-        for b, n in names.items():
-            trials = [t for t in self.data.proc.completed_trials if t.block_number == b]
-            dic_ = self.basic_summary(trials=trials, adjust_time_taken=True)
-            dic_ = {f"{n}_{k}": v for k, v in dic_.items()}
-            dic[f"{n}_blaze_errors"] = sum(t.errors for t in trials)
-            dic[f"{n}_misses"] = sum(t.misses for t in trials)
-            dic.update(dic_)
-        return dic
+        t = self.data.current_trial
+        t.attempts = 0
+        t.errors = 0
 
     def mousePressEvent_(self, event):
-        """On press, check if it was inside the target blaze. If so, the trial is over.
-        If not, register a miss or a non-target blaze."""
-        dpct = self.data.proc.current_trial
-        if event.pos() in self.target_blaze:
-            dpct.completed = True
-        elif any(event.pos() in z for z in self.zones):
-            dpct.errors += 1
+        """On mouse click/screen touch, check if it was inside the target square. If so,
+        record the trial as a success and move on. If not, increase misses by 1.
+
+        """
+        ix = [event.pos() in z for z in self.zones]
+        t = self.data.current_trial
+        if any(ix):
+            logging.info("clicked within a blaze")
+            t.correct = next(i for i, v in enumerate(ix) if v) == t.trial_number
+            if t.correct:
+                logging.info("clicked within the correct blaze")
+                self.data.current_trial.status = "completed"
+            else:
+                logging.info("clicked within a different blaze")
+                t.errors += 1
+                t.attempts += 1
         else:
-            dpct.misses += 1
+            logging.info("clicked outside a blaze")
+            t.attempts += 1
 
     def paintEvent(self, _):
         """Need to override a Qt method to draw. Draw a trail (straight line) from the
         centre of one blaze to the centre of the other."""
-        dpct = self.data.proc.current_trial
-        if dpct:
+        t = self.data.current_trial
+        if t:
             painter = QPainter(self)
             pen = QPen()
             pen.setWidth(4)
             painter.setPen(pen)
-            rects = self.rects[: dpct.trial_number]
+            rects = self.rects[: t.trial_number]
             for a, b in zip([None] + rects, rects + [None]):
                 if a and b:
                     painter.drawLine(a.center(), b.center())
+
+    def summarise(self):
+        """See docstring for explanation."""
+        dic = self.basic_summary(adjust_time_taken=True)
+        return dic
