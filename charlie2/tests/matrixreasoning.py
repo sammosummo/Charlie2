@@ -94,9 +94,13 @@ class TestWidget(BaseTestWidget):
         """After five trials completed, exit if four or more were incorrect."""
         if len(self.data.completed_trials) > 5:
             trials = self.data.completed_trials[-5:]
-            completed = [t for t in trials if not t.status == "completed"]
-            correct = len([t for t in completed if t.correct])
-            return True if correct <= 1 else False
+            correct = len([t for t in trials if t.correct])
+            logger.info("corect trials: %s/5" % str(correct))
+            outcome = True if correct <= 1 else False
+        else:
+            outcome = False
+        logger.info("should we stop? %s" % str(outcome))
+        return outcome
 
     def summarise(self):
         """See docstring for explanation."""

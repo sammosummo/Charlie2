@@ -1,7 +1,7 @@
 """
-=================
-Trail-making test
-=================
+============
+Trail making
+============
 
 :Status: complete
 :Version: 2.0
@@ -51,12 +51,15 @@ References
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
 
+from logging import getLogger
 from PyQt5.QtGui import QPainter, QPen
 from charlie2.tools.recipes import charlie2_trials
 from charlie2.tools.testwidget import BaseTestWidget
+from charlie2
+
 
 
 class TestWidget(BaseTestWidget):

@@ -614,8 +614,10 @@ class BaseTestWidget(QWidget):
         if self.performing_trial:
             self.mousePressEvent_(event)
             self._add_timing_details()
-            if self.data.data["current_trial"].status == "completed":
+            t = self.data.data["current_trial"]
+            if t.status == "completed":
                 logger.info("current_trial was completed successfully")
+                logger.info("(final version) of current_trial looks like %s" % str(t))
                 self._next_trial()
 
     def keyReleaseEvent(self, event):
@@ -625,8 +627,10 @@ class BaseTestWidget(QWidget):
         if self.performing_trial:
             self.keyReleaseEvent_(event)
             self._add_timing_details()
+            t = self.data.data["current_trial"]
             if self.data.data["current_trial"].status == "completed":
                 logger.info("current_trial was completed successfully")
+                logger.info("(final version) of current_trial looks like %s" % str(t))
                 self._next_trial()
 
     def _next_trial(self):
