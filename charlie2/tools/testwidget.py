@@ -543,6 +543,12 @@ class BaseTestWidget(QWidget):
         button.show()
         return button
 
+    def display_trial_continue_button(self):
+        """The button is connected to _next_trial instead of _trial."""
+        button = self._display_continue_button()
+        button.clicked.disconnect()
+        button.clicked.connect(self._next_trial)
+
     def _continue_button_pressed(self):
         logger.info("continue button was pressed")
         self._trial()
@@ -640,6 +646,9 @@ class BaseTestWidget(QWidget):
         logger.info("saving a csv of the completed trials")
         self.data.save_completed_trials_as_csv()
         self._step()
+
+    def next_trial(self):
+        self._next_trial()
 
     def _trial_timeout(self):
         """End a trial early because it had timed out."""

@@ -1,7 +1,7 @@
 """
-===================
-Verbal-fluency test
-===================
+==============
+Verbal fluency
+==============
 
 :Status: complete
 :Version: 2.0
@@ -49,10 +49,14 @@ References
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
+from logging import getLogger
 from PyQt5 import QtCore, QtWidgets
 from charlie2.tools.testwidget import BaseTestWidget
+
+
+logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -61,7 +65,9 @@ class TestWidget(BaseTestWidget):
         """For this test, trial_type indicates whether it is time for the experimenter
         to provide instructions to the proband or record their responses. Kind records
         whether this is the F, A, S, or animal trial; but this is not really important
-        and the letters/categories can be switched easily."""
+        and the letters/categories can be switched easily.
+        
+        """
         names = ['trial_number', 'trial_type', 'kind']
         trial_numbers = range(8)
         trial_types = ['instruct', 'perform'] * 4
@@ -71,10 +77,11 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """Display instructions to proband if this is the very first trial. Otherwise,
-        do nothing here."""
-        dpct = self.data.proc.current_trial
+        do nothing here.
+        
+        """
         self.skip_countdown = True
-        if dpct.first_trial_in_test:
+        if self.data.current_trial.first_trial_in_test:
             self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
@@ -82,28 +89,29 @@ class TestWidget(BaseTestWidget):
         "trials". The first simply displays some instructions that the experimenter
         reads to the proband. The second is a whole additional GUI. The two are
         implemented in separate private methods below and this method simply selects the
-        correct one based on the trial_type."""
-        dpct = self.data.proc.current_trial
+        correct one based on the trial_type.
+        
+        """
         self.clear_screen(delete=True)
-        if dpct.trial_type == "instruct":
+        if self.data.current_trial.trial_type == "instruct":
             return self._instruct()
         else:
             return self._perform()
 
     def _instruct(self):
         """Just display the message."""
-        dpct = self.data.proc.current_trial
-        s = self.instructions[5 + dpct.trial_number // 2]
+        t = self.data.current_trial
+        s = self.instructions[5 + t.trial_number // 2]
         self.display_instructions(s)
         self.display_trial_continue_button()
 
     def _perform(self):
         """This is the complicated bit."""
-        dpct = self.data.proc.current_trial
+        t = self.data.current_trial
 
         # set default values
-        dpct.valid_responses = 0
-        dpct.invalid_responses = 0
+        t.valid_responses = 0
+        t.invalid_responses = 0
         self._time_left = 60
 
         # timer
@@ -162,17 +170,17 @@ class TestWidget(BaseTestWidget):
 
     @property
     def _total_responses(self):
-        dpct = self.data.proc.current_trial
-        return dpct.valid_responses + dpct.invalid_responses
+        t = self.data.current_trial
+        return t.valid_responses + t.invalid_responses
 
     def _valid(self):
-        dpct = self.data.proc.current_trial
-        dpct.valid_responses += 1
+        t = self.data.current_trial
+        t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
 
     def _invalid(self):
-        dpct = self.data.proc.current_trial
-        dpct.valid_responses += 1
+        t = self.data.proc.current_trial
+        t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
 
     def _start(self):
@@ -194,7 +202,6 @@ class TestWidget(BaseTestWidget):
         self.quit_button.setEnabled(True)
 
     def _tick(self):
-        print('>>>', self.data.proc.current_trial)
         self._time_left -= 1
         self.countdown.display(self._time_left)
         if self._time_left == 0:
@@ -204,18 +211,23 @@ class TestWidget(BaseTestWidget):
             self.button.clicked.connect(self.next_trial)
             self.button.setText(self.instructions[17])
 
+    # def summarise(self):
+    #     """See docstring for explanation."""
+    #     names = {1: "f", 3: "a", 5: "s", 7: "animal"}
+    #     dic = {}
+    #     trials = self.data.proc.completed_trials
+    #     for i, n in names.items():
+    #         trial = [t for t in trials if t.trial_number == i][0]
+    #         dic.update({
+    #             f"{n}_completed": True,
+    #             f"{n}_valid": trial.valid_responses,
+    #             f"{n}_invalid": trial.invalid_responses
+    #         })
+    #     return dic
+
     def summarise(self):
         """See docstring for explanation."""
-        names = {1: "f", 3: "a", 5: "s", 7: "animal"}
-        dic = {}
-        trials = self.data.proc.completed_trials
-        for i, n in names.items():
-            trial = [t for t in trials if t.trial_number == i][0]
-            dic.update({
-                f"{n}_completed": True,
-                f"{n}_valid": trial.valid_responses,
-                f"{n}_invalid": trial.invalid_responses
-            })
+        dic = self.basic_summary(adjust_time_taken=True)
         return dic
 
     def mousePressEvent(self, event):
