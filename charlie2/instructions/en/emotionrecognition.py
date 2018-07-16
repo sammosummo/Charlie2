@@ -7,7 +7,9 @@ feeling. They will be either angry, neutral (no
 emotion), or sad. Try to complete the task as
 quickly as you can without making mistakes.
 
-Press the button below to begin.""",
+This task uses the keyboard.
+
+Press the space bar to begin.""",
     "Angry",
     "Neutral",
     "Sad",
