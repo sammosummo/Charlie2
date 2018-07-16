@@ -1,6 +1,6 @@
 from datetime import datetime
 from logging import getLogger
-from .data import TestData, SimpleProcedure
+from .data import SimpleProcedure, SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
@@ -38,10 +38,6 @@ class BaseTestWidget(QWidget):
         self.zones = []
         self.instructions = get_instructions(self.kwds.test_name, self.kwds.language)
         self.data = None
-        self.procedure = None
-        self.remaining_trials = None
-        self.current_trial = None
-        self.completed_trials = None
         self.setFocusPolicy(Qt.StrongFocus)
 
         self._performing_trial = False
@@ -50,19 +46,11 @@ class BaseTestWidget(QWidget):
     def begin(self):
         """Start the test."""
         logger.info("initialising a data object")
-        self.data = TestData(**vars(self.kwds))
+        self.data = SimpleProcedure(**vars(self.kwds))
         logger.info("checking if test was resumed")
-        if not self.data.test_resumed:
+        if not self.data.data["test_resumed"]:
             logger.info('answer is False, so populating the remaining_trials list')
             self.data.data["remaining_trials"] = self.make_trials()
-            self.update()
-        logger.info("initialising a procedure object")
-        proc = self.get_procedure()
-        self.procedure = proc(**self.data.data)
-        logger.info("creating shortucts to procedure trial lists in testwidget")
-        self.remaining_trials = self.procedure.remaining_trials
-        self.current_trial = self.procedure.current_trial
-        self.completed_trials = self.procedure.completed_trials
         logger.info("initialising the test timer")
         self.test_time.start()
         self._step()
@@ -75,10 +63,10 @@ class BaseTestWidget(QWidget):
         logger.info("stepping forward in test")
         logger.info("trying to iterate procedure")
         try:
-            next(self.procedure)
+            next(self.data)
             logger.info("successfully iterated")
             logger.info("checking if this is first trial in a new block")
-            if self.procedure.current_trial.first_trial_in_block:
+            if self.data.data["current_trial"].first_trial_in_block:
                 logger.info("yes, running _block()")
                 self._block()
             else:
@@ -88,11 +76,6 @@ class BaseTestWidget(QWidget):
             logger.warning("failed to iterate (hopefully) bc this is end of test")
             self.performing_trial = False
             self.safe_close()
-
-    def get_procedure(self):
-        """Returns a Procedure class. This method can be overridden."""
-        logger.info("using a simple procedure (default)")
-        return SimpleProcedure
 
     def make_trials(self):
         """Override this method."""
@@ -123,32 +106,24 @@ class BaseTestWidget(QWidget):
         """Runs at the start of a new trial. Displays the countdown if first in a new
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
-        logger.info("current trial looks like this: %s" % self.procedure.current_trial)
-        if self.procedure.current_trial.trial_number == 0 and not self.skip_countdown:
+        trial = self.data.data["current_trial"]
+        logger.info("current trial looks like %s" % str(dict(trial)))
+        if trial.first_trial_in_block and not self.skip_countdown:
             logger.info("countdown requested")
             self._display_countdown()
         self.repaint()
         self.performing_trial = True
-        logger.info("initialising the trial timer")
-        self.trial_time.start()
         self.trial()
 
     def safe_close(self):
         """Safely clean up and save the data at the end of the test."""
         logger.info("called safe_close()")
-        logger.info("updating TestData trial lists to reflect contents of procedure")
-        self.data.data["remaining_trials"] = self.procedure.remaining_trials
-        self.data.data["completed_trials"] = self.procedure.completed_trials
-        if self.procedure.current_trial is not None:
-            self.data.data["current_trial"] = dict(self.procedure.current_trial)
-        else:
-            self.data.data["current_trial"] = self.procedure.current_trial
-        logger.info('data look like this: %s' % str(self.data.data))
         logger.info("trying to summarise performance on the test")
         summary = self.summarise()
-        logger.info("updating TestData to include summary")
+        logger.info("updating data object to include summary")
         self.data.data["summary"] = summary
         self.data.save()
+        self.data.save_summary()
         logger.info("all done, so switching the central widget")
         self.parent().switch_central_widget()
 
@@ -159,10 +134,8 @@ class BaseTestWidget(QWidget):
     @performing_trial.setter
     def performing_trial(self, value):
         assert isinstance(value, bool), "performing_trial must be a bool"
-        # if value is False:
-        #     self._stop_trial_deadline()
-        # elif self.trial_max_time:
-        #     self._start_trial_deadline()
+        logger.info("initialising the trial timer")
+        self.trial_time.start()
         self._performing_trial = value
 
     @property
@@ -464,13 +437,13 @@ class BaseTestWidget(QWidget):
             dic (dict): dictionary of results.
 
         """
-        trials = self.procedure.completed_trials
+        trials = self.data.data["completed_trials"]
         if "trials" in kwds:
             trials = kwds["trials"]
-        np_trials = [t for t in trials if not t["practice_trial"]]
-        completed_trials = [t for t in np_trials if t["trial_status"] == "completed"]
+        np_trials = [t for t in trials if not t["practice"]]
+        completed_trials = [t for t in np_trials if t["status"] == "completed"]
         correct_trials = [t for t in completed_trials if t["correct"]]
-        skipped_trials = [t for t in np_trials if t["trial_status"] == "skipped"]
+        skipped_trials = [t for t in np_trials if t["status"] == "skipped"]
         meanrt = sum([t["trial_time_elapsed_ms"] for t in correct_trials]) / len(
             correct_trials)
         last_trial = completed_trials[-1]
@@ -481,66 +454,12 @@ class BaseTestWidget(QWidget):
             "skipped_trials": len(skipped_trials),
             "accuracy": len(correct_trials) / len(completed_trials),
             "mean_rt_correct_ms": meanrt,
-            "mean_rt_correct_ms_adj": None,
             "time_elapsed_ms": last_trial["block_time_elapsed_ms"],
+            "timestamp": last_trial["timestamp"],
         }
-        if "adjust_rts" in
-
-        # dic["skipped_trials"] = len([
-        #     t for t in trials if t["trial_status"] == "skipped"
-        # ])
-        #
-        # if "group_by" not in kwds:
-        #     trials = [t.update({"": 0} for t in trials}]
-        #
-        # if self.procedure.all_skipped:
-        #     return {'completed': False}
-        #
-        # # get all completed trials
-        # if trials is None:
-        #     trials = self.procedure.completed_trials
-        #
-        # skipped = [t for t in trials if t.skipped]
-        # any_skipped = len(skipped) > 0
-        #
-        # if all('block_type' in trial for trial in trials):
-        #     trials = [t for t in trials if t.block_type != "practice"]
-        #
-        # # count responses and skips
-        # not_skipped = [t for t in trials if not t.skipped]
-        # dic = {
-        #     'completed': True,
-        #     'responses': len(not_skipped),
-        #     'any_skipped': any_skipped,
-        # }
-        #
-        # # this is the easiest case
-        # if not any_skipped and not self.data.test_resumed:
-        #     dic['time_taken'] = trials[-1].time_elapsed
-        #
-        # # more complicated
-        # elif not any_skipped and self.data.test_resumed:
-        #     idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
-        #     res = sum([trials[i].time_elapsed for i in idx])
-        #     dic['time_taken'] = trials[-1].time_elapsed + res
-        #
-        # # not meaningful
-        # elif any_skipped and not adjust_time_taken:
-        #     pass
-        #
-        # # adjustment
-        # elif any_skipped and adjust_time_taken:
-        #     meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
-        #     dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
-        #
-        # else:
-        #     raise AssertionError('should not be possible!')
-        #
-        # # accuracy
-        # if 'correct' in trials[0]:
-        #     dic['correct'] = len([t for t in not_skipped if t.correct])
-        #     dic['accuracy'] = dic['correct'] / dic['responses']
-
+        if "adjust_rts" in kwds:
+            adjf = meanrt * len(skipped_trials)
+            dic["mean_rt_correct_ms_adj"]: self.block_time.elapsed() + adjf
         return dic
 
     def _display_continue_button(self):
@@ -619,7 +538,7 @@ class BaseTestWidget(QWidget):
             "block_time_up_ms": self._block_time_up,
             "trial_time_up_ms": self._trial_time_up,
         }
-        self.procedure.current_trial.update(dic)
+        self.data.data["current_trial"].update(dic)
 
     def mousePressEvent(self, event):
         """Overridden from `QtWidget`."""
@@ -628,7 +547,7 @@ class BaseTestWidget(QWidget):
         if self.performing_trial:
             self.mousePressEvent_(event)
             self._add_timing_details()
-            if self.procedure.current_trial.trial_status == "completed":
+            if self.data.data["current_trial"].status == "completed":
                 logger.info("current_trial was completed successfully")
                 self._next_trial()
 
@@ -639,7 +558,7 @@ class BaseTestWidget(QWidget):
         if self.performing_trial:
             self.keyReleaseEvent_(event)
             self._add_timing_details()
-            if self.procedure.current_trial.trial_status == "completed":
+            if self.data.data["current_trial"].status == "completed":
                 logger.info("current_trial was completed successfully")
                 self._next_trial()
 
@@ -647,6 +566,5 @@ class BaseTestWidget(QWidget):
         """Moves on to the next trial."""
         logger.info("called _next_trial()")
         logger.info("saving a csv of the completed trials")
-        a = [dict(self.procedure.current_trial)]
-        self.data.save_as_csv(self.procedure.completed_trials + a)
+        self.data.save_as_csv()
         self._step()

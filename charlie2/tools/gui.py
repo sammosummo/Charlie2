@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QTextBrowser,
 )
-from .data import ProbandData
+from .data import Proband
 from .paths import (
     logo_path,
     get_instructions,
@@ -37,7 +37,7 @@ class GUIWidget(QWidget):
 
         self.kwds = self.parent().kwds
         self.instructions = get_instructions("gui", self.kwds.language)
-        self.proband = ProbandData(**vars(self.kwds))
+        self.proband = Proband(**vars(self.kwds))
         self.vprint = print if self.kwds.verbose else lambda *a, **k: None
 
         # graphical elements
@@ -192,10 +192,25 @@ class GUIWidget(QWidget):
         self.notes_tab_vbox = QVBoxLayout()
         self.notes_tab.setLayout(self.notes_tab_vbox)
 
+        # layout > tab > notes tab > proband ID and test
+        self.notes_tab_grid = QGridLayout()
+        self.notes_tab_vbox.addLayout(self.notes_tab_grid)
+        self.notes_tab_grid.addWidget(QLabel(self.instructions[7]), 0, 0)
+        self.proband_id_box_2 = QComboBox()
+        self.notes_tab_grid.addWidget(self.proband_id_box_2, 0, 1)
+        self.proband_id_box_2.setEditable(False)
+        self.proband_id_box_2.addItems(proband_pickles())
+        self.notes_tab_grid.addWidget(QLabel(self.instructions[14]), 1, 0)
+        self.test_name_box_2 = QComboBox()
+        self.notes_tab_grid.addWidget(self.test_name_box_2, 1, 1)
+        self.test_name_box_2.setEditable(False)
+        self.test_name_box_2.addItems(tests_list)
+
         # layout > tab > notes tab > notes box
         self.notes_tab_vbox.addWidget(QLabel(self.instructions[43]))
         self.notes_box = QPlainTextEdit()
         self.notes_tab_vbox.addWidget(self.notes_box)
+        self._notes()
 
         # layout > tab > notes tab > buttons
         self.notes_savebtn = QPushButton(self.instructions[44])
@@ -268,15 +283,13 @@ class GUIWidget(QWidget):
 
         # add functionality to graphical elements
 
-        # layout > tab > proband tab > proband and notes
+        # layout > tab > proband tab
         self.proband_id_box.currentTextChanged.connect(self._set_proband)
         self.addinf_age_box.currentTextChanged.connect(self._set_age)
         self.addinf_sex_box.currentTextChanged.connect(self._set_sex)
         self.addinf_otherids_addbtn.clicked.connect(self._add_other_id)
         self.addinf_otherids_rmbtn.clicked.connect(self._rm_other_id)
         self.save_button.clicked.connect(self._save_proband)
-        self.notes_savebtn.clicked.connect(self._save_notes)
-        self.notes_resetbtn.clicked.connect(self._reset_notes)
 
         # layout > tab > test tab > options
         self.fullscreen_checkbox.setChecked(self.kwds.fullscreen)
@@ -290,6 +303,12 @@ class GUIWidget(QWidget):
         self.test_name_box.addItems([""] + tests_list)
         self.test_name_box.activated.connect(self._set_test_name)
         self.test_button.clicked.connect(self.parent().switch_central_widget)
+
+        # layout > notes tab
+        self.proband_id_box_2.currentTextChanged.connect(self._notes)
+        self.test_name_box_2.currentTextChanged.connect(self._notes)
+        self.notes_savebtn.clicked.connect(self._save_notes)
+        self.notes_resetbtn.clicked.connect(self._reset_notes)
 
     def _reset_addinfo(self):
         """Reset the additional proband information (age, sex, other IDs, and notes)."""
@@ -309,13 +328,12 @@ class GUIWidget(QWidget):
         self.addinf_otherids_box.clear()
         self.addinf_otherids_box.addItems(sorted(self.kwds.other_ids))
         self.addinf_otherids_box.setCurrentText("")
-        self.notes_box.setPlainText(self.kwds.notes)
 
     def _set_proband(self, s):
         """Change the current proband."""
         if match("^[a-zA-Z0-9_]*$", s):
             self.kwds.proband_id = s
-            self.proband = ProbandData(**vars(self.kwds))
+            self.proband = Proband(**vars(self.kwds))
             if s in proband_pickles():
                 self.kwds.__dict__.update(**self.proband.data)
             else:
@@ -344,10 +362,26 @@ class GUIWidget(QWidget):
             self.kwds.other_ids.remove(s)
             self.addinf_otherids_box.removeItem(self.addinf_otherids_box.findText(s))
 
+    def _notes(self):
+        proband_id = self.proband_id_box_2.currentText()
+        test_name = self.test_name_box_2.currentText()
+        if proband_id in proband_pickles() and test_name in tests_list:
+            dic = {"proband_id": proband_id, "test_name": test_name}
+            data = Proband(**dic)
+            self.notes_box.setPlainText(data.notes)
+
     def _save_notes(self):
         """Save the notes."""
-        self.kwds.notes = self.notes_box.toPlainText()
-        self._save_proband()
+        proband_id = self.proband_id_box_2.currentText()
+        test_name = self.test_name_box_2.currentText()
+        if proband_id in proband_pickles() and test_name in tests_list:
+            dic = {
+                "proband_id": proband_id,
+                "test_name": test_name,
+                "notes":self.notes_box.toPlainText()
+            }
+            data = Proband(**dic)
+            data.save()
 
     def _reset_notes(self):
         """Reset the notes."""

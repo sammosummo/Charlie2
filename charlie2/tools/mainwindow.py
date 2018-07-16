@@ -6,7 +6,7 @@ from sys import exit, platform
 from os.path import exists
 from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
-from .data import TestData
+from .data import SimpleProcedure
 from .commandline import get_parser
 from .gui import GUIWidget
 from .paths import get_test, get_tests_from_batch, get_error_messages
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
             self.kwds.test_name = self.kwds.test_names.pop(0)
 
             logger.info("checking whether there are data for this proband and test")
-            data_exist = exists(TestData(**vars(self.kwds)).path)
+            data_exist = exists(SimpleProcedure(**vars(self.kwds)).path)
             logger.info("answer is %s" % data_exist)
 
             if data_exist:

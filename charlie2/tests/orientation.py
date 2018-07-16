@@ -61,14 +61,14 @@ class TestWidget(BaseTestWidget):
 
         """
         self.block_deadline = 60 * 1000
+        self.trial_deadline = 30 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
         """For this test, we simply show the square to be pressed."""
-        self.trial_deadline = 30 * 1000
         self.clear_screen(delete=True)
-        self.procedure.current_trial.attempts = 0
-        square = self.display_image("0_s.png", self.procedure.current_trial.position)
+        self.data.current_trial.attempts = 0
+        square = self.display_image("0_s.png", self.data.current_trial.position)
         self.make_zones([square.frameGeometry()])
 
     def mousePressEvent_(self, event):
@@ -77,13 +77,13 @@ class TestWidget(BaseTestWidget):
 
         """
         if event.pos() in self.zones[0]:
-            self.procedure.current_trial.correct = True
-            self.procedure.current_trial.trial_status = "completed"
+            self.data.current_trial.correct = True
+            self.data.current_trial.status = "completed"
         else:
-            self.procedure.current_trial.attempts += 1
+            self.data.current_trial.attempts += 1
 
     def summarise(self):
         """See docstring for explanation."""
         dic = self.basic_summary(adjust_time_taken=True)
-        dic["attempts"] = sum(t["attempts"] for t in self.procedure.completed_trials)
+        dic["attempts"] = sum(t["attempts"] for t in self.data.completed_trials)
         return dic

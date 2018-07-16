@@ -43,8 +43,9 @@ other data.""",
     "Status",
     "Backup",
     "Back up data now",
-    """No. data files: %i
-No. unique proband IDs: %i
+    """Computer name: %s
+No. proband .pkls: %i
+No. test .pkls: %i
 No. conflicts: %i""",
     "Attempting backup (%i/5) ...",
     "Backup succeeded.",
@@ -52,7 +53,9 @@ No. conflicts: %i""",
     "Local data files are up to date.",
     "Local files are out of date.",
     "Notes",
-    "Use the box below to add notes about the proband.",
+    """Use the box below to add notes about the specific proband
+and test. NOTE: This does *NOT* affect the selections in the
+Proband and Test tabs.""",
     "Save",
     "Reset",
 ]
