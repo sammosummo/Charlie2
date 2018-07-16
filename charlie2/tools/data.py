@@ -186,6 +186,12 @@ class SimpleProcedure(Proband):
             
             logger.info("remaining_trials is empty, test must be completed")
             self.data["test_completed"] = True
+
+            logger.info("is there an orphaned current_trial?")
+            if self.data["current_trial"] is not None:
+                logger.info("yes, appending to completed_trials")
+                self._append_current_trial()
+
             self.update()
             raise StopIteration
 
@@ -202,10 +208,7 @@ class SimpleProcedure(Proband):
             if isinstance(self.data["current_trial"], Trial):
 
                 logger.info("must have been created in this session, so moving on")
-                logger.info("appending to completed_trials")
-                if self.data["current_trial"].status != "skipped":
-                    self.data["current_trial"].status = "completed"
-                self.data["completed_trials"].append(vars(self.data["current_trial"]))
+                self._append_current_trial()
                 logger.info("and popping new one from remaining_trials")
                 self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
 
@@ -225,13 +228,39 @@ class SimpleProcedure(Proband):
             ))
             return self.data["current_trial"]
 
-    def save_as_csv(self):
+    def _append_current_trial(self):
+        """Append current_trial to completed_trials, if there is indeed a current_trial
+        and it is not already at the bottom of completed_trials.
+
+        """
+        logger.info("attempting to append to current_trial to completed_trials")
+        ct = self.data["current_trial"]
+        if ct.status != "skipped":
+            logger.info("setting status of current_trial to completed")
+            ct.status = "completed"
+        else:
+            logger.info("preserving status of current_trial as skipped")
+        if len(self.data["completed_trials"]) > 0:
+            if dict(ct) == self.data["completed_trials"][-1]:
+                logger.info("current_trial is last item in completed_trials already")
+                return
+        logger.info("current_trial is not on completed_trials, so appending")
+        self.data["completed_trials"].append(vars(ct))
+
+    def save_completed_trials_as_csv(self):
         """Output the list of dicts as a csv."""
+        logger.debug(self.data["remaining_trials"])
+        logger.debug(self.data["current_trial"])
+        logger.debug(self.data["completed_trials"])
         df = pd.DataFrame(self.data["completed_trials"])
+        try:
+            df.set_index("trial_number", inplace=True)
+        except KeyError:
+            logger.warning("No trial_number in dataframe, no trials yet?")
         df.to_csv(self.data["csv"])
         self.update()
 
     def save_summary(self):
         """Save the summary as a csv"""
-        pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
+        s = pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
         self.update()

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from logging import getLogger
 from .data import SimpleProcedure, SimpleProcedure
@@ -35,6 +36,13 @@ class BaseTestWidget(QWidget):
         self.test_deadline = None
         self.block_deadline = None
         self.trial_deadline = None
+        self.test_timer = QTimer()
+        self.test_timer.setSingleShot(True)
+        self.block_timer = QTimer()
+        self.block_timer.setSingleShot(True)
+        self.trial_timer = QTimer()
+        self.trial_timer.setSingleShot(True)
+        self.trial_timer.timeout.connect(self._trial_timeout)
         self.zones = []
         self.instructions = get_instructions(self.kwds.test_name, self.kwds.language)
         self.data = None
@@ -74,7 +82,6 @@ class BaseTestWidget(QWidget):
                 self._trial()
         except StopIteration:
             logger.warning("failed to iterate (hopefully) bc this is end of test")
-            self.performing_trial = False
             self.safe_close()
 
     def make_trials(self):
@@ -118,11 +125,14 @@ class BaseTestWidget(QWidget):
     def safe_close(self):
         """Safely clean up and save the data at the end of the test."""
         logger.info("called safe_close()")
+        logger.info("saving a csv of the completed trials")
+        self.data.save_completed_trials_as_csv()
         logger.info("trying to summarise performance on the test")
         summary = self.summarise()
         logger.info("updating data object to include summary")
         self.data.data["summary"] = summary
         self.data.save()
+        logger.info("saving the summary")
         self.data.save_summary()
         logger.info("all done, so switching the central widget")
         self.parent().switch_central_widget()
@@ -134,9 +144,21 @@ class BaseTestWidget(QWidget):
     @performing_trial.setter
     def performing_trial(self, value):
         assert isinstance(value, bool), "performing_trial must be a bool"
-        logger.info("initialising the trial timer")
-        self.trial_time.start()
         self._performing_trial = value
+        time = self.trial_time
+        timer = self.trial_timer
+        deadline = self.trial_deadline
+        if timer.isActive():
+            logger.info("stopping trial timer")
+            timer.stop()
+        if value is True:
+            logger.info("performing_trial set to True")
+            logger.info("starting the trial time")
+            time.start()
+        if value is True and deadline:
+            logger.info("trial deadline: %s" % str(self.trial_deadline))
+            logger.info("starting one-shot trial timer")
+            timer.start(deadline)
 
     @property
     def mouse_visible(self):
@@ -437,29 +459,45 @@ class BaseTestWidget(QWidget):
             dic (dict): dictionary of results.
 
         """
-        trials = self.data.data["completed_trials"]
-        if "trials" in kwds:
-            trials = kwds["trials"]
-        np_trials = [t for t in trials if not t["practice"]]
-        completed_trials = [t for t in np_trials if t["status"] == "completed"]
-        correct_trials = [t for t in completed_trials if t["correct"]]
-        skipped_trials = [t for t in np_trials if t["status"] == "skipped"]
-        meanrt = sum([t["trial_time_elapsed_ms"] for t in correct_trials]) / len(
-            correct_trials)
-        last_trial = completed_trials[-1]
-        dic = {
-            "total_trials": len(np_trials),
-            "completed_trials": len(completed_trials),
-            "correct_trials": len(correct_trials),
-            "skipped_trials": len(skipped_trials),
-            "accuracy": len(correct_trials) / len(completed_trials),
-            "mean_rt_correct_ms": meanrt,
-            "time_elapsed_ms": last_trial["block_time_elapsed_ms"],
-            "timestamp": last_trial["timestamp"],
-        }
-        if "adjust_rts" in kwds:
-            adjf = meanrt * len(skipped_trials)
-            dic["mean_rt_correct_ms_adj"]: self.block_time.elapsed() + adjf
+        logger.info("building default dict")
+        keys = [
+            "total_trials",
+            "completed_trials",
+            "correct_trials",
+            "skipped_trials",
+            "accuracy",
+            "mean_rt_correct_ms",
+            "time_elapsed_ms",
+            "timestamp",
+        ]
+        dic = {k: None for k in keys}
+        # logger.info("finding trials")
+        # trials = self.data.data["completed_trials"]
+        # if "trials" in kwds:
+        #     trials = kwds["trials"]
+        # np_trials = [t for t in trials if not t["practice"]]
+        # completed_trials = [t for t in np_trials if t["status"] == "completed"]
+        # correct_trials = [t for t in completed_trials if t["correct"]]
+        # skipped_trials = [t for t in np_trials if t["status"] == "skipped"]
+        # if len(correct_trials) == 0:
+        #     logger.info("no good trials at all")
+        #     return dic
+        # last_trial = trials[-1]
+        # meanrt = sum([t["trial_time_elapsed_ms"] for t in correct_trials]) / len(
+        #     correct_trials)
+        # dic = {
+        #     "total_trials": len(np_trials),
+        #     "completed_trials": len(completed_trials),
+        #     "correct_trials": len(correct_trials),
+        #     "skipped_trials": len(skipped_trials),
+        #     "accuracy": len(correct_trials) / len(completed_trials),
+        #     "mean_rt_correct_ms": meanrt,
+        #     "time_elapsed_ms": last_trial["block_time_elapsed_ms"],
+        #     "timestamp": last_trial["timestamp"],
+        # }
+        # if "adjust_rts" in kwds:
+        #     adjf = meanrt * len(skipped_trials)
+        #     dic["mean_rt_correct_ms_adj"] = self.block_time.elapsed() + adjf
         return dic
 
     def _display_continue_button(self):
@@ -564,7 +602,15 @@ class BaseTestWidget(QWidget):
 
     def _next_trial(self):
         """Moves on to the next trial."""
+        self.performing_trial = False
         logger.info("called _next_trial()")
         logger.info("saving a csv of the completed trials")
-        self.data.save_as_csv()
+        self.data.save_completed_trials_as_csv()
         self._step()
+
+    def _trial_timeout(self):
+        """End a trial early because it had timed out."""
+        logger.info("timing out the current trial")
+        self.data.data["current_trial"].status = 'skipped'
+        self.data.data["current_trial"].reason_skipped = 'timeout'
+        self._next_trial()

@@ -61,7 +61,7 @@ class TestWidget(BaseTestWidget):
 
         """
         self.block_deadline = 60 * 1000
-        self.trial_deadline = 30 * 1000
+        self.trial_deadline = 2 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
@@ -85,5 +85,12 @@ class TestWidget(BaseTestWidget):
     def summarise(self):
         """See docstring for explanation."""
         dic = self.basic_summary(adjust_time_taken=True)
-        dic["attempts"] = sum(t["attempts"] for t in self.data.completed_trials)
+        try:
+            dic["attempts"] = sum(t["attempts"] for t in self.data.completed_trials)
+            denom = dic["completed_trials"] + dic["attempts"]
+            dic["accuracy"] = dic["correct_trials"] / (denom)
+        except TypeError:
+            logger.warning("summary failed, probably bc not enough completed trials")
+            dic["attempts"] = None
+            dic["accuracy"] = None
         return dic
