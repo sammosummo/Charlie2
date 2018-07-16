@@ -1,7 +1,7 @@
 """
-===========================
-Verbal working-memory test
-===========================
+=====================
+Verbal working memory
+=====================
 
 :Status: complete
 :Version: 2.0
@@ -45,12 +45,16 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
 
+from logging import getLogger
 from PyQt5 import QtCore, QtWidgets
 from charlie2.tools.testwidget import BaseTestWidget
 from charlie2.tools.recipes import get_vwm_stimuli
+
+
+logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -60,6 +64,7 @@ class TestWidget(BaseTestWidget):
         lns_prac, or lns blocks."""
         sequences = get_vwm_stimuli(self.args.language)
         trial_types = ['forward', 'backward', 'lns_prac', 'lns']
+        practices = {'forward': , 'backward', 'lns_prac', 'lns']}
         details = []
         for block, sequences_ in enumerate(sequences):
             for trial, sequence in enumerate(sequences_):

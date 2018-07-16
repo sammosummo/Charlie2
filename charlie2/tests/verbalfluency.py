@@ -139,8 +139,12 @@ class TestWidget(BaseTestWidget):
         response_box = QtWidgets.QGroupBox(self.instructions[10])
         response_grid = QtWidgets.QGridLayout()
         self.valid_rsp_button = QtWidgets.QPushButton(self.instructions[11])
+        self.valid_rsp_button.setMinimumHeight(120)
         response_grid.addWidget(self.valid_rsp_button, 0, 0)
+        self.valid_rsp_button.setFont(self.instructions_font)
         self.invalid_rsp_button = QtWidgets.QPushButton(self.instructions[12])
+        self.invalid_rsp_button.setFont(self.instructions_font)
+        self.invalid_rsp_button.setMinimumHeight(120)
         response_grid.addWidget(self.invalid_rsp_button, 0, 1)
         response_box_layout = QtWidgets.QVBoxLayout()
         response_box_layout.addLayout(response_grid)
@@ -150,12 +154,16 @@ class TestWidget(BaseTestWidget):
         button_box = QtWidgets.QGroupBox(self.instructions[18])
         button_grid = QtWidgets.QGridLayout()
         self.button = QtWidgets.QPushButton(self.instructions[9])
+        self.button.setFont(self.instructions_font)
         self.button.clicked.connect(self._start)
+        self.button.setMinimumHeight(120)
         button_grid.addWidget(self.button, 0, 0)
         self.quit_button = QtWidgets.QPushButton(self.instructions[19])
+        self.quit_button.setFont(self.instructions_font)
         self.quit_button.clicked.connect(self.next_trial)
         button_grid.addWidget(self.quit_button, 1, 0)
         self.quit_button.setEnabled(False)
+        self.quit_button.setMinimumHeight(120)
         button_box_layout = QtWidgets.QVBoxLayout()
         button_box_layout.addLayout(button_grid)
         button_box.setLayout(button_box_layout)
@@ -179,7 +187,7 @@ class TestWidget(BaseTestWidget):
         self.rsp_counter.display(self._total_responses)
 
     def _invalid(self):
-        t = self.data.proc.current_trial
+        t = self.data.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
 
@@ -206,7 +214,7 @@ class TestWidget(BaseTestWidget):
         self.countdown.display(self._time_left)
         if self._time_left == 0:
             self.timer.stop()
-            self.data.proc.current_trial.completed = True
+            self.data.current_trial.status = "completed"
             self.button.clicked.disconnect()
             self.button.clicked.connect(self.next_trial)
             self.button.setText(self.instructions[17])
