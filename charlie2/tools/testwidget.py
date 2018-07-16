@@ -114,6 +114,8 @@ class BaseTestWidget(QWidget):
         """Runs at the start of a new trial. Displays the countdown if first in a new
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
+        if self.block_stopping_rule():
+            self._block_stop()
         trial = self.data.data["current_trial"]
         logger.info("current trial looks like %s" % str(dict(trial)))
         if trial.first_trial_in_block and not self.skip_countdown:
@@ -646,4 +648,14 @@ class BaseTestWidget(QWidget):
         """End a trial early because it had timed out."""
         logger.info("timing out the current block")
         self.data.skip_current_block('timeout')
+        self._next_trial()
+
+    def block_stopping_rule(self):
+        """Override this method."""
+        return False
+
+    def _block_stop(self):
+        """End a trial early because stopping rule passed."""
+        logger.info("stopping the current block")
+        self.data.skip_current_block('stopping rule')
         self._next_trial()

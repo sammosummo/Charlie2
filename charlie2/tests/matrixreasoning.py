@@ -1,7 +1,7 @@
 """
-=====================
-Matrix reasoning test
-=====================
+================
+Matrix reasoning
+================
 
 :Status: complete
 :Version: 2.0
@@ -39,11 +39,14 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
-
+from logging import getLogger
 from PyQt5.QtCore import QRect
 from charlie2.tools.testwidget import BaseTestWidget
+
+
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -57,47 +60,45 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """Set the trial time limit and display instructions."""
-        self.trial_max_time = 45
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
         """Show matrix and array, set up zones."""
-        dpct = self.data.proc.current_trial
-
-        # clear the screen
-        self.clear_screen()
-
-        # show matrix and array
-        self.matrix = self.display_image(dpct.matrix, (0, 125))
-        self.array = self.display_image(dpct.array, (0, -125))
+        self.clear_screen(delete=True)
+        matrix = self.display_image(self.data.current_trial.matrix, (0, 125))
+        array = self.display_image(self.data.current_trial.array, (0, -125))
 
         # make zones
         rects = []
         for i in range(5):
-            w = int(round(self.array.frameGeometry().width() / 5))
-            h = self.array.frameGeometry().height()
-            x = self.array.frameGeometry().x() + w * i
-            y = self.array.frameGeometry().y()
+            w = int(round(array.frameGeometry().width() / 5))
+            h = array.frameGeometry().height()
+            x = array.frameGeometry().x() + w * i
+            y = array.frameGeometry().y()
             rects.append(QRect(x, y, w, h))
         self.make_zones(rects)
 
-        # set the target
-        self.target = self.zones[dpct.answer]
+    def mousePressEvent_(self, event):
+        """On mouse click/screen touch, check if it was inside the target square. If so,
+        record the trial as a success and move on. If not, increase misses by 1.
+
+        """
+        ix = [event.pos() in z for z in self.zones]
+        t = self.data.current_trial
+        if any(ix):
+            t.rsp = next(i for i, v in enumerate(ix) if v)
+            t.correct = t.rsp == t.answer
+            self.data.current_trial.status = "completed"
+
+    def block_stopping_rule(self):
+        """After five trials completed, exit if four or more were incorrect."""
+        if len(self.data.completed_trials) > 5:
+            trials = self.data.completed_trials[-5:]
+            completed = [t for t in trials if not t.status == "completed"]
+            correct = len([t for t in completed if t.correct])
+            return True if correct <= 1 else False
 
     def summarise(self):
         """See docstring for explanation."""
-        return self.basic_summary()
-
-    def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the correct item."""
-        dpct = self.data.proc.current_trial
-        dpct.completed = any(event.pos() in z for z in self.zones)
-        dpct.correct = event.pos() in self.target
-
-    def stopping_rule(self):
-        """After five trials completed, exit if four or more were incorrect."""
-        if len(self.data.proc.completed_trials) > 5:
-            trials = self.data.proc.completed_trials[-5:]
-            completed = [t for t in trials if not t.skipped]
-            correct = len([t for t in completed if t.correct])
-            return True if correct <= 1 else False
+        dic = self.basic_summary(adjust_time_taken=True)
+        return dic

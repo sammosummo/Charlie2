@@ -9,5 +9,7 @@ choice per picture. If you think that more than one
 answer is correct, choose the one you think fits
 best.
 
+This test uses the touchscreen.
+
 Press the button below to begin.""",
 ]
