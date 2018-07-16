@@ -1,7 +1,7 @@
 """
-==================
-Facial-memory test
-==================
+=============
+Facial memory
+=============
 
 :Status: complete
 :Version: 2.0
@@ -38,11 +38,15 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = 'production'
 
 
+from logging import getLogger
 from PyQt5.QtCore import Qt
 from charlie2.tools.testwidget import BaseTestWidget
+
+
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -82,35 +86,33 @@ class TestWidget(BaseTestWidget):
     def block(self):
         """The two blocks differ in terms thier duration. We use the `trial_max_time`
         trick to implement this."""
-        b = self.data.proc.current_trial.block_number
+        b = self.data.current_trial.block_number
+        if b == 0:
+            self.trial_deadline = 25
+        else:
+            self.trial_deadline = None
         self.display_instructions_with_continue_button(self.instructions[4 + b])
-        self.trial_max_time = [2.5, 15][b]
 
     def trial(self):
         """For each trial we display a face. If a "recognition" trial, we also display
         the keyboard arrow keys."""
-        dpct = self.data.proc.current_trial
-        self.mouse_visible = False
         self.clear_screen(delete=True)
-        self.display_image(dpct.face, (0, 100))
-        if dpct.block_type == "recognition":
+        self.display_image(self.data.current_trial.face, (0, 100))
+        b = self.data.current_trial.block_number
+        if b == 1:
             s = self.instructions[2:4]
-            print(s)
             self.keyboard_keys = self.display_keyboard_arrow_keys(s)
-
-    def summarise(self):
-        """See docstring for explanation. Here, we only want to analyse "recognition"
-        trials."""
-        trials = self.data.proc.completed_trials
-        trials = [t for t in trials if t.block_type == "recognition"]
-        return self.basic_summary(trials=trials)
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
         dic = {Qt.Key_Left: 'new', Qt.Key_Right: 'old'}
-        dpct = self.data.proc.current_trial
+        t = self.data.current_trial
+        if t.block_number == 1 and event.key() in dic:
+            t.rsp = dic[event.key()]
+            t.correct = t.rsp == t.face_type
+            t.status = "completed"
 
-        if dpct.block_type == "recognition" and event.key() in dic:
-            dpct.rsp = dic[event.key()]
-            dpct.correct = dpct.rsp == dpct.face_type
-            dpct.completed = True
+    def summarise(self):
+        """See docstring for explanation."""
+        dic = self.basic_summary(adjust_time_taken=True)
+        return dic
