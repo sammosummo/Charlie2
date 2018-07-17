@@ -46,7 +46,9 @@ class BaseTestWidget(QWidget):
         self.trial_timer.setSingleShot(True)
         self.trial_timer.timeout.connect(self._trial_timeout)
         self.zones = []
-        self.instructions = get_instructions(self.kwds["test_name"], self.kwds["language"])
+        self.instructions = get_instructions(
+            self.kwds["test_name"], self.kwds["language"]
+        )
         self.data = None
         self.setFocusPolicy(Qt.StrongFocus)
 

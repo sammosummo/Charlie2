@@ -31,7 +31,7 @@ from .paths import (
 )
 from ..gui.proband_widget import ProbandWidget
 from ..gui.test_widget import TestWidget
-
+from ..gui.notes_widget import NotesWidget
 
 logger = getLogger(__name__)
 
@@ -96,6 +96,16 @@ class GUIWidget(QWidget):
         self.test_tab.setMinimumSize(_w, _h)
         self.tabs.addTab(self.test_tab, self.instructions[5])
 
+        # layout > tabs widget > notes tab
+        self.notes_tab = QTabWidget()
+        self.notes_tab_vbox = QVBoxLayout()
+        self.notes_tab.setLayout(self.notes_tab_vbox)
+        self.notes_widget = NotesWidget(self)  # TODO: explicitly set parent?
+        self.notes_tab_vbox.addWidget(self.notes_widget)
+        _w = self.notes_widget.sizeHint().width() + 20
+        _h = self.notes_widget.sizeHint().height()
+        self.notes_tab.setMinimumSize(_w, _h)
+        self.tabs.addTab(self.notes_tab, self.instructions[42])
 
     #     # layout > tab > notes tab
     #     self.notes_tab = QWidget()

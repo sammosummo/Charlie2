@@ -3,11 +3,23 @@
 """
 from copy import copy
 from logging import getLogger
-from re import match
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QGridLayout, QLabel, QComboBox, QPushButton, QErrorMessage, QCheckBox
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QGroupBox,
+    QGridLayout,
+    QLabel,
+    QComboBox,
+    QPushButton,
+    QCheckBox,
+)
 from ..tools.defaults import default_kwds, valid_for_tests
-from ..tools.data import SimpleProcedure
-from ..tools.paths import get_error_messages, tests_list, proband_pickles, batches_list, get_tests_from_batch
+from ..tools.paths import (
+    tests_list,
+    proband_pickles,
+    batches_list,
+    get_tests_from_batch,
+)
 
 
 logger = getLogger(__name__)
@@ -112,7 +124,7 @@ class TestWidget(QWidget):
         self._begin = self.parent().parent().switch_central_widget  # store ref
         self.test_button.clicked.connect(self._run_single_test)
         self.batch_button.clicked.connect(self._run_batch)
-    
+
     def _run_single_test(self):
         """Run a single test."""
         logger.info("_run_single_test() called")

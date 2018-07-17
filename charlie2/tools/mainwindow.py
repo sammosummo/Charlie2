@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
 
         logger.info("setting self.gui to True")
         self.gui = True
-        
+
         logger.info("getting desktop dimensions")
         self.desktop_size = QDesktopWidget().availableGeometry().size()
         logger.info("dimensions are %s" % str(self.desktop_size))

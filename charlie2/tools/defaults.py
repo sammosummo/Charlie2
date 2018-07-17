@@ -21,7 +21,7 @@ default_kwds = {  # default values for all useful keywords
     "computer_id": gethostname(),
     "user_id": getuser(),
     "platform": platform,
-    "notes": "",
+    "notes": "Add copious notes about the proband here...",
 }
 
 valid_for_probands = {  # keywords that should be stored for a given proband
@@ -44,4 +44,3 @@ valid_for_tests = {  # keywords that should be stored for a given test
     "user_id",
     "platform",
 }
-

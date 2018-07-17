@@ -4,7 +4,16 @@
 from copy import copy
 from logging import getLogger
 from re import match
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QGridLayout, QLabel, QComboBox, QPushButton, QErrorMessage
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QGroupBox,
+    QGridLayout,
+    QLabel,
+    QComboBox,
+    QPushButton,
+    QErrorMessage,
+)
 from ..tools.defaults import default_kwds, valid_for_probands
 from ..tools.data import Proband
 from ..tools.paths import proband_pickles, get_error_messages
