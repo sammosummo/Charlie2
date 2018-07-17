@@ -38,7 +38,7 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = "production"
 
 
 from logging import getLogger
@@ -57,14 +57,46 @@ class TestWidget(BaseTestWidget):
         faces = [
             ["tar%02d.png" % (i + 1) for i in range(20)],
             [
-                "idis05.png", "tar06.png", "tar18.png", "tar11.png", "idis16.png",
-                "tar20.png", "tar12.png", "tar16.png", "idis07.png", "idis18.png",
-                "tar19.png", "tar02.png", "tar15.png", "idis06.png", "tar13.png",
-                "tar10.png", "tar04.png", "idis03.png", "idis20.png", "idis19.png",
-                "idis17.png", "tar07.png", "idis15.png", "idis09.png", "idis01.png",
-                "idis04.png", "tar05.png", "tar14.png", "idis13.png","idis10.png",
-                "idis08.png", "idis11.png", "idis02.png", "tar17.png", "idis12.png",
-                "tar01.png", "idis14.png", "tar08.png", "tar09.png", "tar03.png",
+                "idis05.png",
+                "tar06.png",
+                "tar18.png",
+                "tar11.png",
+                "idis16.png",
+                "tar20.png",
+                "tar12.png",
+                "tar16.png",
+                "idis07.png",
+                "idis18.png",
+                "tar19.png",
+                "tar02.png",
+                "tar15.png",
+                "idis06.png",
+                "tar13.png",
+                "tar10.png",
+                "tar04.png",
+                "idis03.png",
+                "idis20.png",
+                "idis19.png",
+                "idis17.png",
+                "tar07.png",
+                "idis15.png",
+                "idis09.png",
+                "idis01.png",
+                "idis04.png",
+                "tar05.png",
+                "tar14.png",
+                "idis13.png",
+                "idis10.png",
+                "idis08.png",
+                "idis11.png",
+                "idis02.png",
+                "tar17.png",
+                "idis12.png",
+                "tar01.png",
+                "idis14.png",
+                "tar08.png",
+                "tar09.png",
+                "tar03.png",
             ],
         ]
         blocks = [0, 1]
@@ -76,8 +108,8 @@ class TestWidget(BaseTestWidget):
                 dic = {
                     "block_number": block,
                     "block_type": block_type,
-                    'trial_number': n,
-                    'face': faces[block][n],
+                    "trial_number": n,
+                    "face": faces[block][n],
                     "face_type": ["old", "new"]["tar" in faces[block][n]],
                 }
                 details.append(dic)
@@ -105,7 +137,7 @@ class TestWidget(BaseTestWidget):
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left- and right-arrow keyboard key presses."""
-        dic = {Qt.Key_Left: 'new', Qt.Key_Right: 'old'}
+        dic = {Qt.Key_Left: "new", Qt.Key_Right: "old"}
         t = self.data.current_trial
         if t.block_number == 1 and event.key() in dic:
             t.rsp = dic[event.key()]

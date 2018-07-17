@@ -34,7 +34,7 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'complete'
+__status__ = "complete"
 
 
 from logging import getLogger
@@ -45,14 +45,23 @@ logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
         """For this test, all we need is the trial number and position of the square on
         each trial.
 
         """
-        pos = [(-122, -53), (-40, 19), (78, -85), (351, 296), (136, -203), (-42, 255),
-               (294, -221), (308, 155), (-407, -54), (95, 215)]
+        pos = [
+            (-122, -53),
+            (-40, 19),
+            (78, -85),
+            (351, 296),
+            (136, -203),
+            (-42, 255),
+            (294, -221),
+            (308, 155),
+            (-407, -54),
+            (95, 215),
+        ]
         return [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
 
     def block(self):

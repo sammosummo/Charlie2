@@ -1,6 +1,7 @@
 """Paths to all files.
 
 """
+from logging import getLogger
 from pkgutil import iter_modules
 from os import listdir as ls
 from os.path import dirname, exists, join as pj
@@ -9,6 +10,8 @@ from copy import copy
 import charlie2
 from docutils.core import publish_string
 
+
+logger = getLogger(__name__)
 
 _path = dirname(charlie2.__file__)
 data_path = pj(_path, "data")
@@ -37,7 +40,7 @@ def data_pickles():
 
 
 def proband_pickles():
-    return [p.replace(".pkl", "") for p in ls(proband_path) if p.endswith(".pkl")]
+    return sorted(p.replace(".pkl", "") for p in ls(proband_path) if p.endswith(".pkl"))
 
 
 def is_test(s):
@@ -67,6 +70,7 @@ def _get_common_instructions(lang):
 
 def get_instructions(s, lang):
     """Return the instructions from test `s` in the given language."""
+    logger.info("getting instructions for %s in language %s" % (s, lang))
     lst = _get_common_instructions(lang)
     lst += _get_instructions(s, lang)
     return lst

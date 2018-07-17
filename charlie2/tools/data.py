@@ -133,7 +133,7 @@ class SimpleProcedure(Proband):
         logger.info("initialising a TestData object with kwds: %s" % str(kwds))
         assert "proband_id" in kwds, "Missing proband_id keyword argument"
         assert "test_name" in kwds, "Missing test_name keyword argument"
-        
+
         logger.info("initialising (and saving) a corresponding proband data object")
         Proband(proband_id=kwds["proband_id"]).save()
 
@@ -147,11 +147,11 @@ class SimpleProcedure(Proband):
         )
         self.data["path"] = pj(test_data_path, self.data["filename"])
         self.data["csv"] = pj(csv_path, self.data["filename"]).replace(".pkl", ".csv")
-        self.data["summary_path"] = pj(
-            summaries_path, self.data["filename"]
-        ).replace(".pkl", ".csv")
+        self.data["summary_path"] = pj(summaries_path, self.data["filename"]).replace(
+            ".pkl", ".csv"
+        )
         self.update()
-        
+
         logger.info("loading pre-existing info")
         self.load()
         if exists(self.path):
@@ -175,11 +175,11 @@ class SimpleProcedure(Proband):
         assert "current_trial" in self.data, "Missing current_trial"
         assert "completed_trials" in self.data, "Missing completed_trials"
         self.update()
-    
+
     def __iter__(self):
         """Just returns itself."""
         return self
-    
+
     def __next__(self):
         """Iterate one trial."""
         logger.info("iterating one trial")

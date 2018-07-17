@@ -1,15 +1,15 @@
 """Define the main Qt widget used for running tests.
 
 """
+from copy import copy
 from logging import getLogger
-from sys import exit, platform
 from os.path import exists
-from PyQt5.QtCore import QEventLoop, QTimer
+from sys import exit
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
 from .data import SimpleProcedure
-from .commandline import get_parser
+from .defaults import default_kwds
 from .gui import GUIWidget
-from .paths import get_test, get_tests_from_batch, get_error_messages
+from .paths import get_test, get_error_messages
 
 
 logger = getLogger(__name__)
@@ -27,45 +27,43 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(parent)
         logger.info("main window created")
 
-        logger.info("parsing and formatting command-line arguments")
-        self.kwds = get_parser().parse_args()
-        self.kwds.test_name = None
-        if isinstance(self.kwds.other_ids, str):
-            self.kwds.other_ids = set(self.kwds.other_ids.split())
-        if self.kwds.batch_name != "":
-            self.kwds.test_names = get_tests_from_batch(self.batch_name)
-        if self.kwds.gui:
-            self.kwds.test_names = []
-        logger.info("command-line arguments are: %s" % str(vars(self.kwds)))
+        logger.info("loading default keywords")
+        self.kwds = copy(default_kwds)
+        logger.info("keywords are %s" % str(self.kwds))
 
+        logger.info("setting self.gui to True")
+        self.gui = True
+        
+        logger.info("getting desktop dimensions")
         self.desktop_size = QDesktopWidget().availableGeometry().size()
-        logger.info("desktop dimensions: %s" % str(self.desktop_size))
+        logger.info("dimensions are %s" % str(self.desktop_size))
 
         logger.info("starting the app proper")
         self.ignore_close_event = False
         self.switch_central_widget()
 
     def switch_central_widget(self):
-        """Show the GUI, move from one test to another, or close the app. This method
+        """Switch the central widget.
+        
+        Show the GUI, move from one test to another, or close the app. This method
         also checks whether a test should be resumed.
 
         """
         logger.info("called switch_central_widget()")
-        self.kwds.test_names = [s for s in self.kwds.test_names if s]
-        logger.info("test list looks like this: %s" % str(self.kwds.test_names))
+        # TODO: Do I need to remove empty test names?
+        logger.info("removing empty test names")
+        self.kwds["test_names"] = [s for s in self.kwds["test_names"] if s]
+        logger.info("test list looks like this: %s" % str(self.kwds["test_names"]))
 
-        if len(self.kwds.test_names) == 0 and self.kwds.gui:
+        if len(self.kwds["test_names"]) == 0 and self.gui is True:
 
-            logger.info("no tests; in gui mode")
+            logger.info("initialising gui")
             gui = GUIWidget(self)
 
-            logger.info("sizing, centring, and showing the window in normal mode")
+            logger.info("sizing, centring, and showing the window")
             if self.isFullScreen():
                 logger.info("in full screen")
-                if platform == "darwin":
-                    logger.info("running on macOS, so sleeping for 1 second")
-                    self._sleep(1)
-                self.showNormal()  # two calls needed here, unclear why
+                self.showNormal()  # TODO: Do I need this extra call?
             self.setFixedSize(gui.sizeHint())
             self._centre()
             self.showNormal()
@@ -73,32 +71,33 @@ class MainWindow(QMainWindow):
             logger.info("showing the gui")
             self.setCentralWidget(gui)
 
-        elif len(self.kwds.test_names) > 0:
+        elif len(self.kwds["test_names"]) > 0:
 
-            logger.info("at least one test")
-            self.kwds.test_name = self.kwds.test_names.pop(0)
+            logger.info("at least one test in test_names")
+            self.kwds["test_name"] = self.kwds["test_names"].pop(0)
 
-            logger.info("checking whether there are data for this proband and test")
-            data_exist = exists(SimpleProcedure(**vars(self.kwds)).path)
-            logger.info("answer is %s" % data_exist)
+            # logger.info("data for this proband and test?")
+            # data_exist = exists(SimpleProcedure(**vars(self.kwds)).path)
+            # logger.info("answer is %s" % data_exist)
+            #
+            # if data_exist:
+            #     logger.info("resumable? %s" % self.kwds["resume"])
+            #     if not self.kwds["resume"]:
+            #         logger.info("displaying warning message")
+            #         message_box = QErrorMessage(self)
+            #         msg = get_error_messages(self.kwds["language"], "proband_exists")
+            #         message = msg % (self.kwds["proband_id"], self.kwds["test_name"])
+            #         message_box.setMinimumSize(400, 600)
+            #         message_box.showMessage(message)
+            #         self.switch_central_widget()
+            #         return
 
-            if data_exist:
-                logger.info("resumable? %s" % self.kwds.resume)
-                if not self.kwds.resume:
-                    logger.info("displaying warning message")
-                    message_box = QErrorMessage(self)
-                    message = get_error_messages(self.kwds.language, "proband_exists")
-                    message = message % (self.kwds.proband_id, self.kwds.test_name)
-                    message_box.showMessage(message)
-                    self.switch_central_widget()
-                    return
-
-            logger.info("initalising %s" % self.kwds.test_name)
-            w = get_test(self.kwds.test_name)
+            logger.info("initalising %s" % self.kwds["test_name"])
+            w = get_test(self.kwds["test_name"])
             widget = w(self)
 
-            if not self.kwds.fullscreen:
-                logger.info("sizing, centring, and showing the window in normal mode")
+            if not self.kwds["fullscreen"] or self.kwds["platform"] == "darwin":
+                logger.info("showing the window in normal mode")
                 self.setFixedSize(1000, 750)
                 widget.setFixedSize(1000, 750)
                 self._centre()
@@ -118,7 +117,7 @@ class MainWindow(QMainWindow):
 
         else:
 
-            logger.info("no tests; no gui; closing")
+            logger.info("closing the mainwindow (i.e., everything")
             exit()
 
     def _centre(self):
@@ -127,14 +126,6 @@ class MainWindow(QMainWindow):
         centre_point = QDesktopWidget().availableGeometry().center()
         rect.moveCenter(centre_point)
         self.move(rect.topLeft())
-
-    def _sleep(self, t):
-        """PyQt-friendly sleep function."""
-        self.ignore_close_event = True
-        loop = QEventLoop()
-        QTimer.singleShot(t * 1000, loop.quit)
-        loop.exec_()
-        self.ignore_close_event = False
 
     def closeEvent(self, event):
         """Reimplemented exit protocol.

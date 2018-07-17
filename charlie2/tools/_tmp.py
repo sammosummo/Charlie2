@@ -12,7 +12,7 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
 
     """
     if self.procedure.all_skipped:
-        return {'completed': False}
+        return {"completed": False}
 
     # get all completed trials
     if trials is None:
@@ -21,26 +21,22 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
     skipped = [t for t in trials if t.skipped]
     any_skipped = len(skipped) > 0
 
-    if all('block_type' in trial for trial in trials):
+    if all("block_type" in trial for trial in trials):
         trials = [t for t in trials if t.block_type != "practice"]
 
     # count responses and skips
     not_skipped = [t for t in trials if not t.skipped]
-    dic = {
-        'completed': True,
-        'responses': len(not_skipped),
-        'any_skipped': any_skipped,
-    }
+    dic = {"completed": True, "responses": len(not_skipped), "any_skipped": any_skipped}
 
     # this is the easiest case
     if not any_skipped and not self.data.test_resumed:
-        dic['time_taken'] = trials[-1].time_elapsed
+        dic["time_taken"] = trials[-1].time_elapsed
 
     # more complicated
     elif not any_skipped and self.data.test_resumed:
-        idx = [trials.index(t) - 1 for t in trials if 'resumed_from_here' in t]
+        idx = [trials.index(t) - 1 for t in trials if "resumed_from_here" in t]
         res = sum([trials[i].time_elapsed for i in idx])
-        dic['time_taken'] = trials[-1].time_elapsed + res
+        dic["time_taken"] = trials[-1].time_elapsed + res
 
     # not meaningful
     elif any_skipped and not adjust_time_taken:
@@ -49,21 +45,17 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
     # adjustment
     elif any_skipped and adjust_time_taken:
         meanrt = sum(t.rt for t in not_skipped) / len(not_skipped)
-        dic['time_taken'] = int(self.block_max_time * 1000 + meanrt * len(skipped))
+        dic["time_taken"] = int(self.block_max_time * 1000 + meanrt * len(skipped))
 
     else:
-        raise AssertionError('should not be possible!')
+        raise AssertionError("should not be possible!")
 
     # accuracy
-    if 'correct' in trials[0]:
-        dic['correct'] = len([t for t in not_skipped if t.correct])
-        dic['accuracy'] = dic['correct'] / dic['responses']
+    if "correct" in trials[0]:
+        dic["correct"] = len([t for t in not_skipped if t.correct])
+        dic["accuracy"] = dic["correct"] / dic["responses"]
 
     return dic
-
-
-
-
 
 
 # logger.info("loading and converting trials")
@@ -111,42 +103,42 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
 #
 
 #
-    # @property
-    # def any_skipped(self):
-    #     """:obj:`bool`: Where any trials skipped?"""
-    #     return any(t.skipped for t in self.completed_trials)
-    #
-    # @property
-    # def all_skipped(self):
-    #     """:obj:`bool`: Where any trials skipped?"""
-    #     return all(t.skipped for t in self.completed_trials)
-    #
-    # @property
-    # def not_skipped_trials(self):
-    #     """:obj:`list`: List of trials that were not skipped and not "practice" trials,
-    #     if there were any."""
-    #     trials = [trial for trial in self.completed_trials if not trial.skipped]
-    #     if "block_type" in trials[0]:
-    #         trials = [trial for trial in trials if trial.block_type != "practice"]
-    #     return trials
-    #
-    # @property
-    # def skipped_trials(self):
-    #     """:obj:`list`: List of trials that were skipped.and not "practice" trials,
-    #     if there were any."""
-    #     trials = [trial for trial in self.completed_trials if trial.skipped]
-    #     if "block_type" in trials[0]:
-    #         trials = [trial for trial in trials if trial.block_type != "practice"]
-    #     return trials
-    #
-    # @property
-    # def current_block_number(self):
-    #     """:obj:`int`: Block number of current trial."""
-    #     return self.current_trial.block_number
-    #
-    # def trials_from_block(self, bn):
-    #     """Return all completed trials from a given block."""
-    #     return [trial for trial in self.completed_trials if trial.block_number == bn]
+# @property
+# def any_skipped(self):
+#     """:obj:`bool`: Where any trials skipped?"""
+#     return any(t.skipped for t in self.completed_trials)
+#
+# @property
+# def all_skipped(self):
+#     """:obj:`bool`: Where any trials skipped?"""
+#     return all(t.skipped for t in self.completed_trials)
+#
+# @property
+# def not_skipped_trials(self):
+#     """:obj:`list`: List of trials that were not skipped and not "practice" trials,
+#     if there were any."""
+#     trials = [trial for trial in self.completed_trials if not trial.skipped]
+#     if "block_type" in trials[0]:
+#         trials = [trial for trial in trials if trial.block_type != "practice"]
+#     return trials
+#
+# @property
+# def skipped_trials(self):
+#     """:obj:`list`: List of trials that were skipped.and not "practice" trials,
+#     if there were any."""
+#     trials = [trial for trial in self.completed_trials if trial.skipped]
+#     if "block_type" in trials[0]:
+#         trials = [trial for trial in trials if trial.block_type != "practice"]
+#     return trials
+#
+# @property
+# def current_block_number(self):
+#     """:obj:`int`: Block number of current trial."""
+#     return self.current_trial.block_number
+#
+# def trials_from_block(self, bn):
+#     """Return all completed trials from a given block."""
+#     return [trial for trial in self.completed_trials if trial.block_number == bn]
 
 #         s = "%s_%s" % (self.proband_id, self.test_name)
 #         self.pkl_name = f"{s}.pkl"
@@ -421,31 +413,31 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
 #             self.test_resumed = False
 #             self.to_log("data object created.")
 # def clear_screen(self, delete=False):
-    #     """Hide widgets.
-    #
-    #     Hides and optionally deletes all children of this widget.
-    #
-    #     Args:
-    #         delete (:obj:`bool`, optional): Delete the widgets as well.
-    #
-    #     """
-    #     # for widgets  organized in a layout
-    #     if self.layout() is not None:
-    #         while self.layout().count():
-    #             item = self.layout().takeAt(0)
-    #             widget = item.widget()
-    #             if widget is not None:
-    #                 widget.hide()
-    #                 if delete:
-    #                     widget.deleteLater()
-    #             else:
-    #                 self.clearLayout(item.layout())
-    #     # for widgets not organized
-    #     for widget in self.children():
-    #         if hasattr(widget, 'hide'):
-    #             widget.hide()
-    #         if delete:
-    #             widget.deleteLater()
+#     """Hide widgets.
+#
+#     Hides and optionally deletes all children of this widget.
+#
+#     Args:
+#         delete (:obj:`bool`, optional): Delete the widgets as well.
+#
+#     """
+#     # for widgets  organized in a layout
+#     if self.layout() is not None:
+#         while self.layout().count():
+#             item = self.layout().takeAt(0)
+#             widget = item.widget()
+#             if widget is not None:
+#                 widget.hide()
+#                 if delete:
+#                     widget.deleteLater()
+#             else:
+#                 self.clearLayout(item.layout())
+#     # for widgets not organized
+#     for widget in self.children():
+#         if hasattr(widget, 'hide'):
+#             widget.hide()
+#         if delete:
+#             widget.deleteLater()
 
 #
 #

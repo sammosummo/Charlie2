@@ -36,8 +36,6 @@ Reference
 
 """
 
-html = docutils.core.publish_string(
-           source=text,
-           writer_name='html').decode()
-html = html[html.find('<body>')+6:html.find('</body>')].strip()
+html = docutils.core.publish_string(source=text, writer_name="html").decode()
+html = html[html.find("<body>") + 6 : html.find("</body>")].strip()
 print(html)

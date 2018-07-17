@@ -51,7 +51,7 @@ References
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = "production"
 
 
 from logging import getLogger

@@ -49,7 +49,7 @@ References
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = "production"
 
 from logging import getLogger
 from PyQt5 import QtCore, QtWidgets
@@ -60,7 +60,6 @@ logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
         """For this test, trial_type indicates whether it is time for the experimenter
         to provide instructions to the proband or record their responses. Kind records
@@ -68,10 +67,10 @@ class TestWidget(BaseTestWidget):
         and the letters/categories can be switched easily.
         
         """
-        names = ['trial_number', 'trial_type', 'kind']
+        names = ["trial_number", "trial_type", "kind"]
         trial_numbers = range(8)
-        trial_types = ['instruct', 'perform'] * 4
-        kinds = ['f'] * 2 + ['a'] * 2 + ['s'] * 2 + ['animal'] * 2
+        trial_types = ["instruct", "perform"] * 4
+        kinds = ["f"] * 2 + ["a"] * 2 + ["s"] * 2 + ["animal"] * 2
         z = zip(trial_numbers, trial_types, kinds)
         return [dict(zip(names, p)) for p in z]
 

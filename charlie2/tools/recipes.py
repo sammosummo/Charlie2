@@ -175,9 +175,3 @@ def charlie1_trials():
     names = ["block", "block_type", "trial", "blaze_position", "glyph"]
     control = [dict(zip(names, d)) for d in details]
     return control
-
-
-
-
-
-

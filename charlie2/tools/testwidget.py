@@ -25,9 +25,9 @@ class BaseTestWidget(QWidget):
         logger.info("test widget created")
         logger.info("transferring command-line arguments from mainwidget to testwidget")
         self.kwds = self.parent().kwds
-        
-        self.vis_stim_paths = get_vis_stim_paths(self.kwds.test_name)
-        self.aud_stim_paths = get_aud_stim_paths(self.kwds.test_name)
+
+        self.vis_stim_paths = get_vis_stim_paths(self.kwds["test_name"])
+        self.aud_stim_paths = get_aud_stim_paths(self.kwds["test_name"])
         self.instructions_font = QFont("Helvetica", 26)
         self.test_time = QTime()
         self.block_time = QTime()
@@ -46,7 +46,7 @@ class BaseTestWidget(QWidget):
         self.trial_timer.setSingleShot(True)
         self.trial_timer.timeout.connect(self._trial_timeout)
         self.zones = []
-        self.instructions = get_instructions(self.kwds.test_name, self.kwds.language)
+        self.instructions = get_instructions(self.kwds["test_name"], self.kwds["language"])
         self.data = None
         self.setFocusPolicy(Qt.StrongFocus)
 
@@ -57,10 +57,10 @@ class BaseTestWidget(QWidget):
     def begin(self):
         """Start the test."""
         logger.info("initialising a data object")
-        self.data = SimpleProcedure(**vars(self.kwds))
+        self.data = SimpleProcedure(**self.kwds)
         logger.info("checking if test was resumed")
         if not self.data.data["test_resumed"]:
-            logger.info('answer is False, so populating the remaining_trials list')
+            logger.info("answer is False, so populating the remaining_trials list")
             self.data.data["remaining_trials"] = self.make_trials()
         logger.info("initialising the test timer")
         self.test_time.start()
@@ -347,7 +347,7 @@ class BaseTestWidget(QWidget):
         if pos:
             self.move_widget(label, pos)
         label.show()
-        logger.info("showing %s" %s)
+        logger.info("showing %s" % s)
         return label
 
     def load_text(self, s):
@@ -568,14 +568,14 @@ class BaseTestWidget(QWidget):
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
-    
+
     @property
     def _test_time_left(self):
         if self.test_deadline:
             return self.test_deadline - self.test_time.elapsed()
         else:
             return None
-    
+
     @property
     def _test_time_up(self):
         if self._test_time_left:
@@ -662,14 +662,14 @@ class BaseTestWidget(QWidget):
     def _trial_timeout(self):
         """End a trial early because it had timed out."""
         logger.info("timing out the current trial")
-        self.data.data["current_trial"].status = 'skipped'
-        self.data.data["current_trial"].reason_skipped = 'timeout'
+        self.data.data["current_trial"].status = "skipped"
+        self.data.data["current_trial"].reason_skipped = "timeout"
         self._next_trial()
 
     def _block_timeout(self):
         """End a trial early because it had timed out."""
         logger.info("timing out the current block")
-        self.data.skip_current_block('timeout')
+        self.data.skip_current_block("timeout")
         self._next_trial()
 
     def _block_stopping_rule(self):
@@ -696,4 +696,4 @@ class BaseTestWidget(QWidget):
     def _block_stop(self):
         """End a trial early because stopping rule passed."""
         logger.info("stopping the current block")
-        self.data.skip_current_block('stopping rule')
+        self.data.skip_current_block("stopping rule")

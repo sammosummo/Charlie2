@@ -38,7 +38,7 @@ Reference
 """
 
 __version__ = 1.0
-__status__ = 'production'
+__status__ = "production"
 
 
 from logging import getLogger
@@ -50,27 +50,45 @@ logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
         """For this test, all we need is the stimulus and the emotion gleaned from its
         filename."""
         fs = [
-            'MN_223.png', 'MSZ_112.png', 'FAZ_32.png', 'FN_228.png', 'FAX_25.png',
-            'MAZ_146.png', 'MAX_39.png', 'MAX_201.png', 'FAZ_129.png', 'MN_21.png',
-            'FSZ_219.png', 'MN_123.png', 'MSX_147.png', 'FAX_45.png', 'FN_13.png',
-            'MSZ_126.png', 'FSZ_210.png', 'FN_30.png', 'MN_111.png', 'FSX_20.png',
-            'FN_204.png', 'MSX_108.png', 'FSX_47.png', 'MAZ_128.png'
+            "MN_223.png",
+            "MSZ_112.png",
+            "FAZ_32.png",
+            "FN_228.png",
+            "FAX_25.png",
+            "MAZ_146.png",
+            "MAX_39.png",
+            "MAX_201.png",
+            "FAZ_129.png",
+            "MN_21.png",
+            "FSZ_219.png",
+            "MN_123.png",
+            "MSX_147.png",
+            "FAX_45.png",
+            "FN_13.png",
+            "MSZ_126.png",
+            "FSZ_210.png",
+            "FN_30.png",
+            "MN_111.png",
+            "FSX_20.png",
+            "FN_204.png",
+            "MSX_108.png",
+            "FSX_47.png",
+            "MAZ_128.png",
         ]
 
         def e(s):
-            if 'N' in s:
-                return 'neutral'
-            if 'S' in s:
-                return 'sad'
-            if 'A' in s:
-                return 'angry'
+            if "N" in s:
+                return "neutral"
+            if "S" in s:
+                return "sad"
+            if "A" in s:
+                return "angry"
 
-        d = [{'trial_number': i, 'face': f, 'emotion': e(f)} for i, f in enumerate(fs)]
+        d = [{"trial_number": i, "face": f, "emotion": e(f)} for i, f in enumerate(fs)]
         return d
 
     def block(self):
@@ -89,7 +107,7 @@ class TestWidget(BaseTestWidget):
 
     def keyReleaseEvent_(self, event):
         """For this trial, listen for left-, down- right-arrow keyboard key presses."""
-        dic = {Qt.Key_Left: 'angry', Qt.Key_Down: 'neutral', Qt.Key_Right: 'sad'}
+        dic = {Qt.Key_Left: "angry", Qt.Key_Down: "neutral", Qt.Key_Right: "sad"}
         t = self.data.current_trial
         if event.key() in dic:
             t.rsp = dic[event.key()]

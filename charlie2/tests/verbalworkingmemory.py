@@ -45,7 +45,7 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = "production"
 
 
 from logging import getLogger
@@ -57,28 +57,32 @@ logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
         """For this test, block_type indicates whether this is the forward, backward,
         lns_prac, or lns blocks.
 
         """
-        sequences = get_vwm_stimuli(self.kwds.language)
-        trial_types = ['forward', 'backward', 'lns_prac', 'lns']
+        sequences = get_vwm_stimuli(self.kwds["language"])
+        trial_types = ["forward", "backward", "lns_prac", "lns"]
         practices = {
-            'forward': False, 'backward': False, 'lns_prac': True, 'lns': False,
+            "forward": False,
+            "backward": False,
+            "lns_prac": True,
+            "lns": False,
         }
         details = []
         for block, sequences_ in enumerate(sequences):
             for trial, sequence in enumerate(sequences_):
-                details.append({
-                    'block_number': block,
-                    'trial_number': trial,
-                    'block_type': trial_types[block],
-                    'practice': practices[trial_types[block]],
-                    'sequence': str(sequence),
-                    'length': len(str(sequence)),
-                })
+                details.append(
+                    {
+                        "block_number": block,
+                        "trial_number": trial,
+                        "block_type": trial_types[block],
+                        "practice": practices[trial_types[block]],
+                        "sequence": str(sequence),
+                        "length": len(str(sequence)),
+                    }
+                )
         return details
 
     def block(self):
@@ -106,9 +110,9 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
 
         # calculate the corect answer
-        if t.block_type == 'forward':
+        if t.block_type == "forward":
             answer = t.sequence
-        elif t.block_type == 'backward':
+        elif t.block_type == "backward":
             answer = t.sequence[::-1]
         else:
             digits = []
@@ -121,9 +125,9 @@ class TestWidget(BaseTestWidget):
             answer = sorted(digits) + sorted(letters)
 
         # instructions and buttons
-        self.display_instructions(self.instructions[9] % '-'.join(t.sequence))
+        self.display_instructions(self.instructions[9] % "-".join(t.sequence))
         corr_button = self._display_continue_button()
-        corr_button.setText(self.instructions[10] % '-'.join(answer))
+        corr_button.setText(self.instructions[10] % "-".join(answer))
         corr_button.setFont(self.instructions_font)
         corr_button.resize(corr_button.sizeHint())
         corr_button.setMinimumHeight(120)
@@ -201,7 +205,7 @@ class TestWidget(BaseTestWidget):
         if last_trial["practice"]:
             logger.info("practice trial, so don't apply stopping rule")
             return False
-        if 'lns' in last_trial["block_type"]:
+        if "lns" in last_trial["block_type"]:
             logger.info("lns trial, 3 trials per length")
             n = 3
         else:

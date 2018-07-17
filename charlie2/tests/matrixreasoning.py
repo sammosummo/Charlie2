@@ -39,7 +39,7 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = 'production'
+__status__ = "production"
 
 from logging import getLogger
 from PyQt5.QtCore import QRect
@@ -50,13 +50,54 @@ logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
         """For this test, all we need are the answers and path to the correct images."""
-        answers = [1, 3, 1, 3, 2, 0, 0, 2, 4, 4, 4, 1, 2, 0, 1, 3, 2, 0, 0, 3, 4, 4, 1,
-                   1, 0, 4, 3, 2, 2, 3, 0, 3, 1, 2, 4]
-        return [{"trial_number": i, "answer": answer, "matrix": 'M%03d.png' % (i + 1),
-                "array": 'M%03da.png' % (i + 1)} for i, answer in enumerate(answers)]
+        answers = [
+            1,
+            3,
+            1,
+            3,
+            2,
+            0,
+            0,
+            2,
+            4,
+            4,
+            4,
+            1,
+            2,
+            0,
+            1,
+            3,
+            2,
+            0,
+            0,
+            3,
+            4,
+            4,
+            1,
+            1,
+            0,
+            4,
+            3,
+            2,
+            2,
+            3,
+            0,
+            3,
+            1,
+            2,
+            4,
+        ]
+        return [
+            {
+                "trial_number": i,
+                "answer": answer,
+                "matrix": "M%03d.png" % (i + 1),
+                "array": "M%03da.png" % (i + 1),
+            }
+            for i, answer in enumerate(answers)
+        ]
 
     def block(self):
         """Set the trial time limit and display instructions."""

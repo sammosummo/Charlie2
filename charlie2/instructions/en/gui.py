@@ -8,15 +8,15 @@ For assistance, please contact {__email__}
 """,
     'Tests',
     'Proband',
-    'Select or enter new ID:',
-    """NOTE: Using "TEST" (upper case, no quotation marks) as
+    'Select or enter new ID*:',
+    """*NOTE: Using "TEST" (upper case, no quotation marks) as
 the proband ID will result in no data being saved. In this
 case, the fields below are ignored. Case sensitive. Alpha-
 numeric characters only.""",
-    'Options',
+    'Testing options',
     'Run tests in full-screen mode',
-    'Resume a test or batch of tests',
-    'Auto-attempt backup on exit',
+    'Allow resumable tests/batches',
+    'Enable Auto-backup mode',
     'Test (single)',
     'Select single test:',
     'Run single test',
@@ -58,4 +58,9 @@ and test. NOTE: This does *NOT* affect the selections in the
 Proband and Test tabs.""",
     "Save",
     "Reset",
+    """*NOTE: The proband ID must be created in the Probands tab
+before it can be used. Using "TEST" (upper case, no quotation
+marks) as the proband ID will result in no data being saved.""",
+    """Select a proband ID:""",
+    """Select a testing language:"""
 ]
