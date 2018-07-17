@@ -7,6 +7,7 @@ from logging import getLogger
 from os.path import exists, join as pj
 from pickle import load, dump
 from socket import gethostname
+from sys import platform
 import pandas as pd
 from .paths import proband_path, test_data_path, csv_path, summaries_path
 
@@ -15,6 +16,45 @@ logger = getLogger(__name__)
 forbidden_ids = {"TEST", ""}
 this_user = getuser()
 this_computer = gethostname()
+
+default_kwds = {  # default values for all useful keywords
+    "proband_id": "TEST",
+    "batch_name": None,
+    "test_name": None,
+    "test_names": [],
+    "language": "en",
+    "fullscreen": [True, False][platform == "darwin"],
+    "resume": False,
+    "autobackup": True,
+    "age": 1,
+    "sex": "Male",
+    "other_ids": set(),
+    "computer_id": this_computer,
+    "user_id": this_user,
+    "platform": platform,
+    "notes": "Add copious notes about the proband here...",
+}
+
+valid_for_probands = {  # keywords that should be stored for a given proband
+    "proband_id",
+    "age",
+    "sex",
+    "other_ids",
+    "notes",
+    "language",
+}
+
+valid_for_tests = {  # keywords that should be stored for a given test
+    "proband_id",
+    "test_name",
+    "language",
+    "fullscreen",
+    "resume",
+    "autobackup",
+    "computer_id",
+    "user_id",
+    "platform",
+}
 
 
 class Trial(dict):
@@ -66,13 +106,8 @@ class Proband:
 
         """
         logger.info("initialising a proband data object with kwds: %s" % str(kwds))
-        self.data = {}
-        assert "proband_id" in kwds, "Missing proband_id keyword argument"
-        if "notes" not in kwds:
-            self.data["notes"] = ""
+        self.data = {k: v for k, v in default_kwds.items() if k in valid_for_probands}
         self.data.update(kwds)
-        self.data["current_computer_id"] = this_computer
-        self.data["current_user_id"] = this_user
         self.data["filename"] = self.data["proband_id"] + ".pkl"
         self.data["path"] = pj(proband_path, self.data["filename"])
         self.update()
@@ -80,23 +115,18 @@ class Proband:
         logger.info("after fully initialising, object looks like this: %s" % self.data)
 
     def load(self):
-        """Load pre-existing data (and update current data) if any exist."""
+        """Load pre-existing data, and update current data, if any exist."""
         logger.info("called load()")
         if exists(self.path):
             logger.info("file exists")
             prev_data = load(open(self.path, "rb"))
             self.data.update(prev_data)
-            self.data["previous_computer_id"] = prev_data["current_computer_id"]
-            self.data["previous_user_id"] = prev_data["current_user_id"]
             self.data["last_loaded"] = datetime.now()
-            self.data["current_computer_id"] = this_computer
-            self.data["current_user_id"] = this_user
         else:
             logger.info("file does not exist")
             self.data["created"] = datetime.now()
-            self.data["original_computer_id"] = this_computer
-            self.data["original_user_id"] = this_user
-        logger.info("current data file updated to %s" % self.data)
+
+        logger.info("current data file updated to %s" % str(self.data))
         self.update()
 
     def save(self):
