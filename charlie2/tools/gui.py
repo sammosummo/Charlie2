@@ -304,6 +304,11 @@ class GUIWidget(QWidget):
         self.test_name_box.activated.connect(self._set_test_name)
         self.test_button.clicked.connect(self.parent().switch_central_widget)
 
+        # layout > tab > test tab > batches
+        self.batch_name_box.addItems([""] + batches_list)
+        self.batch_name_box.activated.connect(self._set_batch)
+        self.batch_button.clicked.connect(self.parent().switch_central_widget)
+
         # layout > notes tab
         self.proband_id_box_2.currentTextChanged.connect(self._notes)
         self.test_name_box_2.currentTextChanged.connect(self._notes)
@@ -420,3 +425,7 @@ class GUIWidget(QWidget):
         self.kwds.test_names = [self.sender().currentText()]
         s = get_docstring_html(self.kwds.test_names[0])
         self.docs_text_box.setText(s)
+
+    def _set_batch(self):
+        """Load a batch file and add tests to test_names."""
+        self.kwds.test_names = get_tests_from_batch(self.sender().currentText())
