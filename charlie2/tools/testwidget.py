@@ -1,7 +1,8 @@
 from collections import defaultdict
+from copy import copy
 from datetime import datetime
 from logging import getLogger
-from .data import SimpleProcedure, SimpleProcedure
+from .data import SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
@@ -71,6 +72,14 @@ class BaseTestWidget(QWidget):
 
         """
         logger.info("stepping forward in test")
+
+        logger.info("testing stopping rule")
+        if len(self.data.data["completed_trials"]) > 0:
+            if self._block_stopping_rule():
+                self._block_stop()
+        else:
+            logger.info("no trials yet completed, so skipping stopping rule")
+
         logger.info("trying to iterate procedure")
         try:
             next(self.data)
@@ -82,6 +91,7 @@ class BaseTestWidget(QWidget):
             else:
                 logger.info("no, running _trial()")
                 self._trial()
+
         except StopIteration:
             logger.warning("failed to iterate (hopefully) bc this is end of test")
             self.safe_close()
@@ -114,11 +124,9 @@ class BaseTestWidget(QWidget):
         """Runs at the start of a new trial. Displays the countdown if first in a new
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
-        if self.block_stopping_rule():
-            self._block_stop()
-        trial = self.data.data["current_trial"]
-        logger.info("current trial looks like %s" % str(dict(trial)))
-        if trial.first_trial_in_block and not self.skip_countdown:
+        t = self.data.data["current_trial"]
+        logger.info("current trial looks like %s" % str(dict(t)))
+        if t.first_trial_in_block and not self.skip_countdown:
             logger.info("countdown requested")
             self._display_countdown()
         self.repaint()
@@ -339,6 +347,7 @@ class BaseTestWidget(QWidget):
         if pos:
             self.move_widget(label, pos)
         label.show()
+        logger.info("showing %s" %s)
         return label
 
     def load_text(self, s):
@@ -663,6 +672,23 @@ class BaseTestWidget(QWidget):
         self.data.skip_current_block('timeout')
         self._next_trial()
 
+    def _block_stopping_rule(self):
+        """This is a little complicated. Because `self.data.data["completed_trials"]`
+        gets updated when the data object is iterated, the previous trial does not get
+        appended to this list until the next one has already started. Stopping rules
+        should be called before this iteration, yet should evaluate all completed
+        trials. Therefore we temporarily edit completed_trials to include current_trial
+        (actually the previous trial, but we are in-between trials at this point). This
+        is almost certainly not the best way to do this, but I don't have the time to
+        restructure everything to fix it.
+
+        """
+        old_completed_trials = copy(self.data.data["completed_trials"])
+        self.data.data["completed_trials"].append(dict(self.data.data["current_trial"]))
+        result = self.block_stopping_rule()
+        self.data.data["completed_trials"] = old_completed_trials
+        return result
+
     def block_stopping_rule(self):
         """Override this method."""
         return False
@@ -671,4 +697,3 @@ class BaseTestWidget(QWidget):
         """End a trial early because stopping rule passed."""
         logger.info("stopping the current block")
         self.data.skip_current_block('stopping rule')
-        self._next_trial()

@@ -182,50 +182,45 @@ class SimpleProcedure(Proband):
     
     def __next__(self):
         """Iterate one trial."""
+        logger.info("iterating one trial")
+
         if len(self.data["remaining_trials"]) == 0:
-            
             logger.info("remaining_trials is empty, test must be completed")
             self.data["test_completed"] = True
-
             logger.info("is there an orphaned current_trial?")
             if self.data["current_trial"] is not None:
                 logger.info("yes, appending to completed_trials")
                 self._append_current_trial()
-
             self.update()
             raise StopIteration
 
         if self.data["current_trial"] is None:
-            
             logger.info("no current_trial, so popping new one from remaining_trials")
             self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
 
         else:
-            
             logger.info("there is a current_trial; what is it?")
             logger.info("current_trial is a %s" % str(type(self.data["current_trial"])))
 
             if isinstance(self.data["current_trial"], Trial):
-
                 logger.info("must have been created in this session, so moving on")
                 self._append_current_trial()
                 logger.info("and popping new one from remaining_trials")
                 self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
 
             elif isinstance(self.data["current_trial"], dict):
-
                 logger.info("must have been loaded from file, so using it")
                 self.data["current_trial"] = Trial(self.data["current_trial"])
 
         self.update()
+
+        logger.info("current_trial looks like %s" % str(self.data["current_trial"]))
         logger.info("should this trial be skipped?")
         if self.data["current_trial"].status == "skipped":
-            logger.info("yes, so recursively iterating again")
+            logger.info("yes, so recursively iterating")
             return self.__next__()
         else:
-            logger.info("no, so returning this trial: %s" % str(
-                self.data["current_trial"]
-            ))
+            logger.info("no, so returning current_trial")
             return self.data["current_trial"]
 
     def _append_current_trial(self):
@@ -274,7 +269,7 @@ class SimpleProcedure(Proband):
             if "block_number" in t:
                 if t["block_number"] == b:
                     self.data["remaining_trials"][i]["status"] = "skipped"
-                    self.data["remaining_trials"][i]["reason_skipped"] = "timeout"
+                    self.data["remaining_trials"][i]["reason_skipped"] = reason
             else:
                 self.data["remaining_trials"][i]["status"] = "skipped"
             logger.debug("trial %s" % str(t))

@@ -49,22 +49,25 @@ __status__ = 'production'
 
 
 from logging import getLogger
-from PyQt5 import QtCore, QtWidgets
 from charlie2.tools.testwidget import BaseTestWidget
-from charlie2.tools.recipes import get_vwm_stimuli
+from charlie2.recipes.verbalworkingmemory import get_vwm_stimuli
 
 
-logging = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
 
     def make_trials(self):
         """For this test, block_type indicates whether this is the forward, backward,
-        lns_prac, or lns blocks."""
-        sequences = get_vwm_stimuli(self.args.language)
+        lns_prac, or lns blocks.
+
+        """
+        sequences = get_vwm_stimuli(self.kwds.language)
         trial_types = ['forward', 'backward', 'lns_prac', 'lns']
-        practices = {'forward': , 'backward', 'lns_prac', 'lns']}
+        practices = {
+            'forward': False, 'backward': False, 'lns_prac': True, 'lns': False,
+        }
         details = []
         for block, sequences_ in enumerate(sequences):
             for trial, sequence in enumerate(sequences_):
@@ -72,22 +75,25 @@ class TestWidget(BaseTestWidget):
                     'block_number': block,
                     'trial_number': trial,
                     'block_type': trial_types[block],
+                    'practice': practices[trial_types[block]],
                     'sequence': str(sequence),
                     'length': len(str(sequence)),
                 })
         return details
 
     def block(self):
-        """Fro this test, display instructions fro experimenter to read out to proband.
+        """For this test, display instructions experimenter to read out to proband.
         If this is the very first trial, additionally display instructions to the
-        proband."""
-        dpct = self.data.proc.current_trial
+        proband.
+
+        """
         self.skip_countdown = True
-        s = self.instructions[5 + dpct.block_number]
+        t = self.data.current_trial
+        s = self.instructions[5 + t.block_number]
         label, btn = self.display_instructions_with_continue_button(s)
 
         # if very first trial, show message to proband
-        if dpct.first_trial_in_test:
+        if t.first_trial_in_test:
             label.hide()
             btn.hide()
             s = self.instructions[4]
@@ -97,17 +103,17 @@ class TestWidget(BaseTestWidget):
 
     def trial(self):
         """For this test, display the GUI."""
-        dpct = self.data.proc.current_trial
+        t = self.data.current_trial
 
         # calculate the corect answer
-        if dpct.block_type == 'forward':
-            answer = dpct.sequence
-        elif dpct.block_type == 'backward':
-            answer = dpct.sequence[::-1]
+        if t.block_type == 'forward':
+            answer = t.sequence
+        elif t.block_type == 'backward':
+            answer = t.sequence[::-1]
         else:
             digits = []
             letters = []
-            for a in dpct.sequence:
+            for a in t.sequence:
                 if a.isdigit():
                     digits.append(a)
                 elif a.isalpha():
@@ -115,10 +121,14 @@ class TestWidget(BaseTestWidget):
             answer = sorted(digits) + sorted(letters)
 
         # instructions and buttons
-        self.display_instructions(self.instructions[9] % '-'.join(dpct.sequence))
+        self.display_instructions(self.instructions[9] % '-'.join(t.sequence))
         corr_button = self._display_continue_button()
         corr_button.setText(self.instructions[10] % '-'.join(answer))
+        corr_button.setFont(self.instructions_font)
         corr_button.resize(corr_button.sizeHint())
+        corr_button.setMinimumHeight(120)
+        corr_button.setMinimumWidth(320)
+
         x = (self.frameGeometry().width() - corr_button.width()) // 2 - 175
         y = self.frameGeometry().height() - (corr_button.height() + 20)
         corr_button.move(x, y)
@@ -126,7 +136,10 @@ class TestWidget(BaseTestWidget):
         corr_button.clicked.connect(self._correct)
         incorr_button = self._display_continue_button()
         incorr_button.setText(self.instructions[11])
+        incorr_button.setFont(self.instructions_font)
         incorr_button.resize(incorr_button.sizeHint())
+        incorr_button.setMinimumHeight(120)
+        incorr_button.setMinimumWidth(320)
         x = (self.frameGeometry().width() - incorr_button.width()) // 2 + 175
         y = self.frameGeometry().height() - (incorr_button.height() + 20)
         incorr_button.move(x, y)
@@ -134,60 +147,74 @@ class TestWidget(BaseTestWidget):
         incorr_button.clicked.connect(self._incorrect)
 
     def _correct(self):
-        dpct = self.data.proc.current_trial
-        if dpct:
-            dpct.correct = True
-            dpct.completed = True
-            dpct.rt = self.trial_time.elapsed()
-            dpct.time_elapsed = self.block_time.elapsed()
+        t = self.data.current_trial
+        if t:
+            t.correct = True
+            t.status = "completed"
+            logger.info("current_trial was completed successfully")
+            logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
 
     def _incorrect(self):
-        dpct = self.data.proc.current_trial
-        if dpct:
-            dpct.correct = False
-            dpct.completed = True
-            dpct.rt = self.trial_time.elapsed()
-            dpct.time_elapsed = self.block_time.elapsed()
+        t = self.data.current_trial
+        if t:
+            t.correct = False
+            t.status = "completed"
+            logger.info("current_trial was completed successfully")
+            logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
 
-    def summarise(self):
-        """See docstring for explanation."""
-        blocks = ['forward', 'backward', 'lns']
-        dic = {}
-        cts = self.data.proc.completed_trials
-        for b in blocks:
-            trials = [t for t in cts if t.block_type == b and t.completed is True]
-            for trial in trials: print(vars(trial))
-            dic_ = self.basic_summary(trials=trials, adjust_time_taken=False)
-            # dic_['responses'] += 1  # This task undercounts responses by 1.
-            if 'accuracy' in dic_: del dic_['accuracy']  # not meaningful
-            if 'time_taken' in dic_: del dic_['time_taken']  # not meaningful
-            trial = [t for t in trials if t.correct][-1]
-            dic_['k'] = trial.length
-            dic.update({f"{b}_{k}": v for k, v in dic_.items()})
-        return dic
+    # def summarise(self):
+    #     """See docstring for explanation."""
+    #     blocks = ['forward', 'backward', 'lns']
+    #     dic = {}
+    #     cts = self.data.proc.completed_trials
+    #     for b in blocks:
+    #         trials = [t for t in cts if t.block_type == b and t.completed is True]
+    #         for trial in trials: print(vars(trial))
+    #         dic_ = self.basic_summary(trials=trials, adjust_time_taken=False)
+    #         # dic_['responses'] += 1  # This task undercounts responses by 1.
+    #         if 'accuracy' in dic_: del dic_['accuracy']  # not meaningful
+    #         if 'time_taken' in dic_: del dic_['time_taken']  # not meaningful
+    #         trial = [t for t in trials if t.correct][-1]
+    #         dic_['k'] = trial.length
+    #         dic.update({f"{b}_{k}": v for k, v in dic_.items()})
+    #     return dic
 
     def mousePressEvent(self, event):
         """We don't want to handle mouse presses in the same way as other tests."""
         pass
 
-    def stopping_rule(self):
+    def summarise(self):
+        """See docstring for explanation."""
+        dic = self.basic_summary(adjust_time_taken=True)
+        return dic
+
+    def block_stopping_rule(self):
         """Checks to see if the proband got both or all three (depending on the
         phase) sequences of the same length incorrect. If True, all sequences
-        of this phase remaining in the control iterable are removed."""
-        dpct = self.data.proc.current_trial
-        if dpct.correct or dpct.block_type == 'lns_prac':
+        of this phase remaining in the control iterable are removed.
+
+        """
+        last_trial = self.data.completed_trials[-1]
+        logger.info("applying stopping rule to this trial: %s" % str(last_trial))
+        if last_trial["practice"]:
+            logger.info("practice trial, so don't apply stopping rule")
             return False
+        if 'lns' in last_trial["block_type"]:
+            logger.info("lns trial, 3 trials per length")
+            n = 3
         else:
-            ct = self.data.proc.completed_trials
-            trials = [t for t in ct if t.block_number == dpct.block_number]
-            trials = [t for t in trials if t.length == dpct.length]
-            if 'lns' in dpct.block_type:
-                n = 2
-            else:
-                n = 1
-            if len(trials) == n and all(not t.correct for t in trials):
-                return True
-            else:
-                return False
+            logger.info("fwd or bwd trial, 2 trials per length")
+            n = 2
+        ct = self.data.completed_trials
+        trials = [t for t in ct if t["block_number"] == last_trial["block_number"]]
+        trials = [t for t in trials if t["length"] == last_trial["length"]]
+        logger.info("%s trials to evaluate: %s" % (len(trials), trials))
+        if len(trials) < n:
+            logger.info("too few trials")
+            return False
+        errs = [t for t in trials if t["correct"] is False]
+        logger.info(logger.info("%s error trials: %s" % (len(errs), errs)))
+        logger.info("number of errors: %s" % len(errs))
+        return True if len(errs) == n else False

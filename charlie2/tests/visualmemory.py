@@ -1,7 +1,7 @@
 """
-==================
-Visual-memory test
-==================
+=============
+Visual memory
+=============
 
 :Status: complete
 :Version: 1.0
@@ -41,12 +41,15 @@ Reference
 
 """
 __version__ = 1.0
-__status__ = 'complete'
+__status__ = 'production'
 
-
+from logging import getLogger
 from math import cos, sin, pi
 from PyQt5.QtGui import QPixmap
 from charlie2.tools.testwidget import BaseTestWidget
+
+
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -66,77 +69,68 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """If this is the first block, simply display instructions."""
-        self.trial_max_time = 15
-        self.block_max_time = 240
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
         """For this trial, show the study and test arrays, and record responses."""
-        dpct = self.data.proc.current_trial
+        t = self.data.current_trial
 
-        # prevent mouse clicks for now
+        logger.info("commencing study phase of trial")
         self.mouse_visible = False
         self.performing_trial = False
+        self.clear_screen(delete=False)
+        self.display_text(self.instructions[5], (0, -225))
+        # if not t.first_trial_in_block:
+        #     self.sleep(1)  # makes it less confusing when the new trial starts
 
-        # clear the screen
-        self.clear_screen()
-        self.sleep(0.5)  # makes it less confusing when the new trial starts
-
-        # display the items
+        logger.info("about to display items")
         self.labels = []
         delta = 2 * pi / 5
         for item in range(5):
-            theta = dpct.theta * 2 * pi + delta * item
+            theta = t.theta * 2 * pi + delta * item
             x = 150 * sin(theta)
             y = 150 * cos(theta)
-            s = "l%i_t%i_i%i.png" % (5, dpct.trial_number, item)
+            s = "l%i_t%i_i%i.png" % (5, t.trial_number, item)
             label = self.display_image(s, (x, y + 75))
             self.labels.append(label)
-        self.sleep(2)
+        self.sleep(3000)
 
-        # hide the items
         [label.hide() for label in self.labels]
-        self.sleep(1)
+        self.sleep(2000)
 
-        # change the target
-        s = "l%i_t%i_i%i_r.png" % (5, dpct.trial_number, 0)
-        pixmap = QPixmap(self.vis_stim_paths[s])
-        self.labels[0].setPixmap(pixmap)
-
-        # display items again
+        s = "l%i_t%i_i%i_r.png" % (5, t.trial_number, 0)
+        self.labels[0].setPixmap(QPixmap(self.vis_stim_paths[s]))
         [label.show() for label in self.labels]
-        self.display_text(self.instructions[5], (0, -225))
 
-        # set up zones
         self.make_zones(l.frameGeometry() for l in self.labels)
-
-        # set target and lures
-        self.target = self.zones[0]
-        self.lures = self.zones[1:]
-
-        # allow mouse clicks again
         self.mouse_visible = True
         self.performing_trial = True
 
+    def mousePressEvent_(self, event):
+        """On mouse click/screen touch, check if it was inside the target square. If so,
+        record the trial as a success and move on. If not, increase misses by 1.
+
+        """
+        ix = [event.pos() in z for z in self.zones]
+        t = self.data.current_trial
+        if any(ix):
+            t.rsp = next(i for i, v in enumerate(ix) if v)
+            t.correct = t.rsp == 0
+            self.data.current_trial.status = "completed"
+
+    def block_stopping_rule(self):
+        """After five trials completed, exit if at chance."""
+        trials = self.data.completed_trials
+        logger.debug(str(trials))
+        if len(trials) > 5:
+            correct = [t for t in trials if t["correct"]]
+            logger.debug(str(correct))
+            logger.debug(str(len(correct) / len(trials)))
+            return True if len(correct) / len(trials) <= .2 else False
+        else:
+            return False
+
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary()
-        dic['k'] = dic['accuracy'] * 5
+        dic = self.basic_summary(adjust_time_taken=True)
         return dic
-
-    def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the correct item."""
-        dpct = self.data.proc.current_trial
-        dpct.correct = event.pos() in self.target
-        dpct.completed = any(event.pos() in z for z in self.zones)
-        if dpct.completed:
-            dpct.rsp = self.zones.index([z for z in self.zones if event.pos() in z][0])
-
-    def stopping_rule(self):
-        """After five trials completed, exit if at chance."""
-        if len(self.data.proc.completed_trials) > 5:
-            all_trials = self.data.proc.completed_trials
-            completed = [t for t in all_trials if not t.skipped]
-            correct = [t for t in completed if t.correct]
-            pc = len(correct) / len(all_trials)
-            return True if pc <= .2 else False
