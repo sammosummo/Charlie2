@@ -89,7 +89,7 @@ def _get_aud_stim_paths(s):
     """Return dict containing paths to visual stimuli."""
     p = pj(aud_stim_path, s)
     try:
-        return {n: pj(p, n) for n in ls(p) if n.endswith(".png")}
+        return {n: pj(p, n) for n in ls(p) if n.endswith(".wav")}
     except FileNotFoundError:
         return {}
 

@@ -203,16 +203,16 @@ class SimpleProcedure(Proband):
             self.data["completed_trials"] = []
 
         logger.info("after fully initialising, object looks like this: %s" % self.data)
-        logger.debug("completed:", self.data["completed_trials"])
-        logger.debug("current  :", self.data["current_trial"])
-        try:
-            logger.debug(
-                "same     :",
-                self.data["current_trial"] == self.data["completed_trials"][-1]
-            )
-        except:
-            pass
-        logger.debug("remaining:", self.data["remaining_trials"])
+        # logger.debug("completed:", self.data["completed_trials"])
+        # logger.debug("current  :", self.data["current_trial"])
+        # try:
+        #     logger.debug(
+        #         "same     :",
+        #         self.data["current_trial"] == self.data["completed_trials"][-1]
+        #     )
+        # except:
+        #     pass
+        # logger.debug("remaining:", self.data["remaining_trials"])
         self.update()
 
     def __iter__(self):

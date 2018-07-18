@@ -3,9 +3,8 @@
 Trail making
 ============
 
-:Status: complete
 :Version: 2.0
-:Source: http://github.com/sammosummo/Charlie2/tests/trails.py
+:Source: http://github.com/sammosummo/Charlie2/tests/make_trail_trials.py
 
 Description
 ===========
@@ -51,13 +50,12 @@ References
 
 """
 __version__ = 2.0
-__status__ = "production"
 
 
 from logging import getLogger
 from PyQt5.QtGui import QPainter, QPen
 from charlie2.tools.testwidget import BaseTestWidget
-from charlie2.recipes.trails import trails
+from charlie2.recipes.trails import make_trail_trials
 
 
 logging = getLogger(__name__)
@@ -71,12 +69,16 @@ class TestWidget(BaseTestWidget):
         blaze position (where a correct click/press should go), and the glyph (to load
         the correct image). This was complicated to generate and required many manual
         edits, so was all done in a different script and simply imported here."""
-        return trails()
+        return make_trail_trials()
 
     def block(self):
         """For this test, display instructions, pre-load the images, set up zones, and
         create a painter widget for drawing the trail."""
         b = self.data.current_trial.block_number
+
+        if b == 0:
+            self.preload_feedback_sounds()
+
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
         # find all trials in this block
@@ -96,18 +98,25 @@ class TestWidget(BaseTestWidget):
             img.hide()
             self.rects.append(img.frameGeometry())
 
+        self.tick = self.display_image("tick.png", positions[0])
+        self.tick.hide()
+
         # make zones
         self.make_zones(self.rects)
 
     def trial(self):
         """For this test, just listen for a mouse press within the target blaze."""
         self.clear_screen(delete=False)
+        t = self.data.current_trial
 
         # show the blazes
-        [img.show() for img in self.images]
+        if not t.first_trial_in_block:
+            [img.show() for img in self.images + [self.tick]]
+        else:
+            [img.show() for img in self.images]
 
         # reset click/press counters
-        t = self.data.current_trial
+
         t.attempts = 0
         t.errors = 0
 
@@ -121,6 +130,8 @@ class TestWidget(BaseTestWidget):
         if any(ix):
             logging.info("clicked within a blaze")
             t.correct = next(i for i, v in enumerate(ix) if v) == t.trial_number
+            if self.data.current_trial.practice:
+                self.play_feedback_sound(t.correct)
             if t.correct:
                 logging.info("clicked within the correct blaze")
                 self.data.current_trial.status = "completed"

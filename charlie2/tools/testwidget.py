@@ -6,6 +6,7 @@ from .data import SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 
 
@@ -28,6 +29,7 @@ class BaseTestWidget(QWidget):
 
         self.vis_stim_paths = get_vis_stim_paths(self.kwds["test_name"])
         self.aud_stim_paths = get_aud_stim_paths(self.kwds["test_name"])
+        self.feedback_sounds = []
         self.instructions_font = QFont("Helvetica", 26)
         self.test_time = QTime()
         self.block_time = QTime()
@@ -713,3 +715,13 @@ class BaseTestWidget(QWidget):
         """End a trial early because stopping rule passed."""
         logger.info("stopping the current block")
         self.data.skip_current_block("stopping rule")
+
+    def preload_feedback_sounds(self):
+        """This should prevent lags when playing sounds."""
+        for name in ["incorrect.wav", "correct.wav"]:
+            self.feedback_sounds.append(QSound(self.aud_stim_paths[name]))
+
+    def play_feedback_sound(self, correct):
+        """Play either the correct sound if true or incorrect sound if false."""
+        self.feedback_sounds[correct].play()
+

@@ -1,4 +1,4 @@
-def trails():
+def make_trail_trials():
     """Details of the trials from charlie v2 trail-making test (shorter).
 
     """
