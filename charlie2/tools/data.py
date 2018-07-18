@@ -34,14 +34,7 @@ default_kwds = {
     "notes": "Add copious notes about the proband here...",
     "gui": True,
 }
-for_probands = {
-    "proband_id",
-    "age",
-    "sex",
-    "other_ids",
-    "notes",
-    "language",
-}
+for_probands = {"proband_id", "age", "sex", "other_ids", "notes", "language"}
 for_tests = {
     "proband_id",
     "test_name",

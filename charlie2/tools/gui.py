@@ -117,8 +117,6 @@ class GUIWidget(QWidget):
         self.notes_widget.proband_id_box.clear()
         self.notes_widget.proband_id_box.addItems(sorted(proband_pickles()))
 
-
-
     #     # layout > tab > notes tab
     #     self.notes_tab = QWidget()
     #     self.tabs.addTab(self.notes_tab, self.instructions[42])

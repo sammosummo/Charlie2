@@ -50,28 +50,7 @@ class TestWidget(BaseTestWidget):
         each trial.
 
         """
-        pos = [
-            (159, -249),
-            (-65, -329),
-            (-392, 313),
-            (-235, -16),
-            (192, 18),
-            (460, -82),
-            (96, -319),
-            (186, -88),
-            (-10, 119),
-            (60, 87),
-            (122, 91),
-            (398, -326),
-            (379, 270),
-            (-205, -64),
-            (-412, 313),
-            (-225, 208),
-            (-112, -78),
-            (-290, -231),
-            (-61, 45),
-            (150, -330),
-        ]
+        pos = [(263, -23), (-190, 313), (337, -240), (399, -14), (314, 54), (-346, 186), (-104, 157), (-10, -110), (-273, 149), (-420, -197), (3, -184), (294, 1), (60, 298), (335, 73), (-7, -313), (-134, 296), (475, -241), (75, 278), (118, -139), (310, 173)]
         return [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
 
     def block(self):
@@ -79,6 +58,7 @@ class TestWidget(BaseTestWidget):
         instructions and initialise the block timeout timer.
 
         """
+        self.mouse_visible = False
         self.block_deadline = 60 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 

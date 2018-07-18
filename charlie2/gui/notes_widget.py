@@ -81,5 +81,3 @@ class NotesWidget(QWidget):
     def _reset(self):
         """Reset notes to the saved value."""
         self.notes_box.setPlainText(self.proband.data["notes"])
-
-
