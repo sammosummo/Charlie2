@@ -57,7 +57,7 @@ class TestWidget(BaseTestWidget):
         instructions and initialise the block timeout timer.
 
         """
-        self.mouse_visible = False
+        # self.mouse_visible = False
         self.block_deadline = 60 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 

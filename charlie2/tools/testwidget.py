@@ -695,10 +695,14 @@ class BaseTestWidget(QWidget):
         restructure everything to fix it.
 
         """
-        old_completed_trials = copy(self.data.data["completed_trials"])
-        self.data.data["completed_trials"].append(dict(self.data.data["current_trial"]))
-        result = self.block_stopping_rule()
-        self.data.data["completed_trials"] = old_completed_trials
+        if self.data.data["current_trial"] is not None:
+            current_trial = dict(self.data.data["current_trial"])
+            old_completed_trials = copy(self.data.data["completed_trials"])
+            self.data.data["completed_trials"].append(current_trial)
+            result = self.block_stopping_rule()
+            self.data.data["completed_trials"] = old_completed_trials
+        else:
+            result = self.block_stopping_rule()
         return result
 
     def block_stopping_rule(self):

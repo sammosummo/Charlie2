@@ -1,6 +1,7 @@
 """Defines custom data structures.
 
 """
+from copy import copy
 from datetime import datetime
 from getpass import getuser
 from logging import getLogger
@@ -77,7 +78,12 @@ class Trial(dict):
         assert isinstance(self.trial_number, int), "trial_number must be an int"
 
         logger.info("adding default attributes")
-        defaults = {"block_number": 0, "status": "pending", "practice": False}
+        defaults = {
+            "block_number": 0,
+            "status": "pending",
+            "practice": False,
+            "resumed_from_here": False
+        }
         for k, v in defaults.items():
             if k not in self.__dict__:
                 self.__dict__[k] = v
@@ -181,6 +187,14 @@ class SimpleProcedure(Proband):
         if exists(self.path):
             logger.info("since file already exists, setting test_resumed to True")
             self.data["test_resumed"] = True
+            if self.data["test_completed"] is False:
+                logger.info("add current_trial back to remaining_trials list")
+                trial = copy(self.data["current_trial"])
+                trial["resumed_from_here"] = True
+                trial["status"] = "pending"
+                self.data["remaining_trials"] = [trial] + self.data["remaining_trials"]
+                self.data["current_trial"] = None
+
         else:
             self.data["test_resumed"] = False
             self.data["test_completed"] = False
@@ -189,7 +203,16 @@ class SimpleProcedure(Proband):
             self.data["completed_trials"] = []
 
         logger.info("after fully initialising, object looks like this: %s" % self.data)
-        logger.info("checking that trials exist")
+        logger.debug("completed:", self.data["completed_trials"])
+        logger.debug("current  :", self.data["current_trial"])
+        try:
+            logger.debug(
+                "same     :",
+                self.data["current_trial"] == self.data["completed_trials"][-1]
+            )
+        except:
+            pass
+        logger.debug("remaining:", self.data["remaining_trials"])
         self.update()
 
     def __iter__(self):
