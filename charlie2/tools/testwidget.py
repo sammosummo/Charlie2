@@ -535,11 +535,10 @@ class BaseTestWidget(QWidget):
             dic["mean_rt_correct_ms"] = 0
 
         if "adjust" in kwds:
-            if len(skipped_trials) == 0:
-                all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
-                mean_rt = sum(all_rts) / len(all_rts)
-                est_extra_time = mean_rt * len(skipped_trials)
-                dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
+            all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
+            mean_rt = sum(all_rts) / len(all_rts)
+            est_extra_time = mean_rt * len(skipped_trials)
+            dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
 
         if "prefix" in kwds:
             p = kwds["prefix"] + '_'
