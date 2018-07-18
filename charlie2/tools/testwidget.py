@@ -30,6 +30,7 @@ class BaseTestWidget(QWidget):
         self.vis_stim_paths = get_vis_stim_paths(self.kwds["test_name"])
         self.aud_stim_paths = get_aud_stim_paths(self.kwds["test_name"])
         self.feedback_sounds = []
+        self._preload_feedback_sounds()
         self.instructions_font = QFont("Helvetica", 26)
         self.test_time = QTime()
         self.block_time = QTime()
@@ -128,6 +129,7 @@ class BaseTestWidget(QWidget):
         """Runs at the start of a new trial. Displays the countdown if first in a new
         block, checks if very last trial, flags the fact that a trial is in progress,
         updates the results list."""
+        logger.info("called _trial()")
         t = self.data.data["current_trial"]
         logger.info("current trial looks like %s" % str(dict(t)))
         if t.first_trial_in_block and not self.skip_countdown:
@@ -294,6 +296,29 @@ class BaseTestWidget(QWidget):
         logger.info("now waiting for continue button to be pressed")
         return label, button
 
+    def display_instructions_with_space_bar(self, message):
+        """Display instructions, allowing the space bar to continue.
+
+        Args:
+            message (str): Message to display.
+
+        Returns:
+            label (QLabel): Object containing the message.
+
+        """
+        label = self.display_instructions(message)
+        logger.info("now waiting for space bar to be pressed")
+        self._keyReleaseEvent = copy(self.keyReleaseEvent)
+        self.keyReleaseEvent = self._space_bar_continue
+        label.setFocus()
+        return label
+
+    def _space_bar_continue(self, event):
+        logger.info("space bar pressed")
+        if event.key() == Qt.Key_Space:
+            self._trial()
+        self.keyReleaseEvent = self._keyReleaseEvent
+
     def load_image(self, s):
         """Return an image.
 
@@ -450,7 +475,6 @@ class BaseTestWidget(QWidget):
             w (:obj:`list` of :obj:`QLabel`): The created labels.
 
         """
-        print(instructions)
         widgets = self.load_keyboard_arrow_keys(instructions, y)
         [w.show() for w in widgets]
         return widgets
@@ -648,6 +672,8 @@ class BaseTestWidget(QWidget):
             if t.status == "completed":
                 logger.info("current_trial was completed successfully")
                 logger.info("(final version) of current_trial looks like %s" % str(t))
+                if t.practice is True:
+                    self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def keyReleaseEvent(self, event):
@@ -661,6 +687,8 @@ class BaseTestWidget(QWidget):
             if self.data.data["current_trial"].status == "completed":
                 logger.info("current_trial was completed successfully")
                 logger.info("(final version) of current_trial looks like %s" % str(t))
+                if t.practice is True:
+                    self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def _next_trial(self):
@@ -717,7 +745,7 @@ class BaseTestWidget(QWidget):
         logger.info("stopping the current block")
         self.data.skip_current_block("stopping rule")
 
-    def preload_feedback_sounds(self):
+    def _preload_feedback_sounds(self):
         """This should prevent lags when playing sounds."""
         for name in ["incorrect.wav", "correct.wav"]:
             self.feedback_sounds.append(QSound(self.aud_stim_paths[name]))

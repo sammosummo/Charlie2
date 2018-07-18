@@ -89,7 +89,7 @@ class TestWidget(BaseTestWidget):
             logger.info("block deadline set to None")
             self.block_deadline = None
         b = self.data.current_trial.block_number
-        self.display_instructions_with_continue_button(self.instructions[4 + b])
+        self.display_instructions_with_space_bar(self.instructions[4 + b])
         self.symbols = [self.load_image(f"sym{i}.png") for i in range(1, 10)]
         self.digits = [self.load_text(str(i)) for i in range(1, 10)]
         self.xs = range(-300, 350, 75)

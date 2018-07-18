@@ -77,8 +77,8 @@ class TestWidget(BaseTestWidget):
         self.block_deadline = 240 * 1000
         b = self.data.current_trial.block_number
 
-        if b == 0:
-            self.preload_feedback_sounds()
+        # if b == 0:
+        #     self.preload_feedback_sounds()
 
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
@@ -131,8 +131,8 @@ class TestWidget(BaseTestWidget):
         if any(ix):
             logger.info("clicked within a blaze")
             t.correct = next(i for i, v in enumerate(ix) if v) == t.trial_number
-            if self.data.current_trial.practice:
-                self.play_feedback_sound(t.correct)
+            # if self.data.current_trial.practice:
+            #     self.play_feedback_sound(t.correct)
             if t.correct:
                 logger.info("clicked within the correct blaze")
                 self.data.current_trial.status = "completed"
