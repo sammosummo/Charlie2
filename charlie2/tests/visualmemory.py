@@ -104,18 +104,15 @@ class TestWidget(BaseTestWidget):
         self.mouse_visible = False
         self.performing_trial = False
         self.clear_screen(delete=False)
-        self.display_text(self.instructions[5], (0, -225))
-        # if not t.first_trial_in_block:
-        #     self.sleep(1)  # makes it less confusing when the new trial starts
 
         logger.info("about to display items")
         self.labels = []
-        delta = 2 * pi / 5
-        for item in range(5):
+        delta = 2 * pi / 4
+        for item in range(4):
             theta = t.theta * 2 * pi + delta * item
             x = 150 * sin(theta)
             y = 150 * cos(theta)
-            s = "l%i_t%i_i%i.png" % (5, t.trial_number, item)
+            s = "l%i_t%i_i%i.png" % (4, t.trial_number, item)
             label = self.display_image(s, (x, y + 75))
             self.labels.append(label)
         self.sleep(3000)
@@ -123,7 +120,7 @@ class TestWidget(BaseTestWidget):
         [label.hide() for label in self.labels]
         self.sleep(2000)
 
-        s = "l%i_t%i_i%i_r.png" % (5, t.trial_number, 0)
+        s = "l%i_t%i_i%i_r.png" % (4, t.trial_number, 0)
         self.labels[0].setPixmap(QPixmap(self.vis_stim_paths[s]))
         [label.show() for label in self.labels]
 
@@ -147,15 +144,16 @@ class TestWidget(BaseTestWidget):
         """After five trials completed, exit if at chance."""
         trials = self.data.completed_trials
         logger.debug(str(trials))
-        if len(trials) > 5:
+        if len(trials) > 4:
             correct = [t for t in trials if t["correct"]]
             logger.debug(str(correct))
             logger.debug(str(len(correct) / len(trials)))
-            return True if len(correct) / len(trials) <= .2 else False
+            return True if len(correct) / len(trials) <= .25 else False
         else:
             return False
 
     def summarise(self):
         """See docstring for explanation."""
         dic = self.basic_summary(adjust_time_taken=True)
+        dic["k"] = dic["accuracy"] * 4
         return dic
