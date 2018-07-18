@@ -84,7 +84,8 @@ class TestWidget(BaseTestWidget):
         dic = self.basic_summary(adjust=True)
         logger.info("changing what is meant by accuracy for this task")
         if dic["completed_trials"] > 0:
-            attempts = sum(t["attempts"] for t in self.data.completed_trials)
+            trials = [t for t in self.data.completed_trials if "attempts" in t]
+            attempts = sum(t["attempts"] for t in trials)
             denom = dic["completed_trials"] + attempts
             dic["accuracy"] = dic["correct_trials"] / denom
         else:
