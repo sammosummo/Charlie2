@@ -11,32 +11,40 @@ def make_trail_trials():
         + ([True] * 5)
         + ([False] * 20)
     )
+    block_types = (
+            (["number"] * 5)
+            + (["number"] * 20)
+            + (["letter"] * 5)
+            + (["letter"] * 20)
+            + (["sequence"] * 5)
+            + (["sequence"] * 20)
+    )
     trials = (list(range(5)) + list(range(20))) * 3
     blaze_positions = [
         (-219, -85),
         (357, 276),
-        (320, -207),
+        (350, -237),
         (124, -121),
         (31, -267),
         (-243, -45),
         (237, 158),
-        (-144, 183),
+        (-344, 333),  # move this
         (82, -111),
         (342, -112),
-        (189, -268),
+        (189, -308),  # move this
         (-193, -195),
         (-330, -162),
         (-39, -28),
-        (112, -203),
+        (112, -273),  # move this
         (-162, -276),
         (-128, -142),
-        (157, 9),
+        (207, 79),  # move this
         (369, 0),
-        (366, 68),
-        (320, 243),
+        (366, 168),  # move this
+        (320, 243),  # move this
         (-4, 132),
-        (127, -52),
-        (-9, -127),
+        (127, -22),  # move this
+        (-9, -127), # move this
         (194, -166),
         (-262, -17),
         (-40, 101),
@@ -69,15 +77,15 @@ def make_trail_trials():
         (-337, 91),
         (79, -178),
         (-291, -108),
-        (-355, 5),
+        (-385, 5),
         (-357, -266),
         (273, -252),
         (279, -44),
-        (284, 194),
+        (284, 294),
         (333, 18),
         (117, 23),
         (-246, -49),
-        (-153, -49),
+        (3, -49),
         (177, -167),
         (-81, 95),
         (164, 164),
@@ -119,7 +127,9 @@ def make_trail_trials():
         ]
     )
     glyphs = [str(g) for g in glyphs]
-    details = list(zip(blocks, practices, trials, blaze_positions, glyphs))
-    names = ["block_number", "practice", "trial_number", "blaze_position", "glyph"]
+    details = list(zip(blocks, practices, block_types, trials, blaze_positions, glyphs))
+    names = [
+        "block_number", "practice", "block_type", "trial_number", "blaze_position", "glyph"
+    ]
     control = [dict(zip(names, d)) for d in details]
     return control

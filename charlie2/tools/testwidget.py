@@ -509,6 +509,7 @@ class BaseTestWidget(QWidget):
             total_trials = self.data.data["completed_trials"]
         else:
             total_trials = kwds["trials"]
+        total_trials = [t for t in total_trials if not t["practice"]]
         completed_trials = [t for t in total_trials if t["status"] == "completed"]
         skipped_trials = [t for t in total_trials if t["status"] == "skipped"]
         correct_trials = [t for t in completed_trials if t["correct"]]

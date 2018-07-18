@@ -58,7 +58,7 @@ from charlie2.tools.testwidget import BaseTestWidget
 from charlie2.recipes.trails import make_trail_trials
 
 
-logging = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
@@ -74,6 +74,7 @@ class TestWidget(BaseTestWidget):
     def block(self):
         """For this test, display instructions, pre-load the images, set up zones, and
         create a painter widget for drawing the trail."""
+        self.block_deadline = 240 * 1000
         b = self.data.current_trial.block_number
 
         if b == 0:
@@ -128,19 +129,19 @@ class TestWidget(BaseTestWidget):
         ix = [event.pos() in z for z in self.zones]
         t = self.data.current_trial
         if any(ix):
-            logging.info("clicked within a blaze")
+            logger.info("clicked within a blaze")
             t.correct = next(i for i, v in enumerate(ix) if v) == t.trial_number
             if self.data.current_trial.practice:
                 self.play_feedback_sound(t.correct)
             if t.correct:
-                logging.info("clicked within the correct blaze")
+                logger.info("clicked within the correct blaze")
                 self.data.current_trial.status = "completed"
             else:
-                logging.info("clicked within a different blaze")
+                logger.info("clicked within a different blaze")
                 t.errors += 1
                 t.attempts += 1
         else:
-            logging.info("clicked outside a blaze")
+            logger.info("clicked outside a blaze")
             t.attempts += 1
 
     def paintEvent(self, _):
@@ -159,5 +160,18 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
+        dic = {}
+        blocks = set(t["block_type"] for t in self.data.completed_trials)
+        for b in blocks:
+            trials = [t for t in self.data.completed_trials if t["block_type"] == b]
+            dic_ = self.basic_summary(adjust=True, trials=trials, prefix=b)
+            logger.info("changing what is meant by accuracy for this task")
+            if dic_[b + "_completed_trials"] > 0:
+                trials = [t for t in self.data.completed_trials if "attempts" in t]
+                errors = sum(t["errors"] for t in trials)
+                denom = dic_[b + "_completed_trials"] + errors
+                dic_[b + "_accuracy"] = dic_[b + "_completed_trials"] / denom
+            else:
+                dic_[b + "accuracy"] = 0
+            dic.update(dic_)
         return dic
