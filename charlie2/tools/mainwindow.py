@@ -1,7 +1,6 @@
 """Define the main Qt widget used for running tests.
 
 """
-from copy import copy
 from logging import getLogger
 from sys import exit
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
@@ -11,6 +10,7 @@ from .paths import get_test
 
 
 logger = getLogger(__name__)
+window_size = (1000, 750)
 
 
 class MainWindow(QMainWindow):
@@ -93,8 +93,8 @@ class MainWindow(QMainWindow):
 
             if not self.kwds["fullscreen"] or self.kwds["platform"] == "darwin":
                 logger.info("showing the window in normal mode")
-                self.setFixedSize(1000, 750)
-                widget.setFixedSize(1000, 750)
+                self.setFixedSize(*window_size)
+                widget.setFixedSize(*window_size)
                 self._centre()
                 self.showNormal()
 
