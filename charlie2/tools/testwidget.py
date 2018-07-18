@@ -141,15 +141,19 @@ class BaseTestWidget(QWidget):
     def safe_close(self):
         """Safely clean up and save the data at the end of the test."""
         logger.info("called safe_close()")
-        logger.info("saving a csv of the completed trials")
-        self.data.save_completed_trials_as_csv()
-        logger.info("trying to summarise performance on the test")
-        summary = self.summarise()
-        logger.info("updating data object to include summary")
-        self.data.data["summary"] = summary
-        self.data.save()
-        logger.info("saving the summary")
-        self.data.save_summary()
+        if self.data.data["test_completed"] is True:
+            logger.info("saving a csv of the completed trials")
+            self.data.save_completed_trials_as_csv()
+            logger.info("trying to summarise performance on the test")
+            summary = self.summarise()
+            logger.info("updating data object to include summary")
+            self.data.data["summary"] = summary
+            self.data.save()
+            logger.info("saving the summary")
+            self.data.save_summary()
+        else:
+            self.data.save()
+            logger.info("no trials completed, so don't try to summarise")
         logger.info("all done, so switching the central widget")
         self.parent().switch_central_widget()
 
@@ -508,7 +512,6 @@ class BaseTestWidget(QWidget):
         correct_trials = [t for t in completed_trials if t["correct"]]
         rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
         first_trial = total_trials[0]
-        last_trial = completed_trials[-1]
 
         dic = {
             "total_trials": len(total_trials),
@@ -519,29 +522,31 @@ class BaseTestWidget(QWidget):
         }
 
         if len(completed_trials) > 0:
+            last_trial = completed_trials[-1]
             dic["began_timestamp"] = str(first_trial["timestamp"])
             dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
             dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
             dic["finished_timestamp"] = str(last_trial["timestamp"])
+            dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
+
+            if "adjust" in kwds:
+                all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
+                mean_rt = sum(all_rts) / len(all_rts)
+                est_extra_time = mean_rt * len(skipped_trials)
+                dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
         else:
             dic["began_timestamp"] = None
-
-
-        if len(correct_trials) > 0:
-            dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
-        else:
+            dic["duration_ms"] = None
+            dic["total_duration_ms"] = None
+            dic["finished_timestamp"] = None
             dic["mean_rt_correct_ms"] = 0
 
-        if "adjust" in kwds:
-            all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
-            mean_rt = sum(all_rts) / len(all_rts)
-            est_extra_time = mean_rt * len(skipped_trials)
-            dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
+            if "adjust" in kwds:
+                dic['duration_ms_adjusted'] = None
 
         if "prefix" in kwds:
             p = kwds["prefix"] + '_'
             dic = {p + k: v for k, v in dic.items() if k != "total_duration_ms"}
-
 
         return dic
 

@@ -207,6 +207,7 @@ class SimpleProcedure(Proband):
             if self.data["current_trial"] is not None:
                 logger.info("yes, appending to completed_trials")
                 self._append_current_trial()
+            self.data["test_completed"] = True
             self.update()
             raise StopIteration
 
