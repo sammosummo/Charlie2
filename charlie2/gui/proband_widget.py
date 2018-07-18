@@ -3,6 +3,7 @@
 """
 from copy import copy
 from logging import getLogger
+from os import remove
 from re import match
 from PyQt5.QtWidgets import (
     QWidget,
@@ -86,7 +87,7 @@ class ProbandWidget(QWidget):
         self.addinf_groupbox_grid.addWidget(self.addinf_otherids_rmbtn, 6, 1)
 
         # layout > save group box
-        self.save_groupbox = QGroupBox(self.instructions[30])
+        self.save_groupbox = QGroupBox(self.instructions[50])
         self.layout.addWidget(self.save_groupbox)
         self.save_gird = QGridLayout()
         self.save_groupbox.setLayout(self.save_gird)
@@ -94,6 +95,8 @@ class ProbandWidget(QWidget):
         # layout > save group box > save button
         self.save_button = QPushButton(self.instructions[30])
         self.save_gird.addWidget(self.save_button, 0, 0)
+        self.delete_button = QPushButton(self.instructions[49])
+        self.save_gird.addWidget(self.delete_button, 1, 0)
 
         # layout > stretch factor
         self.layout.addStretch(1)
@@ -107,7 +110,7 @@ class ProbandWidget(QWidget):
         self.addinf_otherids_addbtn.clicked.connect(self._add_other_id)
         self.addinf_otherids_rmbtn.clicked.connect(self._rm_other_id)
         self.save_button.clicked.connect(self._save_proband)
-
+        self.delete_button.clicked.connect(self._delete_proband)
         # connect and update
         self._update()
         self._connect()
@@ -187,6 +190,12 @@ class ProbandWidget(QWidget):
             self._disupcon()
         else:
             self._invalid_id()
+
+    def _delete_proband(self):
+        """Delete the ID."""
+        if self.proband.proband_id in proband_pickles():
+            remove(self.proband.path)
+            self._set_proband(proband_pickles()[0])
 
     @staticmethod
     def _valid_proband_id(s):

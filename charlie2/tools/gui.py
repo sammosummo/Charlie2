@@ -78,7 +78,7 @@ class GUIWidget(QWidget):
         self.proband_tab = QTabWidget()
         self.proband_tab_vbox = QVBoxLayout()
         self.proband_tab.setLayout(self.proband_tab_vbox)
-        self.proband_widget = ProbandWidget(self)  # TODO: explicitly set parent?
+        self.proband_widget = ProbandWidget(self)
         self.proband_tab_vbox.addWidget(self.proband_widget)
         _w = self.proband_widget.sizeHint().width() + 20
         _h = self.proband_widget.sizeHint().height()
@@ -89,7 +89,7 @@ class GUIWidget(QWidget):
         self.test_tab = QTabWidget()
         self.test_tab_vbox = QVBoxLayout()
         self.test_tab.setLayout(self.test_tab_vbox)
-        self.test_widget = TestWidget(self)  # TODO: explicitly set parent?
+        self.test_widget = TestWidget(self)
         self.test_tab_vbox.addWidget(self.test_widget)
         _w = self.test_widget.sizeHint().width() + 20
         _h = self.test_widget.sizeHint().height()
@@ -100,12 +100,24 @@ class GUIWidget(QWidget):
         self.notes_tab = QTabWidget()
         self.notes_tab_vbox = QVBoxLayout()
         self.notes_tab.setLayout(self.notes_tab_vbox)
-        self.notes_widget = NotesWidget(self)  # TODO: explicitly set parent?
+        self.notes_widget = NotesWidget(self)
         self.notes_tab_vbox.addWidget(self.notes_widget)
         _w = self.notes_widget.sizeHint().width() + 20
         _h = self.notes_widget.sizeHint().height()
         self.notes_tab.setMinimumSize(_w, _h)
         self.tabs.addTab(self.notes_tab, self.instructions[42])
+
+        # connect tab changing to method
+        self.tabs.currentChanged.connect(self._update_proband_lists)
+
+    def _update_proband_lists(self):
+        """The Tests and Notes tabs have proband boxes that need to be updated."""
+        self.test_widget.proband_id_box.clear()
+        self.test_widget.proband_id_box.addItems(["TEST"] + sorted(proband_pickles()))
+        self.notes_widget.proband_id_box.clear()
+        self.notes_widget.proband_id_box.addItems(sorted(proband_pickles()))
+
+
 
     #     # layout > tab > notes tab
     #     self.notes_tab = QWidget()

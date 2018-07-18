@@ -9,15 +9,14 @@ from pickle import load, dump
 from socket import gethostname
 from sys import platform
 import pandas as pd
-from .paths import proband_path, test_data_path, csv_path, summaries_path
+from .paths import proband_path, test_data_path, csv_path, summaries_path, tests_list
 
 
 logger = getLogger(__name__)
 forbidden_ids = {"TEST", ""}
 this_user = getuser()
 this_computer = gethostname()
-
-default_kwds = {  # default values for all useful keywords
+default_kwds = {
     "proband_id": "TEST",
     "batch_name": None,
     "test_name": None,
@@ -33,9 +32,9 @@ default_kwds = {  # default values for all useful keywords
     "user_id": this_user,
     "platform": platform,
     "notes": "Add copious notes about the proband here...",
+    "gui": True,
 }
-
-valid_for_probands = {  # keywords that should be stored for a given proband
+for_probands = {
     "proband_id",
     "age",
     "sex",
@@ -43,8 +42,7 @@ valid_for_probands = {  # keywords that should be stored for a given proband
     "notes",
     "language",
 }
-
-valid_for_tests = {  # keywords that should be stored for a given test
+for_tests = {
     "proband_id",
     "test_name",
     "language",
@@ -55,6 +53,17 @@ valid_for_tests = {  # keywords that should be stored for a given test
     "user_id",
     "platform",
 }
+for_mainwindow = {
+    "batch_name",
+    "test_name",
+    "test_names",
+    "language",
+    "fullscreen",
+    "resume",
+    "autobackup",
+    "gui",
+}
+defaults_for_mainwidow = {k: v for k, v in default_kwds.items() if k in for_mainwindow}
 
 
 class Trial(dict):
@@ -106,7 +115,7 @@ class Proband:
 
         """
         logger.info("initialising a proband data object with kwds: %s" % str(kwds))
-        self.data = {k: v for k, v in default_kwds.items() if k in valid_for_probands}
+        self.data = {k: v for k, v in default_kwds.items() if k in for_probands}
         self.data.update(kwds)
         self.data["filename"] = self.data["proband_id"] + ".pkl"
         self.data["path"] = pj(proband_path, self.data["filename"])
@@ -161,17 +170,10 @@ class SimpleProcedure(Proband):
 
         """
         logger.info("initialising a TestData object with kwds: %s" % str(kwds))
-        assert "proband_id" in kwds, "Missing proband_id keyword argument"
-        assert "test_name" in kwds, "Missing test_name keyword argument"
-
-        logger.info("initialising (and saving) a corresponding proband data object")
-        Proband(proband_id=kwds["proband_id"]).save()
-
-        logger.info("updating internal dict within initial and default vals")
-        self.data = {}
+        self.data = {k: v for k, v in default_kwds.items() if k in for_probands}
         self.data.update(kwds)
-        self.data["current_computer_id"] = this_computer
-        self.data["current_user_id"] = this_user
+        assert self.data["test_name"] in tests_list, "test_name not recognised"
+
         self.data["filename"] = (
             self.data["proband_id"] + "_" + self.data["test_name"] + ".pkl"
         )
@@ -181,29 +183,20 @@ class SimpleProcedure(Proband):
             ".pkl", ".csv"
         )
         self.update()
-
-        logger.info("loading pre-existing info")
         self.load()
+
         if exists(self.path):
             logger.info("since file already exists, setting test_resumed to True")
             self.data["test_resumed"] = True
         else:
-            logger.info("since file doesn't exist, setting test_resumed to False")
             self.data["test_resumed"] = False
-            logger.info("since file doesn't exist, setting test_completed to False")
             self.data["test_completed"] = False
-            logger.info("since file doesn't exist, setting empty remaining_trials")
             self.data["remaining_trials"] = []
-            logger.info("since file doesn't exist, setting current_trial to None")
             self.data["current_trial"] = None
-            logger.info("since file doesn't exist, setting empty completed_trials")
             self.data["completed_trials"] = []
 
         logger.info("after fully initialising, object looks like this: %s" % self.data)
         logger.info("checking that trials exist")
-        assert "remaining_trials" in self.data, "Missing remaining_trials"
-        assert "current_trial" in self.data, "Missing current_trial"
-        assert "completed_trials" in self.data, "Missing completed_trials"
         self.update()
 
     def __iter__(self):
@@ -278,18 +271,20 @@ class SimpleProcedure(Proband):
         try:
             df.set_index("trial_number", inplace=True)
         except KeyError:
-            logger.warning("No trial_number in dataframe, no trials yet?")
+            logger.warning("No trial_number in data frame, no trials yet?")
         df.to_csv(self.data["csv"])
         self.update()
 
     def save_summary(self):
         """Save the summary as a csv"""
-        s = pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
+        pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
         self.update()
 
     def skip_current_block(self, reason):
         """Set all trials in remaining_trials in the current block, including
-        current_trial, to skipped."""
+        current_trial, to skipped.
+
+        """
         logger.debug("current_trial type: %s" % str(type(self.data["current_trial"])))
         b = self.data["current_trial"].block_number
         logger.debug("current block number: %s" % str(b))

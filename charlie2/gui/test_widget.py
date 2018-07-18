@@ -52,24 +52,24 @@ class TestWidget(QWidget):
         self.proband_id_box = QComboBox()
         self.options_groupbox_grid.addWidget(self.proband_id_box, 0, 1)
         self.proband_id_box.setEditable(False)
-        self.options_groupbox_grid.addWidget(QLabel(self.instructions[46]), 1, 0, 2, 2)
+        self.options_groupbox_grid.addWidget(QLabel(self.instructions[46]), 1, 0, 3, 2)
 
         # layout > options group box > fullscreen
         self.fullscreen_checkbox = QCheckBox(self.instructions[10], self)
-        self.options_groupbox_grid.addWidget(self.fullscreen_checkbox, 3, 0, 1, 2)
+        self.options_groupbox_grid.addWidget(self.fullscreen_checkbox, 4, 0, 1, 2)
 
         # layout > options group box > resume
         self.resume_checkbox = QCheckBox(self.instructions[11], self)
-        self.options_groupbox_grid.addWidget(self.resume_checkbox, 4, 0, 1, 2)
+        self.options_groupbox_grid.addWidget(self.resume_checkbox, 5, 0, 1, 2)
 
         # layout > options group box > autobackup
         self.autobackup_checkbox = QCheckBox(self.instructions[12], self)
-        self.options_groupbox_grid.addWidget(self.autobackup_checkbox, 5, 0, 1, 2)
+        self.options_groupbox_grid.addWidget(self.autobackup_checkbox, 6, 0, 1, 2)
 
         # layout > options group box > language selection box
-        self.options_groupbox_grid.addWidget(QLabel(self.instructions[48]), 6, 0)
+        self.options_groupbox_grid.addWidget(QLabel(self.instructions[48]), 7, 0)
         self.language_box = QComboBox()
-        self.options_groupbox_grid.addWidget(self.language_box, 6, 1)
+        self.options_groupbox_grid.addWidget(self.language_box, 7, 1)
         self.language_box.setEditable(False)
 
         # layout > test group box
@@ -112,7 +112,7 @@ class TestWidget(QWidget):
         logger.info("creating default keywords")
         self.dk = {k: v for k, v in default_kwds.items() if k in valid_for_tests}
         self.kwds = copy(self.dk)
-        self.proband_id_box.addItems(["", "TEST"] + proband_pickles())
+        self.proband_id_box.addItems(["TEST"] + proband_pickles())
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resume"])
         self.autobackup_checkbox.setChecked(self.kwds["autobackup"])

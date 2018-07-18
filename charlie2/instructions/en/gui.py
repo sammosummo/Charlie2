@@ -62,5 +62,7 @@ Proband and Test tabs.""",
 before it can be used. Using "TEST" (upper case, no quotation
 marks) as the proband ID will result in no data being saved.""",
     """Select a proband ID:""",
-    """Select a testing language:"""
+    """Select a testing language:""",
+    """Delete the proband (does not delete data!)""",
+    "Save or delete",
 ]

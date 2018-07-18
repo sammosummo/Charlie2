@@ -3,13 +3,11 @@
 """
 from copy import copy
 from logging import getLogger
-from os.path import exists
 from sys import exit
-from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QErrorMessage
-from .data import SimpleProcedure
-from .defaults import default_kwds
+from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
+from .data import defaults_for_mainwidow
 from .gui import GUIWidget
-from .paths import get_test, get_error_messages
+from .paths import get_test
 
 
 logger = getLogger(__name__)
@@ -28,11 +26,8 @@ class MainWindow(QMainWindow):
         logger.info("main window created")
 
         logger.info("loading default keywords")
-        self.kwds = copy(default_kwds)
+        self.kwds = defaults_for_mainwidow
         logger.info("keywords are %s" % str(self.kwds))
-
-        logger.info("setting self.gui to True")
-        self.gui = True
 
         logger.info("getting desktop dimensions")
         self.desktop_size = QDesktopWidget().availableGeometry().size()
@@ -50,12 +45,12 @@ class MainWindow(QMainWindow):
 
         """
         logger.info("called switch_central_widget()")
-        # TODO: Do I need to remove empty test names?
+
         logger.info("removing empty test names")
         self.kwds["test_names"] = [s for s in self.kwds["test_names"] if s]
         logger.info("test list looks like this: %s" % str(self.kwds["test_names"]))
 
-        if len(self.kwds["test_names"]) == 0 and self.gui is True:
+        if len(self.kwds["test_names"]) == 0 and self.kwds["gui"] is True:
 
             logger.info("initialising gui")
             gui = GUIWidget(self)
@@ -66,7 +61,7 @@ class MainWindow(QMainWindow):
                 self.showNormal()  # TODO: Do I need this extra call?
             self.setFixedSize(gui.sizeHint())
             self._centre()
-            self.showNormal()
+            self.showNormal()  # TODO: Do I need this extra call?
 
             logger.info("showing the gui")
             self.setCentralWidget(gui)
