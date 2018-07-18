@@ -3,7 +3,6 @@
 Orientation
 ===========
 
-:Status: production
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/orientation.py
 
@@ -13,7 +12,7 @@ Description
 This simple test is designed to be administered first in any battery. On each trial, the
 proband sees a red square positioned randomly on the screen. The task is to press the
 square as quickly as possible. It is similar to the mouse practice task from [1]_. There
-are 10 trials in total and the test automatically exits after 60 s.
+are 20 trials in total and the test automatically times out after 60 s.
 
 Summary statistics
 ==================
@@ -82,13 +81,12 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
-        try:
+        dic = self.basic_summary(adjust=True)
+        logger.info("changing what is meant by accuracy for this task")
+        if dic["completed_trials"] > 0:
             dic["attempts"] = sum(t["attempts"] for t in self.data.completed_trials)
             denom = dic["completed_trials"] + dic["attempts"]
-            dic["accuracy"] = dic["correct_trials"] / (denom)
-        except TypeError:
-            logger.warning("summary failed, probably bc not enough completed trials")
-            dic["attempts"] = None
-            dic["accuracy"] = None
+            dic["accuracy"] = dic["correct_trials"] / denom
+        else:
+            dic["accuracy"] = 0
         return dic

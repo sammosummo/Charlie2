@@ -459,7 +459,6 @@ class BaseTestWidget(QWidget):
             reset (:obj:`bool`, optional): Remove previous items.
 
         """
-
         if reset:
             self.zones = []
         for rect in rects:
@@ -499,45 +498,54 @@ class BaseTestWidget(QWidget):
             dic (dict): dictionary of results.
 
         """
-        logger.info("building default dict")
-        keys = [
-            "total_trials",
-            "completed_trials",
-            "correct_trials",
-            "skipped_trials",
-            "accuracy",
-            "mean_rt_correct_ms",
-            "time_elapsed_ms",
-            "timestamp",
-        ]
-        dic = {k: None for k in keys}
-        # logger.info("finding trials")
-        # trials = self.data.data["completed_trials"]
-        # if "trials" in kwds:
-        #     trials = kwds["trials"]
-        # np_trials = [t for t in trials if not t["practice"]]
-        # completed_trials = [t for t in np_trials if t["status"] == "completed"]
-        # correct_trials = [t for t in completed_trials if t["correct"]]
-        # skipped_trials = [t for t in np_trials if t["status"] == "skipped"]
-        # if len(correct_trials) == 0:
-        #     logger.info("no good trials at all")
-        #     return dic
-        # last_trial = trials[-1]
-        # meanrt = sum([t["trial_time_elapsed_ms"] for t in correct_trials]) / len(
-        #     correct_trials)
-        # dic = {
-        #     "total_trials": len(np_trials),
-        #     "completed_trials": len(completed_trials),
-        #     "correct_trials": len(correct_trials),
-        #     "skipped_trials": len(skipped_trials),
-        #     "accuracy": len(correct_trials) / len(completed_trials),
-        #     "mean_rt_correct_ms": meanrt,
-        #     "time_elapsed_ms": last_trial["block_time_elapsed_ms"],
-        #     "timestamp": last_trial["timestamp"],
-        # }
-        # if "adjust_rts" in kwds:
-        #     adjf = meanrt * len(skipped_trials)
-        #     dic["mean_rt_correct_ms_adj"] = self.block_time.elapsed() + adjf
+        logger.info("called basic_summary()")
+        if "trials" not in kwds:
+            total_trials = self.data.data["completed_trials"]
+        else:
+            total_trials = kwds["trials"]
+        completed_trials = [t for t in total_trials if t["status"] == "completed"]
+        skipped_trials = [t for t in total_trials if t["status"] == "skipped"]
+        correct_trials = [t for t in completed_trials if t["correct"]]
+        rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
+        first_trial = total_trials[0]
+        last_trial = total_trials[-1]
+
+        dic = {
+            "total_trials": len(total_trials),
+            "completed_trials": len(completed_trials),
+            "skipped_trials": len(skipped_trials),
+            "correct_trials": len(correct_trials),
+            "accuracy": len(correct_trials) / len(total_trials),
+        }
+
+        if len(completed_trials) > 0:
+            dic["began_timestamp"] = str(first_trial["timestamp"])
+            dic["finished_timestamp"] = str(last_trial["timestamp"])
+            dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
+            dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+        else:
+            dic["began_timestamp"] = None
+            dic["began_timestamp"] = None
+            dic["duration_ms"] = 0
+            dic["total_duration_ms"] = 0
+
+        if len(correct_trials) > 0:
+            dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
+        else:
+            dic["mean_rt_correct_ms"] = 0
+
+        if "adjust" in kwds:
+            if len(skipped_trials) == 0:
+                all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
+                mean_rt = sum(all_rts) / len(all_rts)
+                est_extra_time = mean_rt * len(skipped_trials)
+                dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
+
+        if "prefix" in kwds:
+            p = kwds["prefix"] + '_'
+            dic = {p + k: v for k, v in dic.items() if k != "total_duration_ms"}
+
+
         return dic
 
     def _display_continue_button(self):
@@ -611,7 +619,7 @@ class BaseTestWidget(QWidget):
         """Gathers some details about the current state from the various timers."""
         logger.info("adding timing details to current_trial")
         dic = {
-            "timestamp": str(datetime.now()),
+            "timestamp": datetime.now(),
             "test_time_elapsed_ms": self.test_time.elapsed(),
             "block_time_elapsed_ms": self.block_time.elapsed(),
             "trial_time_elapsed_ms": self.trial_time.elapsed(),
