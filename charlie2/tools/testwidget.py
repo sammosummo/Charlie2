@@ -508,7 +508,7 @@ class BaseTestWidget(QWidget):
         correct_trials = [t for t in completed_trials if t["correct"]]
         rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
         first_trial = total_trials[0]
-        last_trial = total_trials[-1]
+        last_trial = completed_trials[-1]
 
         dic = {
             "total_trials": len(total_trials),
@@ -520,14 +520,12 @@ class BaseTestWidget(QWidget):
 
         if len(completed_trials) > 0:
             dic["began_timestamp"] = str(first_trial["timestamp"])
-            dic["finished_timestamp"] = str(last_trial["timestamp"])
             dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
             dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+            dic["finished_timestamp"] = str(last_trial["timestamp"])
         else:
             dic["began_timestamp"] = None
-            dic["began_timestamp"] = None
-            dic["duration_ms"] = 0
-            dic["total_duration_ms"] = 0
+
 
         if len(correct_trials) > 0:
             dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
