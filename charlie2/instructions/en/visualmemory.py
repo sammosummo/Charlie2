@@ -1,12 +1,12 @@
 instr = [
     """Test of visual memory
 
-On each trial, you will see several colored circles
-on the screen. They will disappear, then reappear.
-When they reappear, one of them will have changed
-color. Your task is to click on the circle that
-changed color
+On each trial, you will see several shaped on the screen.
+They will disappear, then reappear. When they reappear, one
+of them will have changed. Your task is to click on the
+shape that changed changed.
 
 Press the button below to begin.""",
-    "Watch the circles: Which one changed color?",
+    "Watch the shapes"
+    "Which one changed?",
 ]

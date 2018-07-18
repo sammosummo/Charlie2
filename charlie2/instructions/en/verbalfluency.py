@@ -1,9 +1,8 @@
 instr = [
     """Verbal-fluency test
     
-This test requires that the experimenter
-operates the computer. Please allow them to
-take over now.""",
+This test requires that the experimenter operates the
+computer. Please allow them to take over now.""",
     """Say this:
 
 "I'm going to say a letter of the alphabet. When I say begin,
@@ -38,12 +37,11 @@ Then say this:
 """,
     """Say this:
 
-"Now we are going to do something a little
-different. This time, I want you to tell me as
-many animals as you can.  It doesn't matter what
-letter they start with.  You will have 60 seconds
-before I tell you to stop.  Do you have any
-questions? Ready? Begin."
+"Now we are going to do something a little different. This time,
+I want you to tell me as many animals as you can.  It doesn't
+matter what letter they start with.  You will have 60 seconds
+before I tell you to stop.  Do you have any questions? Ready?
+Begin."
 """,
     'Begin trial',
     'Response options:',

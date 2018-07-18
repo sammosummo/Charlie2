@@ -1,25 +1,24 @@
 instr = [
     """Test of verbal working memory
 
-This test requires that the experimenter
-operates the computer. Please allow them to
-take over now.""",
+This test requires that the experimenter operates the
+computer. Please allow them to take over now.""",
     """Say this:
 
-"I am going to say some numbers.  Listen carefully,
-and when I am through, I want you to say them right
-after me.  Just say what I say."
+"I am going to say some numbers.  Listen carefully, and
+when I am through, I want you to say them right after me. 
+Just say what I say."
 
-Give the subject up to two examples until they make
-a correct response:
+Give the subject up to two examples until they make a
+correct response:
 
 2-4-3
 8-9-5""",
     """Say this:
 
-"Now I am going to say some more numbers.  But this
-time when I stop, I want you to say them backwards.
-For example, if I say 7-1-9, what would you say?"
+"Now I am going to say some more numbers.  But this time
+when I stop, I want you to say them backwards. For example,
+if I say 7-1-9, what would you say?"
 
 Give the subject up to two more examples:
 
@@ -27,15 +26,14 @@ Give the subject up to two more examples:
 3-4""",
     """Say this:
 
-"I am going to say a group of numbers and letters.
-After I say them, I want you to tell me the numbers
-fist, in order, starting with the lowest number.
-Then tell me the letters in alphabetical order. For
-example, if I say B-7, your answer should be 7-B.
-The number goes first, then the letter. If I say
-9-C-3, then your answer should be 3-9-C, the numbers
-in order first, then the letters in alphabetical
-order. Let's practice."
+"I am going to say a group of numbers and letters. After I
+say them, I want you to tell me the numbers fist, in order,
+starting with the lowest number. Then tell me the letters
+in alphabetical order. For example, if I say B-7, your
+answer should be 7-B. The number goes first, then the
+letter. If I say 9-C-3, then your answer should be 3-9-C,
+the numbers in order first, then the letters in alphabet-
+ical order. Let's practice."
 """,
     """Say this:
 
