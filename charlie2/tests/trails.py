@@ -74,11 +74,9 @@ class TestWidget(BaseTestWidget):
     def block(self):
         """For this test, display instructions, pre-load the images, set up zones, and
         create a painter widget for drawing the trail."""
-        self.block_deadline = 300 * 1000
+        self.block_deadline = 200 * 1000
         b = self.data.current_trial.block_number
 
-        # if b == 0:
-        #     self.preload_feedback_sounds()
 
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
@@ -120,6 +118,7 @@ class TestWidget(BaseTestWidget):
 
         t.attempts = 0
         t.errors = 0
+        t.responses_list = []
 
     def mousePressEvent_(self, event):
         """On mouse click/screen touch, check if it was inside the target square. If so,
@@ -130,9 +129,10 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
         if any(ix):
             logger.info("clicked within a blaze")
-            t.correct = next(i for i, v in enumerate(ix) if v) == t.trial_number
-            # if self.data.current_trial.practice:
-            #     self.play_feedback_sound(t.correct)
+            rsp = next(i for i, v in enumerate(ix) if v)
+            t.correct = rsp == t.trial_number
+            t.responses_list.append((rsp, self.trial_time.elapsed()))
+
             if t.correct:
                 logger.info("clicked within the correct blaze")
                 self.data.current_trial.status = "completed"
@@ -143,6 +143,7 @@ class TestWidget(BaseTestWidget):
         else:
             logger.info("clicked outside a blaze")
             t.attempts += 1
+            t.responses_list.append(("miss", self.trial_time.elapsed()))
 
     def paintEvent(self, _):
         """Need to override a Qt method to draw. Draw a trail (straight line) from the

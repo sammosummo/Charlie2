@@ -82,7 +82,8 @@ class Trial(dict):
             "block_number": 0,
             "status": "pending",
             "practice": False,
-            "resumed_from_here": False
+            "resumed_from_here": False,
+            "timestamp": datetime.now(),
         }
         for k, v in defaults.items():
             if k not in self.__dict__:
@@ -179,7 +180,7 @@ class SimpleProcedure(Proband):
         self.data["path"] = pj(test_data_path, self.data["filename"])
         self.data["csv"] = pj(csv_path, self.data["filename"]).replace(".pkl", ".csv")
         self.data["summary_path"] = pj(summaries_path, self.data["filename"]).replace(
-            ".pkl", ".csv"
+            ".pkl", "_summary.csv"
         )
         self.update()
         self.load()
@@ -230,7 +231,6 @@ class SimpleProcedure(Proband):
             if self.data["current_trial"] is not None:
                 logger.info("yes, appending to completed_trials")
                 self._append_current_trial()
-            self.data["test_completed"] = True
             self.update()
             raise StopIteration
 
@@ -243,7 +243,7 @@ class SimpleProcedure(Proband):
             logger.info("current_trial is a %s" % str(type(self.data["current_trial"])))
 
             if isinstance(self.data["current_trial"], Trial):
-                logger.info("must have been created in this session, so moving on")
+                logger.info("must have been created in this session, so appending")
                 self._append_current_trial()
                 logger.info("and popping new one from remaining_trials")
                 self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
@@ -256,6 +256,7 @@ class SimpleProcedure(Proband):
 
         logger.info("current_trial looks like %s" % str(self.data["current_trial"]))
         logger.info("should this trial be skipped?")
+
         if self.data["current_trial"].status == "skipped":
             logger.info("yes, so recursively iterating")
             return self.__next__()
@@ -270,11 +271,11 @@ class SimpleProcedure(Proband):
         """
         logger.info("attempting to append to current_trial to completed_trials")
         ct = self.data["current_trial"]
-        if ct.status != "skipped":
-            logger.info("setting status of current_trial to completed")
-            ct.status = "completed"
-        else:
-            logger.info("preserving status of current_trial as skipped")
+        # if ct.status != "skipped":
+        #     logger.info("setting status of current_trial to completed")
+        #     ct.status = "completed"
+        # else:
+        #     logger.info("preserving status of current_trial as skipped")
         if len(self.data["completed_trials"]) > 0:
             if dict(ct) == self.data["completed_trials"][-1]:
                 logger.info("current_trial is last item in completed_trials already")
@@ -297,6 +298,12 @@ class SimpleProcedure(Proband):
         pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
         self.update()
 
+    def skip_current_trial(self, reason):
+        """Set the current trial to skipped."""
+        t = self.data["current_trial"]
+        t.status = "skipped"
+        t.reason_skipped = reason
+
     def skip_current_block(self, reason):
         """Set all trials in remaining_trials in the current block, including
         current_trial, to skipped.
@@ -305,15 +312,14 @@ class SimpleProcedure(Proband):
         logger.debug("current_trial type: %s" % str(type(self.data["current_trial"])))
         b = self.data["current_trial"].block_number
         logger.debug("current block number: %s" % str(b))
-        self.data["current_trial"].status = "skipped"
-        self.data["current_trial"].timestamp = datetime.now()
+        self.skip_current_trial(reason)
         for i, t in enumerate(self.data["remaining_trials"]):
             logger.debug("trial %s" % str(t))
             if "block_number" in t:
                 if t["block_number"] == b:
                     self.data["remaining_trials"][i]["status"] = "skipped"
                     self.data["remaining_trials"][i]["reason_skipped"] = reason
-                    self.data["remaining_trials"][i]["timestamp"] = datetime.now()
             else:
                 self.data["remaining_trials"][i]["status"] = "skipped"
+                self.data["remaining_trials"][i]["reason_skipped"] = reason
             logger.debug("trial %s" % str(t))

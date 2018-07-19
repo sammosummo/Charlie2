@@ -585,8 +585,8 @@ class BaseTestWidget(QWidget):
                 dic["finished_timestamp"] = None
                 dic["mean_rt_correct_ms"] = 0
 
-            if "adjust" in kwds:
-                dic['duration_ms_adjusted'] = None
+                if "adjust" in kwds:
+                    dic['duration_ms_adjusted'] = None
 
         except KeyError:
 
@@ -683,7 +683,6 @@ class BaseTestWidget(QWidget):
         """Gathers some details about the current state from the various timers."""
         logger.info("adding timing details to current_trial")
         dic = {
-            "timestamp": datetime.now(),
             "test_time_elapsed_ms": self.test_time.elapsed(),
             "block_time_elapsed_ms": self.block_time.elapsed(),
             "trial_time_elapsed_ms": self.trial_time.elapsed(),
@@ -740,16 +739,13 @@ class BaseTestWidget(QWidget):
     def _trial_timeout(self):
         """End a trial early because it had timed out."""
         logger.info("timing out the current trial")
-        self.data.data["current_trial"].status = "skipped"
-        self.data.data["current_trial"].reason_skipped = "timeout"
-        self._add_timing_details()
+        self.data.skip_current_trial("timeout")
         self._next_trial()
 
     def _block_timeout(self):
         """End a trial early because it had timed out."""
         logger.info("timing out the current block")
         self.data.skip_current_block("timeout")
-        self._add_timing_details()
         self._next_trial()
 
     def _block_stopping_rule(self):
