@@ -290,6 +290,7 @@ class SimpleProcedure(Proband):
             df.set_index("trial_number", inplace=True)
         except KeyError:
             logger.warning("No trial_number in data frame, no trials yet?")
+        df.dropna(axis=1, how="all", inplace=True)
         df.to_csv(self.data["csv"])
         self.update()
 

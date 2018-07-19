@@ -776,7 +776,7 @@ class BaseTestWidget(QWidget):
     def _block_stop(self):
         """End a trial early because stopping rule passed."""
         logger.info("stopping the current block")
-        self.data.skip_current_block("stopping rule")
+        self.data.skip_current_block("stopping rule failed")
 
     def _preload_feedback_sounds(self):
         """This should prevent lags when playing sounds."""
