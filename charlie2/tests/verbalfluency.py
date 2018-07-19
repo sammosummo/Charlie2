@@ -234,7 +234,16 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
+        dic = self.basic_summary()
+        for kind in ["f", "a", "s", "animal"]:
+            trials = [
+                t for t in self.data.data["completed_trials"] if t["kind"] == kind
+            ]
+            dic_ = self.basic_summary(trials=trials, prefix=kind)
+            dic.update(dic_)
+        trials = [t for t in self.data.data["completed_trials"] if t["kind"] in "fas"]
+        dic_ = self.basic_summary(trials=trials, prefix="letter")
+        dic.update(dic_)
         return dic
 
     def mousePressEvent(self, event):

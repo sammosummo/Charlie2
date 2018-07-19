@@ -147,5 +147,5 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
+        dic = self.basic_summary()
         return dic

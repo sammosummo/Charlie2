@@ -117,5 +117,11 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
+        dic = self.basic_summary()
+        for emotion in ["neutral", "sad", "angry"]:
+            trials = [
+                t for t in self.data.data["completed_trials"] if t["emotion"] == emotion
+            ]
+            dic_ = self.basic_summary(trials=trials, prefix=emotion)
+            dic.update(dic_)
         return dic

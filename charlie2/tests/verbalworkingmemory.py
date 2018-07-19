@@ -191,7 +191,16 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
         """See docstring for explanation."""
-        dic = self.basic_summary(adjust_time_taken=True)
+        dic = {}
+        for kind in ["backward", "forward", "lns"]:
+            trials = [
+                t for t in self.data.data["completed_trials"] if t["kind"] == kind
+            ]
+            dic_ = self.basic_summary(trials=trials, prefix=kind)
+            correct_trials = [t for t in trials if t["correct"]]
+            if len(correct_trials) > 0:
+                dic_[kind + "_k"] = max(t["length"] for t in correct_trials)
+            dic.update(dic_)
         return dic
 
     def block_stopping_rule(self):
