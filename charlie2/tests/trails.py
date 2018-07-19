@@ -74,7 +74,7 @@ class TestWidget(BaseTestWidget):
     def block(self):
         """For this test, display instructions, pre-load the images, set up zones, and
         create a painter widget for drawing the trail."""
-        self.block_deadline = 240 * 1000
+        self.block_deadline = 300 * 1000
         b = self.data.current_trial.block_number
 
         # if b == 0:

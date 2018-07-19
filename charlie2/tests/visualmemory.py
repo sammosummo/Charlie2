@@ -94,6 +94,7 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """If this is the first block, simply display instructions."""
+        self.block_deadline = 300 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):

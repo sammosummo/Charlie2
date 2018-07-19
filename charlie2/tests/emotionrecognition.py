@@ -93,6 +93,7 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """Simply display the task instructions."""
+        self.block_deadline = 300 * 1000
         self.display_instructions_with_space_bar(self.instructions[4])
         self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[5:8])
 

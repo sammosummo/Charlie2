@@ -84,7 +84,7 @@ class TestWidget(BaseTestWidget):
         """For this test, display instructions and pre-load the images."""
         if self.data.current_trial.block_number > 0:
             logger.info("adding block deadline")
-            self.block_deadline = 9 * 1000
+            self.block_deadline = 90 * 1000
         else:
             logger.info("block deadline set to None")
             self.block_deadline = None

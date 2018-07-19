@@ -120,9 +120,10 @@ class TestWidget(BaseTestWidget):
         trick to implement this."""
         b = self.data.current_trial.block_number
         if b == 0:
-            self.trial_deadline = 25
+            self.trial_deadline = int(2.5 * 1000)
         else:
             self.trial_deadline = None
+            self.block_deadline = 300 * 1000
         self.display_instructions_with_space_bar(self.instructions[4 + b])
 
     def trial(self):
