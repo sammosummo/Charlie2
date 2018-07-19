@@ -179,11 +179,13 @@ class TestWidget(QWidget):
             self.kwds["resume"] = self.resume_checkbox.isChecked()
             self.kwds["autobackup"] = self.autobackup_checkbox.isChecked()
             self.kwds["language"] = self.language_box.currentText()
-            tests = get_tests_from_batch(self.batch_name_box.currentText())
-            self.kwds["test_names"] = tests
-            self._update_maiwindow_kwds()
-            logger.info("about to run with these kewyords: %s" % str(self.kwds))
-            self._begin()
+            batch = self.batch_name_box.currentText()
+            if batch in batches_list:
+                tests = get_tests_from_batch(batch)
+                self.kwds["test_names"] = tests
+                self._update_maiwindow_kwds()
+                logger.info("about to run with these kewyords: %s" % str(self.kwds))
+                self._begin()
 
     def _begin(self):
         data = SimpleProcedure(
