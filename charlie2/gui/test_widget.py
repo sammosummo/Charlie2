@@ -3,6 +3,7 @@
 """
 from copy import copy
 from logging import getLogger
+from os.path import exists
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -12,13 +13,16 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QPushButton,
     QCheckBox,
+    QMessageBox,
 )
+from ..tools.data import SimpleProcedure
 from ..tools.defaults import default_kwds, valid_for_tests
 from ..tools.paths import (
     tests_list,
     proband_pickles,
     batches_list,
     get_tests_from_batch,
+    get_error_messages,
 )
 
 
@@ -116,18 +120,30 @@ class TestWidget(QWidget):
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resume"])
         self.autobackup_checkbox.setChecked(self.kwds["autobackup"])
-        self.language_box.addItems(["en", "es"])
+        self.language_box.addItems(["en"])
         self.test_name_box.addItems([""] + sorted(tests_list))
         self.batch_name_box.addItems([""] + sorted(batches_list))
 
         # connect buttons
-        self._begin = self.parent().parent().switch_central_widget  # store ref
+        self.__begin = self.parent().parent().switch_central_widget  # store ref
         self.test_button.clicked.connect(self._run_single_test)
         self.batch_button.clicked.connect(self._run_batch)
 
     def _run_single_test(self):
         """Run a single test."""
         logger.info("_run_single_test() called")
+        s = self.proband_id_box.currentText()
+        if s == "TEST":
+            logger.info("showing a warning popup because proband is TEST")
+            message_box = QMessageBox()
+            msg = get_error_messages(self.kwds["language"], "proband_is_TEST")
+            message_box.setText(msg)
+            message_box.buttonClicked.connect(self.__run_single_test)
+            message_box.exec_()
+        else:
+            self.__run_single_test()
+
+    def __run_single_test(self):
         s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
@@ -141,8 +157,21 @@ class TestWidget(QWidget):
             self._begin()
 
     def _run_batch(self):
-        """Run a batch of tests."""
+        """Run a single test."""
         logger.info("_run_batch() called")
+        s = self.proband_id_box.currentText()
+        if s == "TEST":
+            logger.info("showing a warning popup because proband is TEST")
+            message_box = QMessageBox()
+            msg = get_error_messages(self.kwds["language"], "proband_is_TEST")
+            message_box.setText(msg)
+            message_box.buttonClicked.connect(self.__run_batch)
+            message_box.exec_()
+        else:
+            self.__run_batch()
+
+    def __run_batch(self):
+        """Run a batch of tests."""
         s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
@@ -155,6 +184,20 @@ class TestWidget(QWidget):
             self._update_maiwindow_kwds()
             logger.info("about to run with these kewyords: %s" % str(self.kwds))
             self._begin()
+
+    def _begin(self):
+        data = SimpleProcedure(
+            proband_id=self.kwds["proband_id"],
+            test_name=self.kwds["test_names"][0]
+        )
+        proband_exists = exists(data.path)
+        if proband_exists and not self.kwds["resume"]:
+            message_box = QMessageBox()
+            msg = get_error_messages(self.kwds["language"], "proband_exists")
+            message_box.setText(msg)
+            message_box.exec_()
+        else:
+            self.__begin()
 
     def _update_maiwindow_kwds(self):
         """The following is quite possibly the worst bit of code I've ever written."""

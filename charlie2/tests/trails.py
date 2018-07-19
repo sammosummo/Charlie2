@@ -77,7 +77,6 @@ class TestWidget(BaseTestWidget):
         self.block_deadline = 120 * 1000
         b = self.data.current_trial.block_number
 
-
         self.display_instructions_with_continue_button(self.instructions[4 + b])
 
         # find all trials in this block
@@ -139,7 +138,6 @@ class TestWidget(BaseTestWidget):
             else:
                 logger.info("clicked within a different blaze")
                 t.errors += 1
-                t.attempts += 1
         else:
             logger.info("clicked outside a blaze")
             t.attempts += 1
@@ -164,15 +162,27 @@ class TestWidget(BaseTestWidget):
         dic = {}
         blocks = set(t["block_type"] for t in self.data.completed_trials)
         for b in blocks:
+
             trials = [t for t in self.data.completed_trials if t["block_type"] == b]
+            trials = [t for t in trials if not t["practice"]]
             dic_ = self.basic_summary(adjust=True, trials=trials, prefix=b)
             logger.info("changing what is meant by accuracy for this task")
+
             if dic_[b + "_completed_trials"] > 0:
-                trials = [t for t in self.data.completed_trials if "attempts" in t]
+
+                trials = [t for t in trials if "attempts" in t]
+                attempts = sum(t["attempts"] for t in trials)
+                dic_[b + "_attempts"] = attempts
                 errors = sum(t["errors"] for t in trials)
-                denom = dic_[b + "_completed_trials"] + errors
+                dic_[b + "_errors"] = errors
+                denom = dic_[b + "_completed_trials"] + errors + attempts
                 dic_[b + "_accuracy"] = dic_[b + "_completed_trials"] / denom
+
             else:
-                dic_[b + "accuracy"] = 0
+
+                dic_[b + "_accuracy"] = 0
+                dic_[b + "_errors"] = 0
+                dic_[b + "_accuracy"] = 0
+
             dic.update(dic_)
         return dic

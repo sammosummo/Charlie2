@@ -195,24 +195,6 @@ class TestWidget(BaseTestWidget):
             else:
                 self.sleep(1000)
 
-
-    # def summarise(self):
-    #     """See docstring for explanation."""
-    #     blocks = ['forward', 'backward', 'lns']
-    #     dic = {}
-    #     cts = self.data.proc.completed_trials
-    #     for b in blocks:
-    #         trials = [t for t in cts if t.block_type == b and t.completed is True]
-    #         for trial in trials: print(vars(trial))
-    #         dic_ = self.basic_summary(trials=trials, adjust_time_taken=False)
-    #         # dic_['responses'] += 1  # This task undercounts responses by 1.
-    #         if 'accuracy' in dic_: del dic_['accuracy']  # not meaningful
-    #         if 'time_taken' in dic_: del dic_['time_taken']  # not meaningful
-    #         trial = [t for t in trials if t.correct][-1]
-    #         dic_['k'] = trial.length
-    #         dic.update({f"{b}_{k}": v for k, v in dic_.items()})
-    #     return dic
-
     def mousePressEvent(self, event):
         """We don't want to handle mouse presses in the same way as other tests."""
         pass
@@ -229,6 +211,8 @@ class TestWidget(BaseTestWidget):
             trials = [t for t in trials if t["correct"]]
             if len(trials) > 0:
                 dic_[kind + "_k"] = max(t["length"] for t in trials)
+            else:
+                dic_[kind + "_k"] = 0
             dic.update(dic_)
         return dic
 

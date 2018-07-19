@@ -147,4 +147,5 @@ class TestWidget(BaseTestWidget):
     def summarise(self):
         """See docstring for explanation."""
         dic = self.basic_summary()
+        dic["accuracy"] = dic["correct_trials"] / 35
         return dic

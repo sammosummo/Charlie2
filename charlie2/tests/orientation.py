@@ -86,8 +86,10 @@ class TestWidget(BaseTestWidget):
         if dic["completed_trials"] > 0:
             trials = [t for t in self.data.completed_trials if "attempts" in t]
             attempts = sum(t["attempts"] for t in trials)
+            dic["attempts"] = attempts
             denom = dic["completed_trials"] + attempts
             dic["accuracy"] = dic["correct_trials"] / denom
         else:
             dic["accuracy"] = 0
+            dic["attempts"] = 0
         return dic

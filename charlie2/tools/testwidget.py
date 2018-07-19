@@ -759,6 +759,9 @@ class BaseTestWidget(QWidget):
         restructure everything to fix it.
 
         """
+        already_completed = self.data.data["test_completed"]
+        if already_completed:
+            return False
         if self.data.data["current_trial"] is not None:
             current_trial = dict(self.data.data["current_trial"])
             old_completed_trials = copy(self.data.data["completed_trials"])

@@ -196,7 +196,7 @@ class TestWidget(BaseTestWidget):
 
     def _invalid(self):
         t = self.data.current_trial
-        t.valid_responses += 1
+        t.invalid_responses += 1
         self.rsp_counter.display(self._total_responses)
         t.responses_list.append(("invalid", self.trial_time.elapsed()))
         if self.countdown_started is False:
@@ -258,14 +258,26 @@ class TestWidget(BaseTestWidget):
     def summarise(self):
         """See docstring for explanation."""
         dic = self.basic_summary()
-        for kind in ["f", "a", "s", "animal"]:
-            trials = [
-                t for t in self.data.data["completed_trials"] if t["kind"] == kind
-            ]
-            dic_ = self.basic_summary(trials=trials, prefix=kind)
+        for k in ["f", "a", "s", "animal"]:
+            trials = [t for t in self.data.data["completed_trials"] if t["kind"] == k]
+            trials = [t for t in trials if t["trial_type"] == "perform"]
+            dic_ = self.basic_summary(trials=trials, prefix=k)
+            if len(trials) > 0:
+                dic_[k + '_valid'] = sum(t["valid_responses"] for t in trials)
+                dic_[k + '_invalid'] = sum(t["invalid_responses"] for t in trials)
+            else:
+                dic_[k + '_valid'] = None
+                dic_[k + '_invalid'] = None
             dic.update(dic_)
         trials = [t for t in self.data.data["completed_trials"] if t["kind"] in "fas"]
+        trials = [t for t in trials if t["trial_type"] == "perform"]
         dic_ = self.basic_summary(trials=trials, prefix="letter")
+        if len(trials) > 0:
+            dic_['letter_valid'] = sum(t["valid_responses"] for t in trials)
+            dic_['letter_invalid'] = sum(t["invalid_responses"] for t in trials)
+        else:
+            dic_['letter_valid'] = None
+            dic_['letter_invalid'] = None
         dic.update(dic_)
         return dic
 
