@@ -189,8 +189,7 @@ class TestWidget(QWidget):
 
     def _begin(self):
         data = SimpleProcedure(
-            proband_id=self.kwds["proband_id"],
-            test_name=self.kwds["test_names"][0]
+            proband_id=self.kwds["proband_id"], test_name=self.kwds["test_names"][0]
         )
         proband_exists = exists(data.path)
         if proband_exists and not self.kwds["resume"]:

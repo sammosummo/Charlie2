@@ -12,12 +12,12 @@ def make_trail_trials():
         + ([False] * 20)
     )
     block_types = (
-            (["number"] * 5)
-            + (["number"] * 20)
-            + (["letter"] * 5)
-            + (["letter"] * 20)
-            + (["sequence"] * 5)
-            + (["sequence"] * 20)
+        (["number"] * 5)
+        + (["number"] * 20)
+        + (["letter"] * 5)
+        + (["letter"] * 20)
+        + (["sequence"] * 5)
+        + (["sequence"] * 20)
     )
     trials = (list(range(5)) + list(range(20))) * 3
     blaze_positions = [
@@ -44,7 +44,7 @@ def make_trail_trials():
         (320, 243),  # move this
         (-4, 132),
         (127, -22),  # move this
-        (-9, -127), # move this
+        (-9, -127),  # move this
         (194, -166),
         (-262, -17),
         (-40, 101),
@@ -129,7 +129,12 @@ def make_trail_trials():
     glyphs = [str(g) for g in glyphs]
     details = list(zip(blocks, practices, block_types, trials, blaze_positions, glyphs))
     names = [
-        "block_number", "practice", "block_type", "trial_number", "blaze_position", "glyph"
+        "block_number",
+        "practice",
+        "block_type",
+        "trial_number",
+        "blaze_position",
+        "glyph",
     ]
     control = [dict(zip(names, d)) for d in details]
     return control

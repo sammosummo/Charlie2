@@ -38,7 +38,7 @@ def make_item(c, f, n=None):
     y = r * np.sin(theta)
 
     fig, ax = plt.subplots(1, figsize=(1, 1))
-    ax.plot(out[0], out[1], 'k', lw=2)
+    ax.plot(out[0], out[1], "k", lw=2)
     ax.fill(out[0], out[1], c=clr)
     # ax.plot(x, y, "k", lw=2)
     # ax.fill(x, y, c=clr)
@@ -54,7 +54,7 @@ def make_item(c, f, n=None):
     plt.close(fig)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     for load in [4]:
         for trial in range(30):

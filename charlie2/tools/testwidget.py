@@ -576,7 +576,7 @@ class BaseTestWidget(QWidget):
                     all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
                     mean_rt = sum(all_rts) / len(all_rts)
                     est_extra_time = mean_rt * len(skipped_trials)
-                    dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
+                    dic["duration_ms_adjusted"] = dic["duration_ms"] + est_extra_time
             else:
 
                 dic["began_timestamp"] = None
@@ -586,7 +586,7 @@ class BaseTestWidget(QWidget):
                 dic["mean_rt_correct_ms"] = 0
 
                 if "adjust" in kwds:
-                    dic['duration_ms_adjusted'] = None
+                    dic["duration_ms_adjusted"] = None
 
         except KeyError:
 
@@ -607,7 +607,7 @@ class BaseTestWidget(QWidget):
                 dic["mean_rt_correct_ms"] = 0
 
         if "prefix" in kwds:
-            p = kwds["prefix"] + '_'
+            p = kwds["prefix"] + "_"
             dic = {p + k: v for k, v in dic.items() if k != "total_duration_ms"}
 
         return dic
@@ -789,4 +789,3 @@ class BaseTestWidget(QWidget):
     def play_feedback_sound(self, correct):
         """Play either the correct sound if true or incorrect sound if false."""
         self.feedback_sounds[correct].play()
-
