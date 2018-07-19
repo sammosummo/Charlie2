@@ -1,5 +1,5 @@
 instr = [
-    """Test of visual memory
+    """Visual working memory
 
 On each trial, you will see several shaped on the screen.
 They will disappear, then reappear. When they reappear, one

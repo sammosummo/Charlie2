@@ -1,5 +1,5 @@
 instr = [
-    """Digit-symbol test, part 1 (practice)
+    """Digit-symbol coding, part 1 (practice)
 
 At the top of the screen you will see a row of symbols and
 a row of digits. Each symbol is paired with the digit below
@@ -14,7 +14,7 @@ This task uses the keyboard.
 
 Press the space bar to begin.""",
 
-    """Digit-symbol test, part 2 (real test)
+    """Digit-symbol coding, part 2 (real test)
 
 Now you will perform the real test. It is the same as the
 practice, except there are more trials, and there is no
@@ -23,7 +23,7 @@ within 90 seconds without making mistakes.
 
 Press the space bar to begin.""",
 
-    """Digit-symbol test, part 3 (real test)
+    """Digit-symbol coding, part 3 (real test)
 
 Now you will perform the test again. It is exactly the same
 as the the last time. Try to complete the task as quickly

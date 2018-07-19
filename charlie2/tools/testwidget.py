@@ -254,7 +254,7 @@ class BaseTestWidget(QWidget):
         loop.exec_()
         self.parent().ignore_close_event = False
 
-    def display_instructions(self, message):
+    def display_instructions(self, message, font=None):
         """Display instructions.
 
         This method will first hide any visible widgets (e.g., images from the last
@@ -262,6 +262,7 @@ class BaseTestWidget(QWidget):
 
         Args:
             message (str): Message to display.
+            font (:obj:`QFont`, optional): A font in which to display the instructions.
 
         Returns:
             label (QLabel): Object containing the message.
@@ -271,12 +272,15 @@ class BaseTestWidget(QWidget):
         self.clear_screen()
         label = QLabel(message, self)
         label.setAlignment(Qt.AlignCenter)
-        label.setFont(self.instructions_font)
+        if font is None:
+            label.setFont(self.instructions_font)
+        else:
+            label.setFont(font)
         label.resize(self.size())
         label.show()
         return label
 
-    def display_instructions_with_continue_button(self, message):
+    def display_instructions_with_continue_button(self, message, font=None):
         """Display instructions with a continue button.
 
         This is the same as `self.display_instructions` except that a continue button is
@@ -285,13 +289,14 @@ class BaseTestWidget(QWidget):
 
         Args:
             message (str): Message to display.
+            font (:obj:`QFont`, optional): A font in which to display the instructions.
 
         Returns:
             label (QLabel): Object containing the message.
             button (QPushButton): Button.
 
         """
-        label = self.display_instructions(message)
+        label = self.display_instructions(message, font)
         button = self._display_continue_button()
         logger.info("now waiting for continue button to be pressed")
         return label, button
@@ -311,13 +316,17 @@ class BaseTestWidget(QWidget):
         self._keyReleaseEvent = copy(self.keyReleaseEvent)
         self.keyReleaseEvent = self._space_bar_continue
         label.setFocus()
+        logger.debug("what widget needs to be in focus for this to work?")
+        logger.debug("self? %s" % self.hasFocus())
+        logger.debug("label? %s" % label.hasFocus())
         return label
 
     def _space_bar_continue(self, event):
-        logger.info("space bar pressed")
+        logger.info("%s pressed, looking for %s" % (event.key(), Qt.Key_Space))
         if event.key() == Qt.Key_Space:
+            logger.debug("got the correct key")
             self._trial()
-        self.keyReleaseEvent = self._keyReleaseEvent
+            self.keyReleaseEvent = self._keyReleaseEvent
 
     def load_image(self, s):
         """Return an image.
@@ -536,40 +545,63 @@ class BaseTestWidget(QWidget):
         total_trials = [t for t in total_trials if not t["practice"]]
         completed_trials = [t for t in total_trials if t["status"] == "completed"]
         skipped_trials = [t for t in total_trials if t["status"] == "skipped"]
-        correct_trials = [t for t in completed_trials if t["correct"]]
-        rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
         first_trial = total_trials[0]
 
         dic = {
             "total_trials": len(total_trials),
             "completed_trials": len(completed_trials),
             "skipped_trials": len(skipped_trials),
-            "correct_trials": len(correct_trials),
-            "accuracy": len(correct_trials) / len(total_trials),
         }
 
-        if len(completed_trials) > 0:
-            last_trial = completed_trials[-1]
-            dic["began_timestamp"] = str(first_trial["timestamp"])
-            dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
-            dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
-            dic["finished_timestamp"] = str(last_trial["timestamp"])
-            dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
+        try:
 
-            if "adjust" in kwds:
-                all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
-                mean_rt = sum(all_rts) / len(all_rts)
-                est_extra_time = mean_rt * len(skipped_trials)
-                dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
-        else:
-            dic["began_timestamp"] = None
-            dic["duration_ms"] = None
-            dic["total_duration_ms"] = None
-            dic["finished_timestamp"] = None
-            dic["mean_rt_correct_ms"] = 0
+            correct_trials = [t for t in completed_trials if t["correct"]]
+            rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
+            dic["correct_trials"] = len(correct_trials)
+            dic["accuracy"] = len(correct_trials) / len(total_trials)
+
+            if len(completed_trials) > 0 and len(correct_trials) > 0:
+
+                last_trial = completed_trials[-1]
+                dic["began_timestamp"] = str(first_trial["timestamp"])
+                dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
+                dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+                dic["finished_timestamp"] = str(last_trial["timestamp"])
+                dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
+
+                if "adjust" in kwds:
+                    all_rts = [t["trial_time_elapsed_ms"] for t in completed_trials]
+                    mean_rt = sum(all_rts) / len(all_rts)
+                    est_extra_time = mean_rt * len(skipped_trials)
+                    dic['duration_ms_adjusted'] = dic['duration_ms'] + est_extra_time
+            else:
+
+                dic["began_timestamp"] = None
+                dic["duration_ms"] = None
+                dic["total_duration_ms"] = None
+                dic["finished_timestamp"] = None
+                dic["mean_rt_correct_ms"] = 0
 
             if "adjust" in kwds:
                 dic['duration_ms_adjusted'] = None
+
+        except KeyError:
+
+            if len(completed_trials) > 0:
+
+                last_trial = completed_trials[-1]
+                dic["began_timestamp"] = str(first_trial["timestamp"])
+                dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
+                dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+                dic["finished_timestamp"] = str(last_trial["timestamp"])
+
+            else:
+
+                dic["began_timestamp"] = None
+                dic["duration_ms"] = None
+                dic["total_duration_ms"] = None
+                dic["finished_timestamp"] = None
+                dic["mean_rt_correct_ms"] = 0
 
         if "prefix" in kwds:
             p = kwds["prefix"] + '_'
@@ -707,12 +739,14 @@ class BaseTestWidget(QWidget):
         logger.info("timing out the current trial")
         self.data.data["current_trial"].status = "skipped"
         self.data.data["current_trial"].reason_skipped = "timeout"
+        self._add_timing_details()
         self._next_trial()
 
     def _block_timeout(self):
         """End a trial early because it had timed out."""
         logger.info("timing out the current block")
         self.data.skip_current_block("timeout")
+        self._add_timing_details()
         self._next_trial()
 
     def _block_stopping_rule(self):

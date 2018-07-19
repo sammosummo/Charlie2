@@ -1,5 +1,5 @@
 instr = [
-    """Facial-memory test (learning).
+    """Facial recognition memory (learning phase).
 
 There are two parts to this test. In the first part, you
 will see images of people's faces, one at a time. Try to
@@ -9,7 +9,7 @@ faces you have seen.
 This task uses the keyboard.
 
 Press the space bar to begin.""",
-    """Facial-memory test (recognition).
+    """Facial recognition memory (recognition phase).
 
 In this second part, you will see some more faces. Some of
 these faces you have already seen and others are new.

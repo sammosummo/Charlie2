@@ -1,5 +1,5 @@
 instr = [
-    """Matrix-reasoning test
+    """Matrix reasoning
 
 On each trial you will see a picture with a piece missing
 from it. Your task is to choose the missing piece from the

@@ -49,6 +49,7 @@ __status__ = "production"
 
 
 from logging import getLogger
+from PyQt5.QtGui import QFont
 from charlie2.tools.testwidget import BaseTestWidget
 from charlie2.recipes.verbalworkingmemory import get_vwm_stimuli
 
@@ -94,7 +95,9 @@ class TestWidget(BaseTestWidget):
         self.skip_countdown = True
         t = self.data.current_trial
         s = self.instructions[5 + t.block_number]
-        label, btn = self.display_instructions_with_continue_button(s)
+        label, btn = self.display_instructions_with_continue_button(
+            s, font=QFont("Helvetica", 18)
+        )
 
         # if very first trial, show message to proband
         if t.first_trial_in_test:
@@ -155,6 +158,7 @@ class TestWidget(BaseTestWidget):
         if t:
             t.correct = True
             t.status = "completed"
+            self._add_timing_details()
             logger.info("current_trial was completed successfully")
             logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
@@ -164,6 +168,7 @@ class TestWidget(BaseTestWidget):
         if t:
             t.correct = False
             t.status = "completed"
+            self._add_timing_details()
             logger.info("current_trial was completed successfully")
             logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
@@ -194,12 +199,13 @@ class TestWidget(BaseTestWidget):
         dic = {}
         for kind in ["backward", "forward", "lns"]:
             trials = [
-                t for t in self.data.data["completed_trials"] if t["kind"] == kind
+                t for t in self.data.data["completed_trials"] if t["block_type"] == kind
             ]
             dic_ = self.basic_summary(trials=trials, prefix=kind)
-            correct_trials = [t for t in trials if t["correct"]]
-            if len(correct_trials) > 0:
-                dic_[kind + "_k"] = max(t["length"] for t in correct_trials)
+            trials = [t for t in trials if t["status"] == "completed"]
+            trials = [t for t in trials if t["correct"]]
+            if len(trials) > 0:
+                dic_[kind + "_k"] = max(t["length"] for t in trials)
             dic.update(dic_)
         return dic
 

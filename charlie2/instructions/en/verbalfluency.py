@@ -1,5 +1,5 @@
 instr = [
-    """Verbal-fluency test
+    """Verbal fluency
     
 This test requires that the experimenter operates the
 computer. Please allow them to take over now.""",

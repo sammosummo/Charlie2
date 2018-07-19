@@ -1,5 +1,5 @@
 instr = [
-    """Emotion-recognition test
+    """Emotion recognition
 
 On each trial you will see a person's face. Your task is to
 judge how the person is feeling. They will be either angry,

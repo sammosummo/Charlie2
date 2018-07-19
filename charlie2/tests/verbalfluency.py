@@ -52,7 +52,7 @@ __version__ = 2.0
 __status__ = "production"
 
 from logging import getLogger
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from charlie2.tools.testwidget import BaseTestWidget
 
 
@@ -101,7 +101,8 @@ class TestWidget(BaseTestWidget):
         """Just display the message."""
         t = self.data.current_trial
         s = self.instructions[5 + t.trial_number // 2]
-        self.display_instructions(s)
+        self.display_instructions(s, font=QtGui.QFont("Helvetica", 18))
+        self._add_timing_details()
         self.display_trial_continue_button()
 
     def _perform(self):
@@ -126,6 +127,7 @@ class TestWidget(BaseTestWidget):
         rsp_counter_box.setLayout(rsp_counter_layout)
 
         # countdown
+        self.countdown_started = False
         countdown_box = QtWidgets.QGroupBox(self.instructions[14])
         countdown_layout = QtWidgets.QVBoxLayout()
         self.countdown = QtWidgets.QLCDNumber()
@@ -140,8 +142,10 @@ class TestWidget(BaseTestWidget):
         self.valid_rsp_button = QtWidgets.QPushButton(self.instructions[11])
         self.valid_rsp_button.setMinimumHeight(120)
         response_grid.addWidget(self.valid_rsp_button, 0, 0)
+        self.valid_rsp_button.clicked.connect(self._valid)
         self.valid_rsp_button.setFont(self.instructions_font)
         self.invalid_rsp_button = QtWidgets.QPushButton(self.instructions[12])
+        self.invalid_rsp_button.clicked.connect(self._invalid)
         self.invalid_rsp_button.setFont(self.instructions_font)
         self.invalid_rsp_button.setMinimumHeight(120)
         response_grid.addWidget(self.invalid_rsp_button, 0, 1)
@@ -159,7 +163,7 @@ class TestWidget(BaseTestWidget):
         button_grid.addWidget(self.button, 0, 0)
         self.quit_button = QtWidgets.QPushButton(self.instructions[19])
         self.quit_button.setFont(self.instructions_font)
-        self.quit_button.clicked.connect(self.next_trial)
+        self.quit_button.clicked.connect(self._end_trial)
         button_grid.addWidget(self.quit_button, 1, 0)
         self.quit_button.setEnabled(False)
         self.quit_button.setMinimumHeight(120)
@@ -184,29 +188,35 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
+        if self.countdown_started is False:
+            self._start()
 
     def _invalid(self):
         t = self.data.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
+        if self.countdown_started is False:
+            self._start()
 
     def _start(self):
         self.timer.start(1000)
         self.button.clicked.disconnect()
         self.button.clicked.connect(self._stop)
         self.button.setText(self.instructions[15])
-        self.valid_rsp_button.clicked.connect(self._valid)
-        self.invalid_rsp_button.clicked.connect(self._invalid)
+        # self.valid_rsp_button.clicked.connect(self._valid)
+        # self.invalid_rsp_button.clicked.connect(self._invalid)
         self.quit_button.setEnabled(False)
+        self.countdown_started = True
 
     def _stop(self):
         self.timer.stop()
         self.button.clicked.disconnect()
         self.button.clicked.connect(self._start)
         self.button.setText(self.instructions[16])
-        self.valid_rsp_button.clicked.disconnect()
-        self.invalid_rsp_button.clicked.disconnect()
+        # self.valid_rsp_button.clicked.disconnect()
+        # self.invalid_rsp_button.clicked.disconnect()
         self.quit_button.setEnabled(True)
+        self.countdown_started = False
 
     def _tick(self):
         self._time_left -= 1
@@ -214,9 +224,18 @@ class TestWidget(BaseTestWidget):
         if self._time_left == 0:
             self.timer.stop()
             self.data.current_trial.status = "completed"
+            self._add_timing_details()
+            logging.debug("current trial looks like %s" % str(self.data.current_trial))
             self.button.clicked.disconnect()
             self.button.clicked.connect(self.next_trial)
             self.button.setText(self.instructions[17])
+
+    def _end_trial(self):
+        self.data.current_trial.status = "completed"
+        self._add_timing_details()
+        logging.debug("current trial looks like %s" % str(self.data.current_trial))
+        self.next_trial()
+
 
     # def summarise(self):
     #     """See docstring for explanation."""
