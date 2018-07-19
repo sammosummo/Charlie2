@@ -93,7 +93,7 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
         """Simply display the task instructions."""
-        self.display_instructions_with_continue_button(self.instructions[4])
+        self.display_instructions_with_space_bar(self.instructions[4])
         self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[5:8])
 
     def trial(self):

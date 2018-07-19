@@ -123,7 +123,7 @@ class TestWidget(BaseTestWidget):
             self.trial_deadline = 25
         else:
             self.trial_deadline = None
-        self.display_instructions_with_continue_button(self.instructions[4 + b])
+        self.display_instructions_with_space_bar(self.instructions[4 + b])
 
     def trial(self):
         """For each trial we display a face. If a "recognition" trial, we also display
