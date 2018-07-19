@@ -306,12 +306,14 @@ class SimpleProcedure(Proband):
         b = self.data["current_trial"].block_number
         logger.debug("current block number: %s" % str(b))
         self.data["current_trial"].status = "skipped"
+        self.data["current_trial"].timestamp = datetime.now()
         for i, t in enumerate(self.data["remaining_trials"]):
             logger.debug("trial %s" % str(t))
             if "block_number" in t:
                 if t["block_number"] == b:
                     self.data["remaining_trials"][i]["status"] = "skipped"
                     self.data["remaining_trials"][i]["reason_skipped"] = reason
+                    self.data["remaining_trials"][i]["timestamp"] = datetime.now()
             else:
                 self.data["remaining_trials"][i]["status"] = "skipped"
             logger.debug("trial %s" % str(t))

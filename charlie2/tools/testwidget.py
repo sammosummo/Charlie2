@@ -558,7 +558,10 @@ class BaseTestWidget(QWidget):
             correct_trials = [t for t in completed_trials if t["correct"]]
             rt_correct_ms = [t["trial_time_elapsed_ms"] for t in correct_trials]
             dic["correct_trials"] = len(correct_trials)
-            dic["accuracy"] = len(correct_trials) / len(total_trials)
+
+            if len(completed_trials) > 0:
+
+                dic["accuracy"] = len(correct_trials) / len(completed_trials)
 
             if len(completed_trials) > 0 and len(correct_trials) > 0:
 

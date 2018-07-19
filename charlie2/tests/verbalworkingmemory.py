@@ -50,6 +50,7 @@ __status__ = "production"
 
 from logging import getLogger
 from PyQt5.QtGui import QFont
+from PyQt5.QtMultimedia import QSound
 from charlie2.tools.testwidget import BaseTestWidget
 from charlie2.recipes.verbalworkingmemory import get_vwm_stimuli
 
@@ -92,6 +93,7 @@ class TestWidget(BaseTestWidget):
         proband.
 
         """
+        self.first_digit_horrible_lag = True
         self.skip_countdown = True
         t = self.data.current_trial
         s = self.instructions[5 + t.block_number]
@@ -129,6 +131,7 @@ class TestWidget(BaseTestWidget):
 
         # instructions and buttons
         self.display_instructions(self.instructions[9] % "-".join(t.sequence))
+        self.play_sequence(t.sequence)
         corr_button = self._display_continue_button()
         corr_button.setText(self.instructions[10] % "-".join(answer))
         corr_button.setFont(self.instructions_font)
@@ -172,6 +175,26 @@ class TestWidget(BaseTestWidget):
             logger.info("current_trial was completed successfully")
             logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
+
+    def play_sequence(self, sequence):
+        """Play the audio of a sequence."""
+        sounds = []
+        for g in sequence:
+            p = ["L", "D"][g in "123456789"]
+            sound = QSound(self.aud_stim_paths[f"SPAN-{p}{g}-V1.wav"])
+            sound.play()
+            while sound.isFinished():
+                self.sleep(100)
+            if self.first_digit_horrible_lag:
+                self.sleep(200)
+                self.first_digit_horrible_lag = False
+            if g in [5]:
+                self.sleep(1100)
+            elif g in [1, 8, 9]:
+                self.sleep(900)
+            else:
+                self.sleep(1000)
+
 
     # def summarise(self):
     #     """See docstring for explanation."""

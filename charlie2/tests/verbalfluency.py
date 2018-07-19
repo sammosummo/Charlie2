@@ -179,6 +179,8 @@ class TestWidget(BaseTestWidget):
         layout.addWidget(button_box, 3, 0, 1, 2)
         self.setLayout(layout)
 
+        self.data.current_trial.responses_list = []
+
     @property
     def _total_responses(self):
         t = self.data.current_trial
@@ -188,6 +190,7 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
+        t.responses_list.append(("valid", self.trial_time.elapsed()))
         if self.countdown_started is False:
             self._start()
 
@@ -195,6 +198,7 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
+        t.responses_list.append(("invalid", self.trial_time.elapsed()))
         if self.countdown_started is False:
             self._start()
 
