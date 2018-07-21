@@ -114,7 +114,7 @@ class TestWidget(BaseTestWidget):
             x = 150 * sin(theta)
             y = 150 * cos(theta)
             s = "l%i_t%i_i%i.png" % (4, t.trial_number, item)
-            label = self.display_image(s, (x, y + 75))
+            label = self.display_image(s, (x, y))
             self.labels.append(label)
         self.sleep(3000)
 
