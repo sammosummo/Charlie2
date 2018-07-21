@@ -134,23 +134,23 @@ class TestWidget(BaseTestWidget):
         self.play_sequence(t.sequence)
         corr_button = self._display_continue_button()
         corr_button.setText(self.instructions[10] % "-".join(answer))
-        corr_button.setFont(self.instructions_font)
+        corr_button.setFont(QFont("Helvetica", 18))
         corr_button.resize(corr_button.sizeHint())
         corr_button.setMinimumHeight(120)
         corr_button.setMinimumWidth(320)
 
-        x = (self.frameGeometry().width() - corr_button.width()) // 2 - 175
+        x = (self.frameGeometry().width() - corr_button.width()) // 2 - 250
         y = self.frameGeometry().height() - (corr_button.height() + 20)
         corr_button.move(x, y)
         corr_button.clicked.disconnect()
         corr_button.clicked.connect(self._correct)
         incorr_button = self._display_continue_button()
         incorr_button.setText(self.instructions[11])
-        incorr_button.setFont(self.instructions_font)
+        incorr_button.setFont(QFont("Helvetica", 18))
         incorr_button.resize(incorr_button.sizeHint())
         incorr_button.setMinimumHeight(120)
         incorr_button.setMinimumWidth(320)
-        x = (self.frameGeometry().width() - incorr_button.width()) // 2 + 175
+        x = (self.frameGeometry().width() - incorr_button.width()) // 2 + 250
         y = self.frameGeometry().height() - (incorr_button.height() + 20)
         incorr_button.move(x, y)
         incorr_button.clicked.disconnect()
