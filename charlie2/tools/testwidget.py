@@ -1,13 +1,12 @@
-from collections import defaultdict
 from copy import copy
-from datetime import datetime
 from logging import getLogger
 from .data import SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
+from .google_drive import backup
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint, QUrl
 from PyQt5.QtGui import QPixmap, QFont
-from PyQt5.QtMultimedia import QSound, QSoundEffect
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
+from httplib2 import ServerNotFoundError
 
 
 logger = getLogger(__name__)
@@ -495,7 +494,7 @@ class BaseTestWidget(QWidget):
 
         Args:
             rects (:obj:`list` of :obj:`QRect`): List of `QRects`.
-            reset (:obj:`bool`, optional): Remove previous items.
+            reset (:obj:`bool`, optional): Remove old items.
 
         """
         if reset:
@@ -706,8 +705,8 @@ class BaseTestWidget(QWidget):
             if t.status == "completed":
                 logger.info("current_trial was completed successfully")
                 logger.info("(final version) of current_trial looks like %s" % str(t))
-                if t.practice is True:
-                    self.play_feedback_sound(t.correct)
+                # if t.practice is True:
+                #     self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def keyReleaseEvent(self, event):
@@ -721,8 +720,8 @@ class BaseTestWidget(QWidget):
             if self.data.data["current_trial"].status == "completed":
                 logger.info("current_trial was completed successfully")
                 logger.info("(final version) of current_trial looks like %s" % str(t))
-                if t.practice is True:
-                    self.play_feedback_sound(t.correct)
+                # if t.practice is True:
+                #     self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def _next_trial(self):
@@ -750,11 +749,11 @@ class BaseTestWidget(QWidget):
 
     def _block_stopping_rule(self):
         """This is a little complicated. Because `self.data.data["completed_trials"]`
-        gets updated when the data object is iterated, the previous trial does not get
+        gets updated when the data object is iterated, the old trial does not get
         appended to this list until the next one has already started. Stopping rules
         should be called before this iteration, yet should evaluate all completed
         trials. Therefore we temporarily edit completed_trials to include current_trial
-        (actually the previous trial, but we are in-between trials at this point). This
+        (actually the old trial, but we are in-between trials at this point). This
         is almost certainly not the best way to do this, but I don't have the time to
         restructure everything to fix it.
 
@@ -781,13 +780,20 @@ class BaseTestWidget(QWidget):
         logger.info("stopping the current block")
         self.data.skip_current_block("stopping rule failed")
 
-    def _preload_feedback_sounds(self):
-        """This should prevent lags when playing sounds."""
-        for name in ["incorrect.wav", "correct.wav"]:
-            sound = QSoundEffect()
-            sound.setSource(QUrl.fromLocalFile(self.aud_stim_paths[name]))
-            self.feedback_sounds.append(sound)
+    # def _preload_feedback_sounds(self):
+    #     """This should prevent lags when playing sounds."""
+    #     for name in ["incorrect.wav", "correct.wav"]:
+    #         sound = QSoundEffect()
+    #         sound.setSource(QUrl.fromLocalFile(self.aud_stim_paths[name]))
+    #         self.feedback_sounds.append(sound)
+    #
+    # def play_feedback_sound(self, correct):
+    #     """Play either the correct sound if true or incorrect sound if false."""
+    #     self.feedback_sounds[correct].play()
 
-    def play_feedback_sound(self, correct):
-        """Play either the correct sound if true or incorrect sound if false."""
-        self.feedback_sounds[correct].play()
+    def _attempt_backup(self):
+        """Try to perform a backup."""
+        try:
+            backup()
+        except ServerNotFoundError:
+            pass

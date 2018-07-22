@@ -267,7 +267,7 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
 #         if exists(self.pkl_path) and self.proband_id != 'TEST':
 #             self.vprint("found a pickle for this test and subject")
 #
-#             # load previous pkl
+#             # load old pkl
 #             prev_vars = load(open(self.pkl_path, "rb"))
 #
 #             # update variables
@@ -389,7 +389,7 @@ def basic_summary(self, trials=None, adjust_time_taken=False):
 #         if exists(self.pkl_path) and self.proband_id != 'TEST':
 #             self.vprint("found a pickle for this test and subject")
 #
-#             # load previous pkl
+#             # load old pkl
 #             prev_vars = load(open(self.pkl_path, "rb"))
 #             if 'override' in self.__dict__:
 #                 if self.override is True:

@@ -71,22 +71,6 @@ class MainWindow(QMainWindow):
             logger.info("at least one test in test_names")
             self.kwds["test_name"] = self.kwds["test_names"].pop(0)
 
-            # logger.info("data for this proband and test?")
-            # data_exist = exists(SimpleProcedure(**vars(self.kwds)).path)
-            # logger.info("answer is %s" % data_exist)
-            #
-            # if data_exist:
-            #     logger.info("resumable? %s" % self.kwds["resume"])
-            #     if not self.kwds["resume"]:
-            #         logger.info("displaying warning message")
-            #         message_box = QErrorMessage(self)
-            #         msg = get_error_messages(self.kwds["language"], "proband_exists")
-            #         message = msg % (self.kwds["proband_id"], self.kwds["test_name"])
-            #         message_box.setMinimumSize(400, 600)
-            #         message_box.showMessage(message)
-            #         self.switch_central_widget()
-            #         return
-
             logger.info("initalising %s" % self.kwds["test_name"])
             w = get_test(self.kwds["test_name"])
             widget = w(self)

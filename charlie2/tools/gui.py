@@ -32,6 +32,8 @@ from .paths import (
 from ..gui.proband_widget import ProbandWidget
 from ..gui.test_widget import TestWidget
 from ..gui.notes_widget import NotesWidget
+from ..gui.backup_widget import BackupWidget
+
 
 logger = getLogger(__name__)
 
@@ -106,6 +108,18 @@ class GUIWidget(QWidget):
         _h = self.notes_widget.sizeHint().height()
         self.notes_tab.setMinimumSize(_w, _h)
         self.tabs.addTab(self.notes_tab, self.instructions[42])
+        
+        # layout > tabs widget > backup tab
+        self.backup_tab = QTabWidget()
+        self.backup_tab_vbox = QVBoxLayout()
+        self.backup_tab.setLayout(self.backup_tab_vbox)
+        self.backup_widget = BackupWidget(self)
+        self.backup_tab_vbox.addWidget(self.backup_widget)
+        _w = self.backup_widget.sizeHint().width() + 20
+        _h = self.backup_widget.sizeHint().height()
+        self.backup_tab.setMinimumSize(_w, _h)
+        self.tabs.addTab(self.backup_tab, self.instructions[51])
+        
 
         # connect tab changing to method
         self.tabs.currentChanged.connect(self._update_proband_lists)
