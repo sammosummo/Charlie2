@@ -4,7 +4,7 @@ from datetime import datetime
 from logging import getLogger
 from .data import SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
-from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
+from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint, QUrl
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtMultimedia import QSound, QSoundEffect
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
@@ -785,7 +785,7 @@ class BaseTestWidget(QWidget):
         """This should prevent lags when playing sounds."""
         for name in ["incorrect.wav", "correct.wav"]:
             sound = QSoundEffect()
-            sound.setSource(self.aud_stim_paths[name])
+            sound.setSource(QUrl.fromLocalFile(self.aud_stim_paths[name]))
             self.feedback_sounds.append(sound)
 
     def play_feedback_sound(self, correct):
