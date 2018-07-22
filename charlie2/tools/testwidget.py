@@ -3,7 +3,7 @@ from logging import getLogger
 from .data import SimpleProcedure
 from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
 from .google_drive import backup
-from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint, QUrl
+from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 from httplib2 import ServerNotFoundError
@@ -29,7 +29,6 @@ class BaseTestWidget(QWidget):
         self.vis_stim_paths = get_vis_stim_paths(self.kwds["test_name"])
         self.aud_stim_paths = get_aud_stim_paths(self.kwds["test_name"])
         self.feedback_sounds = []
-        self._preload_feedback_sounds()
         self.instructions_font = QFont("Helvetica", 26)
         self.test_time = QTime()
         self.block_time = QTime()
@@ -790,10 +789,3 @@ class BaseTestWidget(QWidget):
     # def play_feedback_sound(self, correct):
     #     """Play either the correct sound if true or incorrect sound if false."""
     #     self.feedback_sounds[correct].play()
-
-    def _attempt_backup(self):
-        """Try to perform a backup."""
-        try:
-            backup()
-        except ServerNotFoundError:
-            pass

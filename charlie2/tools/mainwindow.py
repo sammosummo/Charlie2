@@ -5,8 +5,10 @@ from logging import getLogger
 from sys import exit
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
 from .data import defaults_for_mainwidow
+from.google_drive import backup
 from .gui import GUIWidget
 from .paths import get_test
+
 
 
 logger = getLogger(__name__)
@@ -128,8 +130,18 @@ class MainWindow(QMainWindow):
         else:
             if isinstance(self.centralWidget(), GUIWidget):
                 logger.info("at the gui, so properly closing")
+                if self.kwds["autobackup"] is True:
+                    logger.info("attempting autobackup")
+                    self._attempt_backup()
                 exit()
             else:
                 logger.info("at a test, safely closing")
                 self.centralWidget().safe_close()
                 event.ignore()
+
+    @staticmethod
+    def _attempt_backup():
+        try:
+            backup()
+        except ServerNotFoundError:
+            pass

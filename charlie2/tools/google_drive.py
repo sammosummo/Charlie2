@@ -20,7 +20,6 @@ from oauth2client import file, client, tools
 from .paths import data_path, last_backed_up, credentials_path, token_path
 
 
-
 logger = getLogger(__name__)
 this_computer = gethostname()
 mime = "application/vnd.google-apps.%s"
@@ -28,6 +27,7 @@ mime = "application/vnd.google-apps.%s"
 
 def _build_service():
     """Returns a service to the Google Drive API."""
+    logger.info("called _build_service()")
     scopes = [
         'https://www.googleapis.com/auth/drive.metadata.readonly',
         'https://www.googleapis.com/auth/drive.file',
@@ -46,6 +46,7 @@ def _build_service():
 
 def _exists(service, name, parents):
     """Returns the Google Drive item of a file if it exists remotely or None if not."""
+    logger.info("called _exists()")
     q = f"trashed != True"
     for p in parents:
         q += f" and '{p}' in parents"
@@ -61,6 +62,7 @@ def _exists(service, name, parents):
 
 def _create_folder(service, name, parents):
     """Creates a folder in google drive."""
+    logger.info("called _create_folder()")
     item = _exists(service, name, parents)
     if item is None:
         metadata = {'name': name, 'parents': parents, 'mimeType': mime % "folder"}
@@ -70,6 +72,7 @@ def _create_folder(service, name, parents):
 
 def _upload_file(service, name, parents, path):
     """Uploads a file or folder if it doesn't exist."""
+    logger.info("called _upload_file()")
     metadata = {'name': name, 'parents': parents}
     mimetype = MimeTypes().guess_type(name)[0]
     media = MediaFileUpload(path, mimetype=mimetype)
@@ -83,6 +86,7 @@ def _upload_file(service, name, parents, path):
 
 def backup():
     """Upload the contents of the local data directory to Google Drive."""
+    logger.info("called backup()")
     service = _build_service()
     logger.info("creating root remote directory")
     item = _create_folder(service, this_computer, [])
@@ -105,5 +109,5 @@ def backup():
                 _upload_file(service, name, [item["id"]], p)
 
     dump(datetime.now(), open(last_backed_up, "wb"))
-
+    logger.info("all done with backup")
     return True

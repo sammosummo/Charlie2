@@ -29,10 +29,10 @@ from .paths import (
     get_docstring_html,
     proband_pickles,
 )
-from ..gui.proband_widget import ProbandWidget
-from ..gui.test_widget import TestWidget
-from ..gui.notes_widget import NotesWidget
-from ..gui.backup_widget import BackupWidget
+from ..gui.proband import ProbandWidget
+from ..gui.tests import TestsWidget
+from ..gui.notes import NotesWidget
+from ..gui.backup import BackupWidget
 
 
 logger = getLogger(__name__)
@@ -91,7 +91,7 @@ class GUIWidget(QWidget):
         self.test_tab = QTabWidget()
         self.test_tab_vbox = QVBoxLayout()
         self.test_tab.setLayout(self.test_tab_vbox)
-        self.test_widget = TestWidget(self)
+        self.test_widget = TestsWidget(self)
         self.test_tab_vbox.addWidget(self.test_widget)
         _w = self.test_widget.sizeHint().width() + 20
         _h = self.test_widget.sizeHint().height()

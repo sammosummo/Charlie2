@@ -4,6 +4,7 @@
 from copy import copy
 from logging import getLogger
 from os.path import exists
+from httplib2 import ServerNotFoundError
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -24,17 +25,18 @@ from ..tools.paths import (
     get_tests_from_batch,
     get_error_messages,
 )
+from ..tools.google_drive import backup
 
 
 logger = getLogger(__name__)
 
 
-class TestWidget(QWidget):
+class TestsWidget(QWidget):
     def __init__(self, parent=None):
         """Test tab widget.
 
         """
-        super(TestWidget, self).__init__(parent=parent)
+        super(TestsWidget, self).__init__(parent=parent)
 
         logger.info("creating graphical elements of test widget")
 
@@ -186,6 +188,8 @@ class TestWidget(QWidget):
                 self._update_maiwindow_kwds()
                 logger.info("about to run with these kewyords: %s" % str(self.kwds))
                 self._begin()
+        if self.kwds["autobackup"] is True:
+            self._attempt_backup()
 
     def _begin(self):
         data = SimpleProcedure(
@@ -203,3 +207,4 @@ class TestWidget(QWidget):
     def _update_maiwindow_kwds(self):
         """The following is quite possibly the worst bit of code I've ever written."""
         self.parent().parent().parent().parent().parent().kwds.update(self.kwds)
+
