@@ -188,8 +188,6 @@ class TestsWidget(QWidget):
                 self._update_maiwindow_kwds()
                 logger.info("about to run with these kewyords: %s" % str(self.kwds))
                 self._begin()
-        if self.kwds["autobackup"] is True:
-            self._attempt_backup()
 
     def _begin(self):
         data = SimpleProcedure(
