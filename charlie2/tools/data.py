@@ -7,6 +7,7 @@ from getpass import getuser
 from logging import getLogger
 from os.path import exists, join as pj
 from pickle import load, dump
+from shutil import move
 from socket import gethostname
 from sys import platform
 import pandas as pd
@@ -17,6 +18,7 @@ logger = getLogger(__name__)
 forbidden_ids = {"TEST", ""}
 this_user = getuser()
 this_computer = gethostname()
+
 default_kwds = {
     "proband_id": "TEST",
     "batch_name": None,
@@ -25,7 +27,7 @@ default_kwds = {
     "language": "en",
     "fullscreen": [True, False][platform == "darwin"],
     "resume": False,
-    "autobackup": True,
+    "autobackup": False,
     "age": 1,
     "sex": "Male",
     "other_ids": set(),
@@ -35,7 +37,10 @@ default_kwds = {
     "notes": "Add copious notes about the proband here...",
     "gui": True,
 }
+
 for_probands = {"proband_id", "age", "sex", "other_ids", "notes", "language"}
+defaults_for_probands = {k: v for k, v in default_kwds.items() if k in for_probands}
+
 for_tests = {
     "proband_id",
     "test_name",
@@ -47,6 +52,8 @@ for_tests = {
     "user_id",
     "platform",
 }
+defaults_for_tests = {k: v for k, v in default_kwds.items() if k in for_tests}
+
 for_mainwindow = {
     "batch_name",
     "test_name",
@@ -58,7 +65,7 @@ for_mainwindow = {
     "gui",
 }
 defaults_for_mainwidow = {k: v for k, v in default_kwds.items() if k in for_mainwindow}
-logger.info("defaults_for_mainwindow: %s" % defaults_for_mainwidow)
+
 
 class Trial(dict):
     def __init__(self, *args, **kwds):
@@ -115,7 +122,7 @@ class Proband:
 
         """
         logger.info("initialising a proband data object with kwds: %s" % str(kwds))
-        self.data = {k: v for k, v in default_kwds.items() if k in for_probands}
+        self.data = copy(defaults_for_probands)
         self.data.update(kwds)
         self.data["filename"] = self.data["proband_id"] + ".pkl"
         self.data["path"] = pj(proband_path, self.data["filename"])
@@ -142,6 +149,14 @@ class Proband:
         """Dump the data. Don't do this if proband ID is TEST."""
         logger.info("called save()")
         if self.proband_id.upper() not in forbidden_ids:
+            if exists(self.path):
+                logger.warning("%s already exists, making a backup" % self.path)
+                path = self.path.replace("current", "old")
+                for i in range(8, 0, -1):
+                    path_ = path + f"{i}"
+                    if exists(path_):
+                        move(path_, path_ = path + f"{i + 1}")
+                move(self.path, path)
             logger.info("saving the data")
             self.data["saved"] = datetime.now()
             dump(self.data, open(self.path, "wb"))
@@ -170,7 +185,7 @@ class SimpleProcedure(Proband):
 
         """
         logger.info("initialising a TestData object with kwds: %s" % str(kwds))
-        self.data = {k: v for k, v in default_kwds.items() if k in for_probands}
+        self.data = defaults_for_tests
         self.data.update(kwds)
         assert self.data["test_name"] in tests_list, "test_name not recognised"
 

@@ -16,8 +16,7 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QMessageBox,
 )
-from ..tools.data import SimpleProcedure
-from ..tools.defaults import default_kwds, valid_for_tests
+from ..tools.data import SimpleProcedure, defaults_for_tests
 from ..tools.paths import (
     tests_list,
     proband_pickles,
@@ -116,8 +115,7 @@ class TestsWidget(QWidget):
 
         # populate
         logger.info("creating default keywords")
-        self.dk = {k: v for k, v in default_kwds.items() if k in valid_for_tests}
-        self.kwds = copy(self.dk)
+        self.kwds = defaults_for_tests
         self.proband_id_box.addItems(["TEST"] + proband_pickles())
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resume"])

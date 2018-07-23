@@ -11,8 +11,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QPlainTextEdit,
 )
-from ..tools.defaults import default_kwds, valid_for_probands
-from ..tools.data import Proband
+from ..tools.data import Proband, default_kwds, for_probands
 from ..tools.paths import proband_pickles
 
 
@@ -58,9 +57,7 @@ class NotesWidget(QWidget):
         # self.layout.addStretch(1)
 
         logger.info("creating a default proband")
-        self.dk = {k: v for k, v in default_kwds.items() if k in valid_for_probands}
-        self.kwds = copy(self.dk)
-        self.proband = Proband(**self.kwds)
+        self.proband = Proband()
 
         # connect
         self.proband_id_box.currentTextChanged.connect(self._load)

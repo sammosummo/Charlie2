@@ -15,8 +15,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QErrorMessage,
 )
-from ..tools.defaults import default_kwds, valid_for_probands
-from ..tools.data import Proband
+from ..tools.data import Proband, defaults_for_probands
 from ..tools.paths import proband_pickles, get_error_messages
 
 
@@ -102,9 +101,8 @@ class ProbandWidget(QWidget):
         self.layout.addStretch(1)
 
         logger.info("creating a default proband")
-        self.dk = {k: v for k, v in default_kwds.items() if k in valid_for_probands}
-        self.kwds = copy(self.dk)
-        self.proband = Proband(**self.kwds)
+        self.kwds = {}
+        self.proband = Proband()
 
         # connect buttons
         self.addinf_otherids_addbtn.clicked.connect(self._add_other_id)
