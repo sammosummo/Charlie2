@@ -3,7 +3,6 @@
 Matrix reasoning
 ================
 
-:Status: complete
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/maxtrixreasoning.py
 
@@ -19,18 +18,6 @@ five trials were incorrect. Probands can sometimes spend minutes on single trial
 this test. To try to prevent this, each trial has a time limit of 45 seconds. The
 stimuli are taken direction from the WAIS-III.
 
-
-Summary statistics
-==================
-
-* `completed` (bool): Did the proband complete the test?
-* `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
-* `time_taken` (int): Time taken to complete the entire test in ms.
-* `correct` (int): How many trials correct?
-* `accuracy` (float): proportion of correct responses.
-* `resumed` (bool): Was this test resumed at some point?
-
 Reference
 =========
 
@@ -39,19 +26,24 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = "production"
+
 
 from logging import getLogger
 from PyQt5.QtCore import QRect
-from charlie2.tools.testwidget import BaseTestWidget
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
+
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+
     def make_trials(self):
-        """For this test, all we need are the answers and path to the correct images."""
+
         answers = [
             1,
             3,
@@ -100,14 +92,14 @@ class TestWidget(BaseTestWidget):
         ]
 
     def block(self):
-        """Set the trial time limit and display instructions."""
+
         self.trial_deadline = 60 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
-        """Show matrix and array, set up zones."""
+
         self.clear_screen(delete=True)
-        matrix = self.display_image(self.data.current_trial.matrix, (0, 125))
+        self.display_image(self.data.current_trial.matrix, (0, 125))
         array = self.display_image(self.data.current_trial.array, (0, -125))
 
         # make zones
@@ -121,10 +113,7 @@ class TestWidget(BaseTestWidget):
         self.make_zones(rects)
 
     def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the target square. If so,
-        record the trial as a success and move on. If not, increase misses by 1.
 
-        """
         ix = [event.pos() in z for z in self.zones]
         t = self.data.current_trial
         if any(ix):
@@ -133,7 +122,7 @@ class TestWidget(BaseTestWidget):
             self.data.current_trial.status = "completed"
 
     def block_stopping_rule(self):
-        """After five trials completed, exit if four or more were incorrect."""
+
         if len(self.data.completed_trials) > 5:
             trials = self.data.completed_trials[-5:]
             correct = len([t for t in trials if t["correct"]])
@@ -145,7 +134,7 @@ class TestWidget(BaseTestWidget):
         return outcome
 
     def summarise(self):
-        """See docstring for explanation."""
+
         dic = self.basic_summary()
         dic["accuracy"] = dic["correct_trials"] / 35
         return dic

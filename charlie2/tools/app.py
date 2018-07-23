@@ -1,4 +1,4 @@
-"""Runs the main Qt application. This script is the one actually executed.
+"""Runs the application.
 
 """
 from logging import getLogger

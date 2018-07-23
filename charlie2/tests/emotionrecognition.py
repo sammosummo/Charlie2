@@ -3,8 +3,7 @@
 Emotion recognition
 ===================
 
-:Status: complete
-:Version: 1.0
+:Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/emotionrecognition.py
 
 Description
@@ -14,18 +13,6 @@ This is a stripped-down version of the ER-40 by Gur and colleagues [1]_. On each
 the proband sees a colour image of a face expressing an emotion (angry or sad) or with
 a neutral expression. Probands choose between the three possibilities using the arrow
 keys.
-
-
-Summary statistics
-==================
-
-* `completed` (bool): Did the proband complete the test?
-* `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
-* `time_taken` (int): Time taken to complete the entire test in ms.
-* `correct` (int): How many trials correct?
-* `accuracy` (float): proportion of correct responses.
-* `resumed` (bool): Was this test resumed at some point?
 
 Reference
 =========
@@ -37,22 +24,27 @@ Reference
 
 """
 
-__version__ = 1.0
-__status__ = "production"
+__version__ = 2.0
 
 
 from logging import getLogger
 from PyQt5.QtCore import Qt
-from charlie2.tools.testwidget import BaseTestWidget
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
+
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[5:8])
+        self.mouse_visible = False
+
     def make_trials(self):
-        """For this test, all we need is the stimulus and the emotion gleaned from its
-        filename."""
+
         fs = [
             "MN_223.png",
             "MSZ_112.png",
@@ -92,22 +84,18 @@ class TestWidget(BaseTestWidget):
         return d
 
     def block(self):
-        """Simply display the task instructions."""
+
         self.block_deadline = 300 * 1000
         self.display_instructions_with_space_bar(self.instructions[4])
-        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[5:8])
 
     def trial(self):
-        """For this trial, show the face and three keyboard arrow keys."""
-        logger.debug("clearing screen")
+
         self.clear_screen(delete=False)
-        logger.debug("displaying face screen")
         self.display_image(self.data.current_trial.face, (0, 100))
-        logger.debug("displaying keyboard keys")
         [l.show() for l in self.keyboard_keys]
 
     def keyReleaseEvent_(self, event):
-        """For this trial, listen for left-, down- right-arrow keyboard key presses."""
+
         dic = {Qt.Key_Left: "angry", Qt.Key_Down: "neutral", Qt.Key_Right: "sad"}
         t = self.data.current_trial
         if event.key() in dic:
@@ -116,7 +104,7 @@ class TestWidget(BaseTestWidget):
             t.status = "completed"
 
     def summarise(self):
-        """See docstring for explanation."""
+
         dic = self.basic_summary()
         for emotion in ["neutral", "sad", "angry"]:
             trials = [

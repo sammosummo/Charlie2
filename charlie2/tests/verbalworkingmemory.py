@@ -3,9 +3,8 @@
 Verbal working memory
 =====================
 
-:Status: complete
 :Version: 2.0
-:Source: http://github.com/sammosummo/Charlie2/tests/verbalworkingmemory.py
+:Source: http://github.com/sammosummo/Charlie2/tests/recipes.py
 
 Description
 ===========
@@ -24,19 +23,6 @@ followed by the letters in alphabetical order. The third block serves as a pract
 the fourth block. In the fourth block there are three sequences of the same length; if
 probands get all three wrong, the block is terminated.
 
-
-Summary statistics
-==================
-
-For `{x}` in [`forward`, `backward`, `lns`]:
-
-* `{x}_completed` (bool): Did the proband complete the test?
-* `{x}_correct` (int): Number of correct responses.
-* `{x}_responses` (int): Total number of responses in the block.
-* `{x}_k` (int): Length of the longest sequence reported.
-* `resumed` (bool): Was this test resumed at some point?
-
-
 Reference
 =========
 
@@ -51,19 +37,21 @@ __status__ = "production"
 from logging import getLogger
 from PyQt5.QtGui import QFont
 from PyQt5.QtMultimedia import QSound
-from charlie2.tools.testwidget import BaseTestWidget
-from charlie2.recipes.verbalworkingmemory import get_vwm_stimuli
+from ..tools.basetestwidget import BaseTestWidget
+from ..tools.recipes import get_vwm_stimuli
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-    def make_trials(self):
-        """For this test, block_type indicates whether this is the forward, backward,
-        lns_prac, or lns blocks.
 
-        """
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+
+    def make_trials(self):
+
         sequences = get_vwm_stimuli(self.kwds["language"])
         trial_types = ["forward", "backward", "lns_prac", "lns"]
         practices = {
@@ -88,11 +76,7 @@ class TestWidget(BaseTestWidget):
         return details
 
     def block(self):
-        """For this test, display instructions experimenter to read out to proband.
-        If this is the very first trial, additionally display instructions to the
-        proband.
 
-        """
         self.first_digit_horrible_lag = True
         self.skip_countdown = True
         t = self.data.current_trial
@@ -111,7 +95,7 @@ class TestWidget(BaseTestWidget):
             b.clicked.connect(lambda: [a.hide(), b.hide(), btn.show(), label.show()])
 
     def trial(self):
-        """For this test, display the GUI."""
+
         t = self.data.current_trial
 
         # calculate the corect answer
@@ -157,6 +141,7 @@ class TestWidget(BaseTestWidget):
         incorr_button.clicked.connect(self._incorrect)
 
     def _correct(self):
+
         t = self.data.current_trial
         if t:
             t.correct = True
@@ -167,6 +152,7 @@ class TestWidget(BaseTestWidget):
             self.next_trial()
 
     def _incorrect(self):
+
         t = self.data.current_trial
         if t:
             t.correct = False
@@ -177,7 +163,7 @@ class TestWidget(BaseTestWidget):
             self.next_trial()
 
     def play_sequence(self, sequence):
-        """Play the audio of a sequence."""
+
         sounds = []
         for g in sequence:
             p = ["L", "D"][g in "123456789"]
@@ -200,11 +186,11 @@ class TestWidget(BaseTestWidget):
                 self.sleep(1000)
 
     def mousePressEvent(self, event):
-        """We don't want to handle mouse presses in the same way as other tests."""
+
         pass
 
     def summarise(self):
-        """See docstring for explanation."""
+
         dic = {}
         for kind in ["backward", "forward", "lns"]:
             trials = [
@@ -221,11 +207,7 @@ class TestWidget(BaseTestWidget):
         return dic
 
     def block_stopping_rule(self):
-        """Checks to see if the proband got both or all three (depending on the
-        phase) sequences of the same length incorrect. If True, all sequences
-        of this phase remaining in the control iterable are removed.
 
-        """
         last_trial = self.data.completed_trials[-1]
         logger.info("applying stopping rule to this trial: %s" % str(last_trial))
         if last_trial["practice"]:

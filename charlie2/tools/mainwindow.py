@@ -6,8 +6,8 @@ from logging import getLogger
 from sys import exit
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
 from httplib2 import ServerNotFoundError
-from .data import defaults_for_mainwidow
-from .google_drive import backup
+from .defaults import defaults_for_mainwidow
+from .googledrive import backup
 from .gui import GUIWidget
 from .paths import durations_path, get_test
 
@@ -55,11 +55,9 @@ class MainWindow(QMainWindow):
 
         logger.info("removing empty test names")
         self.kwds["test_names"] = [s for s in self.kwds["test_names"] if s]
-        logger.info("test list looks like this: %s" % str(self.kwds["test_names"]))
 
         if len(self.kwds["test_names"]) == 0 and self.kwds["gui"] is True:
 
-            logger.info("initialising gui")
             gui = GUIWidget(self)
 
             logger.info("sizing, centring, and showing the window")
@@ -78,7 +76,7 @@ class MainWindow(QMainWindow):
             logger.info("at least one test in test_names")
             self.kwds["test_name"] = self.kwds["test_names"].pop(0)
 
-            logger.info("initalising %s" % self.kwds["test_name"])
+            logger.info(f"initialising {self.kwds['test_name']}")
             w = get_test(self.kwds["test_name"])
             widget = w(self)
 
@@ -102,8 +100,6 @@ class MainWindow(QMainWindow):
             widget.begin()
 
         else:
-
-            logger.info("closing the mainwindow (i.e., everything")
             exit()
 
     def _centre(self):
@@ -139,8 +135,8 @@ class MainWindow(QMainWindow):
                     logger.info("attempting autobackup")
                     self._attempt_backup()
                 duration = datetime.now() - self.time_started
-                s = ','.join([str(duration), str(self.time_started)]) + '\n'
-                open(durations_path, 'a').write(s)
+                s = ",".join([str(duration), str(self.time_started)]) + "\n"
+                open(durations_path, "a").write(s)
                 exit()
             else:
                 logger.info("at a test, safely closing")

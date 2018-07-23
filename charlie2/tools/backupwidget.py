@@ -1,35 +1,22 @@
 """Widget for backing up data to Google Drive.
 
-Positioned in the fourth tab of the GUI. Simply contains a message saying when the data
-were last backed up and a button to perform the backup. All the heavy lifting is done by
-the `charlie.tools.backup` package and specifically `google_drive.py`. If should be
-straightforward to add more backends in future if needed.
-
 """
 from pickle import load
 from logging import getLogger
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QLabel,
-    QPushButton,
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt5.QtCore import QTimer, QEventLoop
 from httplib2 import ServerNotFoundError
-from charlie2.tools.google_drive import backup
-from ..tools.paths import last_backed_up
+from charlie2.tools.googledrive import backup
+from charlie2.tools.paths import last_backed_up
+
 
 logger = getLogger(__name__)
 
 
 class BackupWidget(QWidget):
     def __init__(self, parent=None):
-        """Notes widget.
-
-        """
         super(BackupWidget, self).__init__(parent=parent)
-
-        logger.info("creating graphical elements of backup widget")
+        logger.info(f"initialised {type(self)}")
 
         # instructions
         self.instructions = self.parent().instructions
@@ -53,11 +40,12 @@ class BackupWidget(QWidget):
     @property
     def _last_backed_up(self):
         try:
-            return str(load(open(last_backed_up, 'rb')))
+            return str(load(open(last_backed_up, "rb")))
         except FileNotFoundError:
             return "Never!"
 
     def _attempt_backup(self):
+        logger.info("called _attempt_backup()")
         self.button.setEnabled(False)
         success = False
         self.button.setText(self.instructions[54])
@@ -73,7 +61,8 @@ class BackupWidget(QWidget):
             self.button.setText(self.instructions[56])
         self.button.setEnabled(True)
 
-    def _sleep(self, t):
+    @staticmethod
+    def _sleep(t):
         loop = QEventLoop()
         QTimer.singleShot(t, loop.quit)
         loop.exec_()

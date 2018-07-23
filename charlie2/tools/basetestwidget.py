@@ -1,12 +1,15 @@
+"""Defines the BaseTestWidget, the blueprint for specific tests.
+
+"""
 from copy import copy
 from logging import getLogger
-from .data import SimpleProcedure
-from .paths import get_vis_stim_paths, get_aud_stim_paths, get_instructions
-from .google_drive import backup
+
 from PyQt5.QtCore import QTime, Qt, QTimer, QEventLoop, QPoint
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
-from httplib2 import ServerNotFoundError
+
+from .procedure import SimpleProcedure
+from .paths import get_aud_stim_paths, get_instructions, get_vis_stim_paths
 
 
 logger = getLogger(__name__)
@@ -22,8 +25,7 @@ class BaseTestWidget(QWidget):
 
         """
         super(BaseTestWidget, self).__init__(parent)
-        logger.info("test widget created")
-        logger.info("transferring command-line arguments from mainwidget to testwidget")
+        logger.info(f"initialised {type(self)} with parent={parent}")
         self.kwds = self.parent().kwds
 
         self.vis_stim_paths = get_vis_stim_paths(self.kwds["test_name"])
@@ -59,7 +61,7 @@ class BaseTestWidget(QWidget):
 
     def begin(self):
         """Start the test."""
-        logger.info("initialising a data object")
+        logger.info("called begin()")
         self.data = SimpleProcedure(**self.kwds)
         logger.info("checking if test was resumed")
         if not self.data.data["test_resumed"]:
@@ -74,7 +76,7 @@ class BaseTestWidget(QWidget):
         start of a block, starting the next trial, or continuing to the next test.
 
         """
-        logger.info("stepping forward in test")
+        logger.info("called _step()")
 
         logger.info("testing stopping rule")
         if len(self.data.data["completed_trials"]) > 0:
@@ -106,6 +108,7 @@ class BaseTestWidget(QWidget):
     def _block(self):
         """Runs at the start of a new block of trials. Typically this is used to give
         the proband a break or display new instructions."""
+        logger.info("called _block()")
         self._performing_block = False
         logger.info("checking if this is a silent block")
         if self.silent_block:
@@ -245,7 +248,7 @@ class BaseTestWidget(QWidget):
             t (float): Time to sleep in seconds.
 
         """
-        logger.info("sleeping for %i s" % t)
+        logger.info(f"called sleep with t={t}")
         self.parent().ignore_close_event = True
         loop = QEventLoop()
         QTimer.singleShot(t, loop.quit)
@@ -266,7 +269,9 @@ class BaseTestWidget(QWidget):
             label (QLabel): Object containing the message.
 
         """
-        logger.info("displaying the following message:" + message.replace("\n", " "))
+        logger.info(
+            f"called display_instructions() with message={message} and font={font}"
+        )
         self.clear_screen()
         label = QLabel(message, self)
         label.setAlignment(Qt.AlignCenter)
@@ -294,6 +299,10 @@ class BaseTestWidget(QWidget):
             button (QPushButton): Button.
 
         """
+        logger.info(
+            f"called display_instructions_with_continue_button() with message={message}"
+            f"and font={font}"
+        )
         label = self.display_instructions(message, font)
         button = self._display_continue_button()
         logger.info("now waiting for continue button to be pressed")
@@ -309,6 +318,9 @@ class BaseTestWidget(QWidget):
             label (QLabel): Object containing the message.
 
         """
+        logger.info(
+            f"called display_instructions_with_space_bar() with message={message}"
+        )
         label = self.display_instructions(message)
         logger.info("now waiting for space bar to be pressed")
         self._keyReleaseEvent = copy(self.keyReleaseEvent)
@@ -320,6 +332,7 @@ class BaseTestWidget(QWidget):
         return label
 
     def _space_bar_continue(self, event):
+        logger.info(f"called _space_bar_continue() with event={event}")
         logger.info("%s pressed, looking for %s" % (event.key(), Qt.Key_Space))
         if event.key() == Qt.Key_Space:
             logger.debug("got the correct key")
@@ -340,6 +353,7 @@ class BaseTestWidget(QWidget):
             label (QLabel): Label containing the image as a pixmap.
 
         """
+        logger.info(f"called load_image() with s={s}")
         label = QLabel(self)
         pixmap = QPixmap(self.vis_stim_paths[s])
         label.setPixmap(pixmap)
@@ -361,6 +375,7 @@ class BaseTestWidget(QWidget):
             g (QRect): Updated geometry of the wdiget.
 
         """
+        logger.info(f"called move_widget() with widget={widget} and pos={pos}")
         x = self.frameGeometry().center().x() + pos[0]
         y = self.frameGeometry().center().y() - pos[1]
         point = QPoint(x, y)
@@ -380,6 +395,7 @@ class BaseTestWidget(QWidget):
             label (QLabel): Label containing the image as a pixmap.
 
         """
+        logger.info(f"called display_image() with s={s} and pos={pos}")
         if isinstance(s, str):
             label = self.load_image(s)
         else:
@@ -400,6 +416,7 @@ class BaseTestWidget(QWidget):
             label (QLabel): Label containing the text.
 
         """
+        logger.info(f"called load_text() with s={s}")
         label = QLabel(s, self)
         label.setFont(self.instructions_font)
         label.setAlignment(Qt.AlignCenter)
@@ -418,6 +435,7 @@ class BaseTestWidget(QWidget):
             label (QLabel): Label containing the text.
 
         """
+        logger.info(f"called display_text() with s={s} and pos={pos}")
         if isinstance(s, str):
             label = self.load_text(s)
         else:
@@ -440,6 +458,10 @@ class BaseTestWidget(QWidget):
             w (:obj:`list` of :obj:`QLabel`): The created labels.
 
         """
+        logger.info(
+            f"called load_keyboard_arrow_keys() with instructions={instructions} and "
+            f"y={y}"
+        )
         w = []
         lx = -75
         rx = 75
@@ -482,6 +504,10 @@ class BaseTestWidget(QWidget):
             w (:obj:`list` of :obj:`QLabel`): The created labels.
 
         """
+        logger.info(
+            f"called display_keyboard_arrow_keys() with instructions={instructions} and"
+            f" y={y}"
+        )
         widgets = self.load_keyboard_arrow_keys(instructions, y)
         [w.show() for w in widgets]
         return widgets
@@ -496,6 +522,7 @@ class BaseTestWidget(QWidget):
             reset (:obj:`bool`, optional): Remove old items.
 
         """
+        logger.info("called make_zones()")
         if reset:
             self.zones = []
         for rect in rects:
@@ -511,6 +538,7 @@ class BaseTestWidget(QWidget):
 
         """
         # for widgets  organized in a layout
+        logger.info("called clear_screen()")
         if self.layout() is not None:
             while self.layout().count():
                 item = self.layout().takeAt(0)
@@ -612,7 +640,7 @@ class BaseTestWidget(QWidget):
 
     def _display_continue_button(self):
         """Display a continue button."""
-        logger.info("displaying the continue button")
+        logger.info("called _display_continue_button()")
         button = QPushButton(self.instructions[1], self)
         button.setFont(self.instructions_font)
         size = (button.sizeHint().width() + 20, button.sizeHint().height() + 20)
@@ -626,17 +654,18 @@ class BaseTestWidget(QWidget):
 
     def display_trial_continue_button(self):
         """The button is connected to _next_trial instead of _trial."""
+        logger.info("called display_trial_continue_button()")
         button = self._display_continue_button()
         button.clicked.disconnect()
         button.clicked.connect(self._next_trial)
 
     def _continue_button_pressed(self):
-        logger.info("continue button was pressed")
+        logger.info("called _continue_button_pressed()")
         self._trial()
 
     def _display_countdown(self, t=5, s=1000):
         """Display the countdown timer."""
-        logger.info("displaying the countdown timer")
+        logger.info("called _display_countdown()")
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
@@ -679,7 +708,7 @@ class BaseTestWidget(QWidget):
 
     def _add_timing_details(self):
         """Gathers some details about the current state from the various timers."""
-        logger.info("adding timing details to current_trial")
+        logger.info("called _add_timing_details()")
         dic = {
             "test_time_elapsed_ms": self.test_time.elapsed(),
             "block_time_elapsed_ms": self.block_time.elapsed(),
@@ -695,8 +724,7 @@ class BaseTestWidget(QWidget):
 
     def mousePressEvent(self, event):
         """Overridden from `QtWidget`."""
-        logger.info("mouse press event occurred, so checking if performing a trial")
-        logger.info("answer is %s" % str(self.performing_trial))
+        logger.info(f"called mousePressEvent() with event={event}")
         if self.performing_trial:
             self.mousePressEvent_(event)
             self._add_timing_details()
@@ -710,8 +738,7 @@ class BaseTestWidget(QWidget):
 
     def keyReleaseEvent(self, event):
         """Overridden from `QtWidget`."""
-        logger.info("mouse press event occurred, so checking if performing a trial")
-        logger.info("answer is %s" % str(self.performing_trial))
+        logger.info(f"called keyReleaseEvent() with event={event}")
         if self.performing_trial:
             self.keyReleaseEvent_(event)
             self._add_timing_details()
@@ -725,24 +752,25 @@ class BaseTestWidget(QWidget):
 
     def _next_trial(self):
         """Moves on to the next trial."""
-        self.performing_trial = False
         logger.info("called _next_trial()")
+        self.performing_trial = False
         logger.info("saving a csv of the completed trials")
         self.data.save_completed_trials_as_csv()
         self._step()
 
     def next_trial(self):
+        logger.info("called next_trial()")
         self._next_trial()
 
     def _trial_timeout(self):
         """End a trial early because it had timed out."""
-        logger.info("timing out the current trial")
+        logger.info("called _trial_timeout()")
         self.data.skip_current_trial("timeout")
         self._next_trial()
 
     def _block_timeout(self):
         """End a trial early because it had timed out."""
-        logger.info("timing out the current block")
+        logger.info("called _block_timeout()")
         self.data.skip_current_block("timeout")
         self._next_trial()
 
@@ -757,6 +785,7 @@ class BaseTestWidget(QWidget):
         restructure everything to fix it.
 
         """
+        logger.info("called _block_stopping_rule()")
         already_completed = self.data.data["test_completed"]
         if already_completed:
             return False
@@ -776,7 +805,7 @@ class BaseTestWidget(QWidget):
 
     def _block_stop(self):
         """End a trial early because stopping rule passed."""
-        logger.info("stopping the current block")
+        logger.info("called _block_stop")
         self.data.skip_current_block("stopping rule failed")
 
     # def _preload_feedback_sounds(self):

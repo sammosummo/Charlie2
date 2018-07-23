@@ -1,10 +1,8 @@
 """Test widget within gui.
 
 """
-from copy import copy
 from logging import getLogger
 from os.path import exists
-from httplib2 import ServerNotFoundError
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -16,15 +14,14 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QMessageBox,
 )
-from ..tools.data import SimpleProcedure, defaults_for_tests
-from ..tools.paths import (
+from .procedure import defaults, SimpleProcedure
+from .paths import (
     tests_list,
     proband_pickles,
     batches_list,
     get_tests_from_batch,
     get_error_messages,
 )
-from ..tools.google_drive import backup
 
 
 logger = getLogger(__name__)
@@ -36,8 +33,7 @@ class TestsWidget(QWidget):
 
         """
         super(TestsWidget, self).__init__(parent=parent)
-
-        logger.info("creating graphical elements of test widget")
+        logger.info(f"initialised {type(self)} with parent={parent}")
 
         # instructions
         self.instructions = self.parent().instructions
@@ -115,7 +111,7 @@ class TestsWidget(QWidget):
 
         # populate
         logger.info("creating default keywords")
-        self.kwds = defaults_for_tests
+        self.kwds = defaults
         self.proband_id_box.addItems(["TEST"] + proband_pickles())
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resume"])
@@ -131,7 +127,7 @@ class TestsWidget(QWidget):
 
     def _run_single_test(self):
         """Run a single test."""
-        logger.info("_run_single_test() called")
+        logger.info("called _run_single_test()")
         s = self.proband_id_box.currentText()
         if s == "TEST":
             logger.info("showing a warning popup because proband is TEST")
@@ -144,12 +140,13 @@ class TestsWidget(QWidget):
             self.__run_single_test()
 
     def __run_single_test(self):
+        logger.info("called __run_single_test()")
         s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
             self.kwds["fullscreen"] = self.fullscreen_checkbox.isChecked()
             self.kwds["resume"] = self.resume_checkbox.isChecked()
-            self.kwds["autobackup"] = self.autobackup_checkbox.isChecked()
+            # self.kwds["autobackup"] = self.autobackup_checkbox.isChecked()
             self.kwds["language"] = self.language_box.currentText()
             self.kwds["test_names"] = [self.test_name_box.currentText()]
             self._update_maiwindow_kwds()
@@ -158,7 +155,7 @@ class TestsWidget(QWidget):
 
     def _run_batch(self):
         """Run a single test."""
-        logger.info("_run_batch() called")
+        logger.info("called _run_batch()")
         s = self.proband_id_box.currentText()
         if s == "TEST":
             logger.info("showing a warning popup because proband is TEST")
@@ -172,12 +169,13 @@ class TestsWidget(QWidget):
 
     def __run_batch(self):
         """Run a batch of tests."""
+        logger.info("called __run_batch()")
         s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
             self.kwds["fullscreen"] = self.fullscreen_checkbox.isChecked()
             self.kwds["resume"] = self.resume_checkbox.isChecked()
-            self.kwds["autobackup"] = self.autobackup_checkbox.isChecked()
+            # self.kwds["autobackup"] = self.autobackup_checkbox.isChecked()
             self.kwds["language"] = self.language_box.currentText()
             batch = self.batch_name_box.currentText()
             if batch in batches_list:
@@ -188,6 +186,7 @@ class TestsWidget(QWidget):
                 self._begin()
 
     def _begin(self):
+        logger.info("called _begin()")
         data = SimpleProcedure(
             proband_id=self.kwds["proband_id"], test_name=self.kwds["test_names"][0]
         )
@@ -201,6 +200,7 @@ class TestsWidget(QWidget):
             self.__begin()
 
     def _update_maiwindow_kwds(self):
-        """The following is quite possibly the worst bit of code I've ever written."""
-        self.parent().parent().parent().parent().parent().kwds.update(self.kwds)
 
+        """The following is quite possibly the worst bit of code I've ever written."""
+        logger.info("called _update_maiwindow_kwds()")
+        self.parent().parent().parent().parent().parent().kwds.update(self.kwds)

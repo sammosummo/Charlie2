@@ -3,7 +3,6 @@
 Facial memory
 =============
 
-:Status: complete
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/facialmemory.py
 
@@ -16,18 +15,6 @@ faces, they perform a recognition-memory task. Each trial comprises a face (eith
 old face or a new one), and probands make old/new judgements. It is identical to the
 original Penn test.
 
-
-Summary statistics
-==================
-
-* `completed` (bool): Did the proband complete the test?
-* `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
-* `time_taken` (int): Time taken to complete the entire test in ms.
-* `correct` (int): How many trials correct?
-* `accuracy` (float): proportion of correct responses.
-* `resumed` (bool): Was this test resumed at some point?
-
 Reference
 =========
 
@@ -38,22 +25,26 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = "production"
 
 
 from logging import getLogger
 from PyQt5.QtCore import Qt
-from charlie2.tools.testwidget import BaseTestWidget
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
+
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+        self.mouse_visible = False
+        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[2:4])
+
     def make_trials(self):
-        """For this test, there are "learning" trials, followed by "recognition" trials.
-        Learning trials require no input. Recognition trials can be either new or old
-        trials."""
+
         faces = [
             ["tar%02d.png" % (i + 1) for i in range(20)],
             [
@@ -116,8 +107,7 @@ class TestWidget(BaseTestWidget):
         return details
 
     def block(self):
-        """The two blocks differ in terms thier duration. We use the `trial_max_time`
-        trick to implement this."""
+
         b = self.data.current_trial.block_number
         if b == 0:
             self.trial_deadline = int(2.5 * 1000)
@@ -125,10 +115,10 @@ class TestWidget(BaseTestWidget):
             self.trial_deadline = None
             self.block_deadline = 300 * 1000
         self.display_instructions_with_space_bar(self.instructions[4 + b])
+        self.mouse_visible = False
 
     def trial(self):
-        """For each trial we display a face. If a "recognition" trial, we also display
-        the keyboard arrow keys."""
+
         self.clear_screen(delete=True)
         self.display_image(self.data.current_trial.face, (0, 100))
         b = self.data.current_trial.block_number
@@ -137,7 +127,7 @@ class TestWidget(BaseTestWidget):
             self.keyboard_keys = self.display_keyboard_arrow_keys(s)
 
     def keyReleaseEvent_(self, event):
-        """For this trial, listen for left- and right-arrow keyboard key presses."""
+
         dic = {Qt.Key_Left: "new", Qt.Key_Right: "old"}
         t = self.data.current_trial
         if t.block_number == 1 and event.key() in dic:
@@ -146,6 +136,5 @@ class TestWidget(BaseTestWidget):
             t.status = "completed"
 
     def summarise(self):
-        """See docstring for explanation."""
         dic = self.basic_summary()
         return dic

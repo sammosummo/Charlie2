@@ -29,9 +29,9 @@ def _build_service():
     """Returns a service to the Google Drive API."""
     logger.info("called _build_service()")
     scopes = [
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive',
+        "https://www.googleapis.com/auth/drive.metadata.readonly",
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive",
     ]
     store = file.Storage(token_path)
     logger.info("do we have valid local credentials?")
@@ -41,7 +41,7 @@ def _build_service():
         flow = client.flow_from_clientsecrets(credentials_path, scopes)
         credentials = tools.run_flow(flow, store)
     logger.info("credentials received ok, so building service")
-    return build('drive', 'v3', http=credentials.authorize(Http()))
+    return build("drive", "v3", http=credentials.authorize(Http()))
 
 
 def _exists(service, name, parents):
@@ -65,23 +65,23 @@ def _create_folder(service, name, parents):
     logger.info("called _create_folder()")
     item = _exists(service, name, parents)
     if item is None:
-        metadata = {'name': name, 'parents': parents, 'mimeType': mime % "folder"}
-        item = service.files().create(body=metadata, fields='id').execute()
+        metadata = {"name": name, "parents": parents, "mimeType": mime % "folder"}
+        item = service.files().create(body=metadata, fields="id").execute()
     return item
 
 
 def _upload_file(service, name, parents, path):
     """Uploads a file or folder if it doesn't exist."""
     logger.info("called _upload_file()")
-    metadata = {'name': name, 'parents': parents}
+    metadata = {"name": name, "parents": parents}
     mimetype = MimeTypes().guess_type(name)[0]
     media = MediaFileUpload(path, mimetype=mimetype)
     item = _exists(service, name, parents)
     if item is None:
-        service.files().create(body=metadata, media_body=media, fields='id').execute()
+        service.files().create(body=metadata, media_body=media, fields="id").execute()
     else:
         fid = item["id"]
-        service.files().update(fileId=fid, media_body=media, fields='id').execute()
+        service.files().update(fileId=fid, media_body=media, fields="id").execute()
 
 
 def backup():
@@ -103,7 +103,7 @@ def backup():
             item = _create_folder(service, last_dir, [parent])
             parent_ids[last_dir] = item["id"]
 
-            for name in [f for f in files if f != '.gitignore']:
+            for name in [f for f in files if f != ".gitignore"]:
 
                 p = pj(root, name)
                 _upload_file(service, name, [item["id"]], p)

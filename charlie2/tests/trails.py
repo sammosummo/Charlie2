@@ -26,19 +26,6 @@ the traditional test. Please note that this test has not been verified against t
 traditional version, however preliminary data from our studies suggests that they are
 correlated.
 
-Summary statistics
-==================
-
-For `{x}` in [`num`, `let`, `numlet`]:
-
-* `{x}_completed` (bool): Did the proband complete the test?
-* `{x}_responses` (int): Total number of responses.
-* `{x}_any_skipped` (bool): Where any trials skipped?
-* `{x}_time_taken` (int): Time taken to complete the entire test in ms.
-* `{x}_blaze_errors` (int): Number of incorrect blazes pressed.
-* `{x}_misses` (int): Number of presses to areas not inside any blaze.
-* `resumed` (bool): Was this test resumed at some point?
-
 References
 ==========
 
@@ -54,14 +41,19 @@ __version__ = 2.0
 
 from logging import getLogger
 from PyQt5.QtGui import QPainter, QPen
-from charlie2.tools.testwidget import BaseTestWidget
-from charlie2.recipes.trails import make_trail_trials
+from ..tools.basetestwidget import BaseTestWidget
+from ..tools.recipes import make_trail_trials
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
+
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+
     def make_trials(self):
         """For this test, each trial requires the block number (for indexing the on-
         screen instructions), the block type (practice blocks are not included in the
@@ -72,8 +64,7 @@ class TestWidget(BaseTestWidget):
         return make_trail_trials()
 
     def block(self):
-        """For this test, display instructions, pre-load the images, set up zones, and
-        create a painter widget for drawing the trail."""
+
         self.block_deadline = 120 * 1000
         b = self.data.current_trial.block_number
 
@@ -103,7 +94,7 @@ class TestWidget(BaseTestWidget):
         self.make_zones(self.rects)
 
     def trial(self):
-        """For this test, just listen for a mouse press within the target blaze."""
+
         self.clear_screen(delete=False)
         t = self.data.current_trial
 
@@ -120,10 +111,7 @@ class TestWidget(BaseTestWidget):
         t.responses_list = []
 
     def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the target square. If so,
-        record the trial as a success and move on. If not, increase misses by 1.
 
-        """
         ix = [event.pos() in z for z in self.zones]
         t = self.data.current_trial
         if any(ix):
@@ -144,8 +132,7 @@ class TestWidget(BaseTestWidget):
             t.responses_list.append(("miss", self.trial_time.elapsed()))
 
     def paintEvent(self, _):
-        """Need to override a Qt method to draw. Draw a trail (straight line) from the
-        centre of one blaze to the centre of the other."""
+
         t = self.data.current_trial
         if t:
             painter = QPainter(self)
@@ -158,7 +145,7 @@ class TestWidget(BaseTestWidget):
                     painter.drawLine(a.center(), b.center())
 
     def summarise(self):
-        """See docstring for explanation."""
+
         dic = {}
         blocks = set(t["block_type"] for t in self.data.completed_trials)
         for b in blocks:

@@ -3,7 +3,6 @@
 Visual memory
 =============
 
-:Status: complete
 :Version: 1.0
 :Source: http://github.com/sammosummo/Charlie2/tests/visualmemory.py
 
@@ -18,19 +17,6 @@ circle. There are 30 trials, but after 5 trials, the test will start evaluating
 performance and will quit early if chance performance is detected. There is a 30-second
 time limit on each trial and a 240-second time limit on the whole experiment.
 
-
-Summary statistics
-==================
-
-* `completed` (bool): Did the proband complete the test?
-* `responses` (int): Total number of responses.
-* `any_skipped` (bool): Where any trials skipped?
-* `time_taken` (int): Time taken to complete the entire test in ms.
-* `correct` (int): How many trials correct?
-* `resumed` (bool): Was this test resumed at some point?
-* `accuracy` (float): proportion of correct responses.
-* `k` (float): Accuracy multiplied by 5.
-
 Reference
 =========
 
@@ -41,22 +27,25 @@ Reference
 
 """
 __version__ = 1.0
-__status__ = "production"
+
 
 from logging import getLogger
 from math import cos, sin, pi
 from PyQt5.QtGui import QPixmap
-from charlie2.tools.testwidget import BaseTestWidget
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-    def make_trials(self):
-        """For this test, each potential correct click/touch is considered a trial.
 
-        """
+    def __init__(self, parent=None):
+
+        super(TestWidget, self).__init__(parent)
+
+    def make_trials(self):
+
         names = ["trial_number", "theta"]
         thetas = [
             0.28335521,
@@ -93,12 +82,12 @@ class TestWidget(BaseTestWidget):
         return [dict(zip(names, params)) for params in enumerate(thetas)]
 
     def block(self):
-        """If this is the first block, simply display instructions."""
+
         self.block_deadline = 300 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
-        """For this trial, show the study and test arrays, and record responses."""
+
         t = self.data.current_trial
 
         logger.info("commencing study phase of trial")
@@ -130,10 +119,7 @@ class TestWidget(BaseTestWidget):
         self.performing_trial = True
 
     def mousePressEvent_(self, event):
-        """On mouse click/screen touch, check if it was inside the target square. If so,
-        record the trial as a success and move on. If not, increase misses by 1.
 
-        """
         ix = [event.pos() in z for z in self.zones]
         t = self.data.current_trial
         if any(ix):
@@ -142,7 +128,7 @@ class TestWidget(BaseTestWidget):
             self.data.current_trial.status = "completed"
 
     def block_stopping_rule(self):
-        """After five trials completed, exit if at chance."""
+
         trials = self.data.completed_trials
         logger.debug(str(trials))
         if len(trials) > 4:
@@ -154,7 +140,7 @@ class TestWidget(BaseTestWidget):
             return False
 
     def summarise(self):
-        """See docstring for explanation."""
+
         dic = self.basic_summary()
         dic["k"] = dic["accuracy"] * 4
         return dic

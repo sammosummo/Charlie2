@@ -147,5 +147,5 @@ def get_docstring_html(s):
     """Returns the docstring of a given test, converted from markdown into html."""
     d = import_module(f"charlie2.tests.{s}").__doc__
     html = publish_string(source=d, writer_name="html").decode()
-    html = html[html.find("<body>") + 6: html.find("</body>")].strip()
+    html = html[html.find("<body>") + 6 : html.find("</body>")].strip()
     return html
