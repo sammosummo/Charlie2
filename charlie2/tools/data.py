@@ -58,7 +58,7 @@ for_mainwindow = {
     "gui",
 }
 defaults_for_mainwidow = {k: v for k, v in default_kwds.items() if k in for_mainwindow}
-
+logger.info("defaults_for_mainwindow: %s" % defaults_for_mainwidow)
 
 class Trial(dict):
     def __init__(self, *args, **kwds):

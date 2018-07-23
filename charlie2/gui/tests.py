@@ -68,9 +68,9 @@ class TestsWidget(QWidget):
         self.resume_checkbox = QCheckBox(self.instructions[11], self)
         self.options_groupbox_grid.addWidget(self.resume_checkbox, 5, 0, 1, 2)
 
-        # layout > options group box > autobackup
-        self.autobackup_checkbox = QCheckBox(self.instructions[12], self)
-        self.options_groupbox_grid.addWidget(self.autobackup_checkbox, 6, 0, 1, 2)
+        # # layout > options group box > autobackup
+        # self.autobackup_checkbox = QCheckBox(self.instructions[12], self)
+        # self.options_groupbox_grid.addWidget(self.autobackup_checkbox, 6, 0, 1, 2)
 
         # layout > options group box > language selection box
         self.options_groupbox_grid.addWidget(QLabel(self.instructions[48]), 7, 0)
@@ -121,7 +121,7 @@ class TestsWidget(QWidget):
         self.proband_id_box.addItems(["TEST"] + proband_pickles())
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resume"])
-        self.autobackup_checkbox.setChecked(self.kwds["autobackup"])
+        # self.autobackup_checkbox.setChecked(self.kwds["autobackup"])
         self.language_box.addItems(["en"])
         self.test_name_box.addItems([""] + sorted(tests_list))
         self.batch_name_box.addItems([""] + sorted(batches_list))

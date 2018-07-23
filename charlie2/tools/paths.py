@@ -1,6 +1,4 @@
-"""Paths.
-
-Contains paths to all files in the battery.
+"""Contains paths to all files in the battery.
 
 """
 from logging import getLogger
@@ -23,6 +21,7 @@ meta_data_path = pj(data_path, "meta")
 last_backed_up = pj(meta_data_path, "last_backed_up.pkl")
 credentials_path = pj(meta_data_path, "credentials.json")
 token_path = pj(meta_data_path, "token.json")
+durations_path = pj(meta_data_path, "durations.csv")
 
 current_data_path = pj(data_path, "current")
 proband_path = pj(current_data_path, "probands")

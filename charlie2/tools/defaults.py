@@ -14,7 +14,7 @@ default_kwds = {  # default values for all useful keywords
     "language": "en",
     "fullscreen": [True, False][platform == "darwin"],
     "resume": False,
-    "autobackup": True,
+    "autobackup": False,
     "age": 1,
     "sex": "Male",
     "other_ids": set(),

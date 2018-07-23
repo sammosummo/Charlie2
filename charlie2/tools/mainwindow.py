@@ -1,14 +1,15 @@
-"""Define the main Qt widget used for running tests.
+"""Main Qt widget used for running tests.
 
 """
+from datetime import datetime
 from logging import getLogger
 from sys import exit
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
+from httplib2 import ServerNotFoundError
 from .data import defaults_for_mainwidow
-from.google_drive import backup
+from .google_drive import backup
 from .gui import GUIWidget
-from .paths import get_test
-
+from .paths import durations_path, get_test
 
 
 logger = getLogger(__name__)
@@ -21,11 +22,12 @@ class MainWindow(QMainWindow):
 
         Top-level widget for running a test or batch of tests. Called once with no
         arguments when starting the app. Responsible for showing and switching between
-        tests and the gui.
+        tests and the gui, recording additional proband information, and backing up the
+        data.
 
         """
         super(MainWindow, self).__init__(parent)
-        logger.info("main window created")
+        logger.info(f"initialised {type(self)}")
 
         logger.info("loading default keywords")
         self.kwds = defaults_for_mainwidow
@@ -34,6 +36,9 @@ class MainWindow(QMainWindow):
         logger.info("getting desktop dimensions")
         self.desktop_size = QDesktopWidget().availableGeometry().size()
         logger.info("dimensions are %s" % str(self.desktop_size))
+
+        logger.info("starting a rough timer")
+        self.time_started = datetime.now()
 
         logger.info("starting the app proper")
         self.ignore_close_event = False
@@ -133,6 +138,9 @@ class MainWindow(QMainWindow):
                 if self.kwds["autobackup"] is True:
                     logger.info("attempting autobackup")
                     self._attempt_backup()
+                duration = datetime.now() - self.time_started
+                s = ','.join([str(duration), str(self.time_started)]) + '\n'
+                open(durations_path, 'a').write(s)
                 exit()
             else:
                 logger.info("at a test, safely closing")

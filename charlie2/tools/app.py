@@ -14,11 +14,10 @@ logger = getLogger(__name__)
 
 def run_app():
 
-    logger.info("initialising the application")
+    logger.info("called run_app()")
     app = QApplication(argv)
     logger.info("setting some global style options")
     app.setWindowIcon(QIcon(logo_path))
     app.setStyle("Fusion")
-    logger.info("executing the app")
     ex = MainWindow()
     exit(app.exec_())

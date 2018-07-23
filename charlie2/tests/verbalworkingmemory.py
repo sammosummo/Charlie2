@@ -184,14 +184,18 @@ class TestWidget(BaseTestWidget):
             sound = QSound(self.aud_stim_paths[f"SPAN-{p}{g}-V1.wav"])
             sound.play()
             while sound.isFinished():
-                self.sleep(100)
+                self.sleep(10)
             if self.first_digit_horrible_lag:
                 self.sleep(200)
                 self.first_digit_horrible_lag = False
+            if g == sequence[-1]:
+                self.sleep(50)
             if g in [5]:
                 self.sleep(1100)
-            elif g in [1, 8, 9]:
+            elif g in [7, 9]:
                 self.sleep(900)
+            elif g in [1, 8]:
+                self.sleep(200)
             else:
                 self.sleep(1000)
 
