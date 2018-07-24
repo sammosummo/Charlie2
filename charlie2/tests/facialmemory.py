@@ -123,8 +123,7 @@ class TestWidget(BaseTestWidget):
         self.display_image(self.data.current_trial.face, (0, 100))
         b = self.data.current_trial.block_number
         if b == 1:
-            s = self.instructions[2:4]
-            self.keyboard_keys = self.display_keyboard_arrow_keys(s)
+            self.display_keyboard_arrow_keys(self.instructions[2:4])
 
     def keyReleaseEvent_(self, event):
 

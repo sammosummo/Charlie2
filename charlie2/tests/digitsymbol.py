@@ -57,7 +57,6 @@ class TestWidget(BaseTestWidget):
 
         super(TestWidget, self).__init__(parent)
         self.mouse_visible = False
-        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[2:4])
         self.symbols = [self.load_image(f"sym{i}.png") for i in range(1, 10)]
         self.digits = [self.load_text(str(i)) for i in range(1, 10)]
         self.xs = range(-300, 350, 75)
@@ -114,7 +113,8 @@ class TestWidget(BaseTestWidget):
     def trial(self):
 
         self.clear_screen(delete=False)
-        [l.show() for l in self.symbols + self.digits + self.keyboard_keys]
+        self.display_keyboard_arrow_keys(self.instructions[2:4])
+        [l.show() for l in self.symbols + self.digits]
         s = self.data.current_trial.symbol
         d = self.data.current_trial.digit
         self.symbol = self.display_image(f"sym{s}.png", (0, 25))

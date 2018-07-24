@@ -115,7 +115,7 @@ class TestWidget(BaseTestWidget):
 
         # instructions and buttons
         self.display_instructions(self.instructions[9] % "-".join(t.sequence))
-        self.play_sequence(t.sequence)
+        QSound.play(self.aud_stim_paths[f"{str(t.sequence)}.wav"])
         corr_button = self._display_continue_button()
         corr_button.setText(self.instructions[10] % "-".join(answer))
         corr_button.setFont(QFont("Helvetica", 18))
@@ -161,29 +161,6 @@ class TestWidget(BaseTestWidget):
             logger.info("current_trial was completed successfully")
             logger.info("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
-
-    def play_sequence(self, sequence):
-
-        sounds = []
-        for g in sequence:
-            p = ["L", "D"][g in "123456789"]
-            sound = QSound(self.aud_stim_paths[f"SPAN-{p}{g}-V1.wav"])
-            sound.play()
-            while sound.isFinished():
-                self.sleep(10)
-            if self.first_digit_horrible_lag:
-                self.sleep(200)
-                self.first_digit_horrible_lag = False
-            if g == sequence[-1]:
-                self.sleep(50)
-            if g in [5]:
-                self.sleep(1100)
-            elif g in [7, 9]:
-                self.sleep(900)
-            elif g in [1, 8]:
-                self.sleep(200)
-            else:
-                self.sleep(1000)
 
     def mousePressEvent(self, event):
 

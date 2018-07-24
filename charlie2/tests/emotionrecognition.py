@@ -40,7 +40,6 @@ class TestWidget(BaseTestWidget):
     def __init__(self, parent=None):
 
         super(TestWidget, self).__init__(parent)
-        self.keyboard_keys = self.load_keyboard_arrow_keys(self.instructions[5:8])
         self.mouse_visible = False
 
     def make_trials(self):
@@ -92,7 +91,7 @@ class TestWidget(BaseTestWidget):
 
         self.clear_screen(delete=False)
         self.display_image(self.data.current_trial.face, (0, 100))
-        [l.show() for l in self.keyboard_keys]
+        self.display_keyboard_arrow_keys(self.instructions[5:8])
 
     def keyReleaseEvent_(self, event):
 
