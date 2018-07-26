@@ -111,6 +111,11 @@ class TestWidget(BaseTestWidget):
             rects.append(QRect(x, y, w, h))
         self.make_zones(rects)
 
+        # prevent super-quick responses
+        self.performing_trial = False
+        self.sleep(1000)
+        self.performing_trial = True
+
     def mousePressEvent_(self, event):
 
         ix = [event.pos() in z for z in self.zones]

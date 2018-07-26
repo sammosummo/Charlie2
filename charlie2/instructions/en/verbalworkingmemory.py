@@ -43,10 +43,11 @@ Repeat with another example (3-4), if necessary.
 letters. This time, I want you to tell me the numbers
 first, in order, starting with the lowest number. Then 
 I want you to tell me the letters, in alphabetical order.
-For example, if I say B-7, your answer should be 7-B. The
-numbers goes first, then the letters. If I say 9-C-3, then
-your answer should be 3-9-C, the numbers in order first,
-then the letters in alphabetical order. Let's practice."
+For example, if the computer says B-7, your answer should
+be 7-B. The numbers goes first, then the letters. If the
+computer says 9-C-3, then your answer should be 3-9-C, the
+numbers in order first, then the letters in alphabetical
+order. Let's practice."
 """,
     """Say this:
 

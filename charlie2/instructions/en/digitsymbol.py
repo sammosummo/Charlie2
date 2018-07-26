@@ -2,10 +2,10 @@ instr = [
     """Digit-symbol coding, part 1 (practice)
 
 At the top of the screen you will see a row of symbols and
-a row of digits. Each symbol is paired with the digit below
+a row of numbers. Each symbol is paired with the number below
 it.
 
-You will also see one symbol and one digit in the middle of
+You will also see one symbol and one number in the middle of
 the screen. Your task is to decide whether they make a
 correct pair. Respond 'Yes' (using the LEFT arrow key) if
 they do and 'No' (using the RIGHT arrow key) if they
@@ -25,10 +25,10 @@ Press the SPACE BAR to begin.""",
     """Digit-symbol coding, part 3 (real test)
 
 Now you will perform the test again. It is exactly the same
-as the the last time. Try to complete as many trials as
-you can within 90 seconds without making mistakes.
+as the last time. Try to complete as many trials as you can
+within 90 seconds without making mistakes.
 
-Press the space bar to begin.""",
+Press the SPACE BAR to begin.""",
     "Correct! :)",
     "Incorrect! :(",
 ]

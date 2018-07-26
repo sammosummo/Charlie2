@@ -27,4 +27,17 @@ if __name__ == '__main__':
     for f in [f for f in listdir(p) if '.wav' in f]:
         print(f)
         w = wave.open(p + f, 'rb')
+        data = []
+        data.append([s.getparams(), s.readframes(s.getnframes())])
+        data.append([w.getparams(), w.readframes(w.getnframes())])
+        w.close()
+        output = wave.open('_' + p + f, 'wb')
+        output.setparams(data[0][0])
+        for i in range(2):
+            output.writeframes(data[i][1])
+        output.close()
+
+
+
+
 
