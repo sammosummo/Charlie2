@@ -283,7 +283,7 @@ class BaseTestWidget(QWidget):
         label.show()
         return label
 
-    def display_instructions_with_continue_button(self, message, font=None):
+    def display_instructions_with_continue_button(self, message, font=None, wait=True):
         """Display instructions with a continue button.
 
         This is the same as `self.display_instructions` except that a continue button is
@@ -293,6 +293,8 @@ class BaseTestWidget(QWidget):
         Args:
             message (str): Message to display.
             font (:obj:`QFont`, optional): A font in which to display the instructions.
+            wait (:obj:`bool`, optional): Wait for a bit before enabling the continue
+            button.
 
         Returns:
             label (QLabel): Object containing the message.
@@ -306,6 +308,17 @@ class BaseTestWidget(QWidget):
         label = self.display_instructions(message, font)
         button = self._display_continue_button()
         logger.info("now waiting for continue button to be pressed")
+        if wait:
+            if hasattr(self, "paintEvent"):
+                logger.debug("temporarily disabling paint events")
+                _paintEvent = copy(self.paintEvent)
+                self.paintEvent = lambda _: None
+            button.setEnabled(False)
+            self.sleep(2 * 1000)
+            button.setEnabled(True)
+            if hasattr(self, "paintEvent"):
+                logger.debug("reenabling paint events")
+                self.paintEvent = _paintEvent
         return label, button
 
     def display_instructions_with_space_bar(self, message):
@@ -595,6 +608,7 @@ class BaseTestWidget(QWidget):
                 dic["began_timestamp"] = str(first_trial["timestamp"])
                 dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
                 dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+                dic["total_duration_min"] = dic["total_duration_ms"] / 60 / 1000
                 dic["finished_timestamp"] = str(last_trial["timestamp"])
                 dic["mean_rt_correct_ms"] = sum(rt_correct_ms) / len(rt_correct_ms)
 
@@ -610,6 +624,7 @@ class BaseTestWidget(QWidget):
                 dic["total_duration_ms"] = None
                 dic["finished_timestamp"] = None
                 dic["mean_rt_correct_ms"] = 0
+                dic["total_duration_min"] = 0
 
                 if "adjust" in kwds:
                     dic["duration_ms_adjusted"] = None
@@ -622,6 +637,7 @@ class BaseTestWidget(QWidget):
                 dic["began_timestamp"] = str(first_trial["timestamp"])
                 dic["duration_ms"] = last_trial["block_time_elapsed_ms"]
                 dic["total_duration_ms"] = last_trial["test_time_elapsed_ms"]
+                dic["total_duration_min"] = dic["total_duration_ms"] / 60 / 1000
                 dic["finished_timestamp"] = str(last_trial["timestamp"])
 
             else:
@@ -631,10 +647,11 @@ class BaseTestWidget(QWidget):
                 dic["total_duration_ms"] = None
                 dic["finished_timestamp"] = None
                 dic["mean_rt_correct_ms"] = 0
+                dic["total_duration_min"] = 0
 
         if "prefix" in kwds:
             p = kwds["prefix"] + "_"
-            dic = {p + k: v for k, v in dic.items() if k != "total_duration_ms"}
+            dic = {p + k: v for k, v in dic.items() if "total_duration" not in k}
 
         return dic
 
@@ -652,11 +669,22 @@ class BaseTestWidget(QWidget):
         button.show()
         return button
 
-    def display_trial_continue_button(self):
+    def display_trial_continue_button(self, wait=True):
         """The button is connected to _next_trial instead of _trial."""
         logger.info("called display_trial_continue_button()")
         button = self._display_continue_button()
         button.clicked.disconnect()
+        if wait:
+            if hasattr(self, "paintEvent"):
+                logger.debug("temporarily disabling paint events")
+                _paintEvent = copy(self.paintEvent)
+                self.paintEvent = lambda _: None
+            button.setEnabled(False)
+            self.sleep(2 * 1000)
+            button.setEnabled(True)
+            if hasattr(self, "paintEvent"):
+                logger.debug("reenabling paint events")
+                self.paintEvent = _paintEvent
         button.clicked.connect(self._next_trial)
 
     def _continue_button_pressed(self):

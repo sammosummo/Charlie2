@@ -5,7 +5,7 @@ This test requires that the experimenter operates the
 computer. Please allow them to take over now.""",
     """Say this:
 
-"I'm going to say a letter of the alphabet. When I say begin, I want you to tell me as
+"I'm going to say a letter from the alphabet. When I say begin, I want you to tell me as
 many words as you can that begin with that letter. You will have 60 seconds before I
 tell you to stop. None of the words can be names of people, or places, or numbers. For
 example, if I gave you the letter T, you could say take, toy, tooth, and so forth, but

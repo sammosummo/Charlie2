@@ -93,7 +93,6 @@ class TestWidget(BaseTestWidget):
 
     def block(self):
 
-        self.trial_deadline = 60 * 1000
         self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):

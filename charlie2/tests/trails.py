@@ -146,7 +146,11 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
 
-        dic = {}
+        d = self.basic_summary()
+        dic = {
+            "total_duration_ms": d["total_duration_ms"],
+            "total_duration_min": d["total_duration_min"],
+        }
         blocks = set(t["block_type"] for t in self.data.completed_trials)
         for b in blocks:
 

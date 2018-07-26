@@ -33,6 +33,7 @@ class Trial(dict):
             "practice": False,
             "resumed_from_here": False,
             "timestamp": datetime.now(),
+            "correct": None,
         }
         for k, v in defaults.items():
             if k not in self.__dict__:

@@ -82,7 +82,7 @@ class TestWidget(BaseTestWidget):
         t = self.data.current_trial
         s = self.instructions[5 + t.block_number]
         label, btn = self.display_instructions_with_continue_button(
-            s, font=QFont("Helvetica", 18)
+            s, QFont("Helvetica", 18), False
         )
 
         # if very first trial, show message to proband
@@ -98,7 +98,7 @@ class TestWidget(BaseTestWidget):
 
         t = self.data.current_trial
 
-        # calculate the corect answer
+        # calculate the correct answer
         if t.block_type == "forward":
             answer = t.sequence
         elif t.block_type == "backward":
@@ -115,7 +115,6 @@ class TestWidget(BaseTestWidget):
 
         # instructions and buttons
         self.display_instructions(self.instructions[9] % "-".join(t.sequence))
-        QSound.play(self.aud_stim_paths[f"{str(t.sequence)}.wav"])
         corr_button = self._display_continue_button()
         corr_button.setText(self.instructions[10] % "-".join(answer))
         corr_button.setFont(QFont("Helvetica", 18))
@@ -139,6 +138,13 @@ class TestWidget(BaseTestWidget):
         incorr_button.move(x, y)
         incorr_button.clicked.disconnect()
         incorr_button.clicked.connect(self._incorrect)
+
+        QSound.play(self.aud_stim_paths[f"{str(t.sequence)}.wav"])
+        corr_button.setEnabled(False)
+        incorr_button.setEnabled(False)
+        self.sleep(3000)
+        corr_button.setEnabled(True)
+        incorr_button.setEnabled(True)
 
     def _correct(self):
 
@@ -168,7 +174,11 @@ class TestWidget(BaseTestWidget):
 
     def summarise(self):
 
-        dic = {}
+        d = self.basic_summary()
+        dic = {
+            "total_duration_ms": d["total_duration_ms"],
+            "total_duration_min": d["total_duration_min"],
+        }
         for kind in ["backward", "forward", "lns"]:
             trials = [
                 t for t in self.data.data["completed_trials"] if t["block_type"] == kind

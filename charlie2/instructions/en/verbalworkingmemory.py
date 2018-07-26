@@ -5,41 +5,54 @@ This test requires that the experimenter operates the
 computer. Please allow them to take over now.""",
     """Say this:
 
-"I am going to say some numbers.  Listen carefully, and
-when I am through, I want you to say them right after me. 
-Just say what I say."
+"The computer is going to say some numbers. Listen
+carefully, and when it is through, I want you to 
+repeat the numbers. Just say what the computer says.
+For example, if the computer says 2-4-3, you say ____" 
 
-Give the subject up to two examples until they make a
-correct response:
+If the subject says "2-4-3", say this:
 
-2-4-3
-8-9-5""",
+"That's correct. Now we will begin the real test.
+Just say what the computer says."
+
+If the subject says anything else, say this:
+
+"The correct answer was 2-4-3. Let's try another
+practice. If the computer says 8-9-5, you say ___"
+""",
     """Say this:
 
-"Now I am going to say some more numbers.  But this time
-when I stop, I want you to say them backwards. For example,
-if I say 7-1-9, what would you say?"
+"Now the computer is going to say some more numbers,
+but this time, I want you to say the numbers backwards.
+For example, if the computer says 7-1-9, you say ___"
 
-Give the subject up to two more examples:
+If the subject says "9-1-7", say this:
 
-1-9
-3-4""",
+"That's correct. Now we will begin the real test."
+
+If the subject says anything else, say this:
+
+"The correct answer was 9-1-7. Let's tray another
+practice. If the computer says 1-9, you say ___"
+
+Repeat with another example (3-4), if necessary.
+""",
     """Say this:
 
-"I am going to say a group of numbers and letters. After I
-say them, I want you to tell me the numbers fist, in order,
-starting with the lowest number. Then tell me the letters
-in alphabetical order. For example, if I say B-7, your
-answer should be 7-B. The number goes first, then the
-letter. If I say 9-C-3, then your answer should be 3-9-C,
-the numbers in order first, then the letters in alphabet-
-ical order. Let's practice."
+"Now the computer is going to say some numbers and
+letters. This time, I want you to tell me the numbers
+first, in order, starting with the lowest number. Then 
+I want you to tell me the letters, in alphabetical order.
+For example, if I say B-7, your answer should be 7-B. The
+numbers goes first, then the letters. If I say 9-C-3, then
+your answer should be 3-9-C, the numbers in order first,
+then the letters in alphabetical order. Let's practice."
 """,
     """Say this:
 
 "Ok, let's begin the real test."
 """,
-    f"""Read this sequence out loud:
+    f"""Sequence:
 
 %s""",
     f'Responded this: %s',
