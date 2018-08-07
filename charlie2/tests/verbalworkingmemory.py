@@ -5,6 +5,7 @@ Verbal working memory
 
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/recipes.py
+:Author: Sam Mathias
 
 Description
 ===========
@@ -31,21 +32,21 @@ Reference
 
 """
 __version__ = 2.0
-__status__ = "production"
+__author__ = "Sam Mathias"
 
 
 from logging import getLogger
+
 from PyQt5.QtGui import QFont
 from PyQt5.QtMultimedia import QSound
+
 from ..tools.basetestwidget import BaseTestWidget
 from ..tools.recipes import get_vwm_stimuli
-
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def __init__(self, parent=None):
 
         super(TestWidget, self).__init__(parent)
@@ -79,7 +80,7 @@ class TestWidget(BaseTestWidget):
 
         self.first_digit_horrible_lag = True
         self.skip_countdown = True
-        t = self.data.current_trial
+        t = self.current_trial
         s = self.instructions[5 + t.block_number]
         label, btn = self.display_instructions_with_continue_button(
             s, QFont("Helvetica", 18), False
@@ -96,7 +97,7 @@ class TestWidget(BaseTestWidget):
 
     def trial(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
 
         # calculate the correct answer
         if t.block_type == "forward":
@@ -148,24 +149,24 @@ class TestWidget(BaseTestWidget):
 
     def _correct(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         if t:
             t.correct = True
             t.status = "completed"
             self._add_timing_details()
-            logger.info("current_trial was completed successfully")
-            logger.info("(final version) of current_trial looks like %s" % str(t))
+            logger.debug("current_trial was completed successfully")
+            logger.debug("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
 
     def _incorrect(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         if t:
             t.correct = False
             t.status = "completed"
             self._add_timing_details()
-            logger.info("current_trial was completed successfully")
-            logger.info("(final version) of current_trial looks like %s" % str(t))
+            logger.debug("current_trial was completed successfully")
+            logger.debug("(final version) of current_trial looks like %s" % str(t))
             self.next_trial()
 
     def mousePressEvent(self, event):
@@ -181,7 +182,9 @@ class TestWidget(BaseTestWidget):
         }
         for kind in ["backward", "forward", "lns"]:
             trials = [
-                t for t in self.data.data["completed_trials"] if t["block_type"] == kind
+                t
+                for t in self.procedure.data["completed_trials"]
+                if t["block_type"] == kind
             ]
             dic_ = self.basic_summary(trials=trials, prefix=kind)
             trials = [t for t in trials if t["status"] == "completed"]
@@ -195,25 +198,25 @@ class TestWidget(BaseTestWidget):
 
     def block_stopping_rule(self):
 
-        last_trial = self.data.completed_trials[-1]
-        logger.info("applying stopping rule to this trial: %s" % str(last_trial))
+        last_trial = self.procedure.completed_trials[-1]
+        logger.debug("applying stopping rule to this trial: %s" % str(last_trial))
         if last_trial["practice"]:
-            logger.info("practice trial, so don't apply stopping rule")
+            logger.debug("practice trial, so don't apply stopping rule")
             return False
         if "lns" in last_trial["block_type"]:
-            logger.info("lns trial, 3 trials per length")
+            logger.debug("lns trial, 3 trials per length")
             n = 3
         else:
-            logger.info("fwd or bwd trial, 2 trials per length")
+            logger.debug("fwd or bwd trial, 2 trials per length")
             n = 2
-        ct = self.data.completed_trials
+        ct = self.procedure.completed_trials
         trials = [t for t in ct if t["block_number"] == last_trial["block_number"]]
         trials = [t for t in trials if t["length"] == last_trial["length"]]
-        logger.info("%s trials to evaluate: %s" % (len(trials), trials))
+        logger.debug("%s trials to evaluate: %s" % (len(trials), trials))
         if len(trials) < n:
-            logger.info("too few trials")
+            logger.debug("too few trials")
             return False
         errs = [t for t in trials if t["correct"] is False]
-        logger.info(logger.info("%s error trials: %s" % (len(errs), errs)))
-        logger.info("number of errors: %s" % len(errs))
+        logger.debug(logger.debug("%s error trials: %s" % (len(errs), errs)))
+        logger.debug("number of errors: %s" % len(errs))
         return True if len(errs) == n else False

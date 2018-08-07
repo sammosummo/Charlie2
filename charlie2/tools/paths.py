@@ -1,15 +1,18 @@
 """Contains paths to all files in the battery.
 
 """
-from logging import getLogger
-from pkgutil import iter_modules
-from os import listdir as ls
-from os.path import dirname, exists, join as pj
-from importlib import import_module
 from copy import copy
-import charlie2
+from importlib import import_module
+from logging import getLogger
+from os import listdir as ls
+from os.path import dirname
+from os.path import join as pj
+from pkgutil import iter_modules
+from typing import Union, List
+
 from docutils.core import publish_string
 
+import charlie2
 
 logger = getLogger(__name__)
 
@@ -51,7 +54,7 @@ icon_path = pj(vis_stim_path, "icon", "icon.png")
 logo_path = pj(_path, "logo", "charlie.png")
 
 
-def proband_pickles():
+def proband_pickles() -> Union[List[str], List]:
     """Returns a sorted list of probands IDs determined by contents of the proband data
     directory.
 
@@ -59,40 +62,48 @@ def proband_pickles():
     return sorted(p.replace(".pkl", "") for p in ls(proband_path) if p.endswith(".pkl"))
 
 
-def is_test(s):
+def is_test(s: str) -> bool:
     """Returns True if `s` is an existing test in the tests sub-package."""
     return s in tests_list
 
 
-def get_test(s):
+def get_test(s: str):
     """Returns the test widget from experiment `s`."""
     return import_module(f"charlie2.tests.{s}").TestWidget
 
 
-def get_tests_from_batch(s):
+def get_tests_from_batch(s: str) -> List[str]:
     """Returns the names of tests from a batch file."""
     return [t.rstrip() for t in open(pj(batch_path, f"{s}"))]
 
 
-def _get_instructions(s, lang):
+def _get_instructions(s: str, lang: str) -> List[str]:
     """Returns the instructions from test `s` in the given language."""
     return copy(import_module(f"charlie2.instructions.{lang}.{s}").instr)
 
 
-def _get_common_instructions(lang):
+def _get_common_instructions(lang: str) -> List[str]:
     """Returns instructions common to several tests in the given language."""
     return _get_instructions("common", lang)
 
 
-def get_instructions(s, lang):
-    """Return instructions from test `s` in the given language."""
-    logger.info("getting instructions for %s in language %s" % (s, lang))
+def get_instructions(s: str, lang: str) -> List[str]:
+    """Return instructions from test `s` in the given language.
+
+    Args:
+        s: Test name.
+        lang: Language.
+
+    Returns:
+        list: List of strings.
+    """
+    logger.debug("getting instructions for %s in language %s" % (s, lang))
     lst = _get_common_instructions(lang)
     lst += _get_instructions(s, lang)
     return lst
 
 
-def _get_vis_stim_paths(s):
+def _get_vis_stim_paths(s: str) -> dict:
     """Returns a dictionary containing whose keys are the file names of the values are
      absolute paths to visual stimuli for test `s`."""
     p = pj(vis_stim_path, s)
@@ -102,7 +113,7 @@ def _get_vis_stim_paths(s):
         return {}
 
 
-def _get_aud_stim_paths(s):
+def _get_aud_stim_paths(s: str) -> dict:
     """Returns a dictionary containing whose keys are the file names of the values are
      absolute paths to auditory stimuli for test `s`."""
     p = pj(aud_stim_path, s)
@@ -112,39 +123,71 @@ def _get_aud_stim_paths(s):
         return {}
 
 
-def _get_common_vis_stim_paths():
+def _get_common_vis_stim_paths() -> dict:
     """For stimuli common to several tests."""
     return _get_vis_stim_paths("common")
 
 
-def _get_common_aud_stim_paths():
+def _get_common_aud_stim_paths() -> dict:
     """For stimuli common to several tests."""
     return _get_aud_stim_paths("common")
 
 
-def get_vis_stim_paths(s):
+def get_vis_stim_paths(s: str) -> dict:
     """Returns a dictionary containing whose keys are the file names of the values are
-     absolute paths to visual stimuli for test `s`."""
+     absolute paths to visual stimuli for test `s`.
+
+    Args:
+        s: Test name.
+
+    Returns:
+        dict: Dictionary of paths.
+
+    """
     dic = _get_common_vis_stim_paths()
     dic.update(_get_vis_stim_paths(s))
     return dic
 
 
-def get_aud_stim_paths(s):
+def get_aud_stim_paths(s: str) -> dict:
     """Returns a dictionary containing whose keys are the file names of the values are
-     absolute paths to visual stimuli for test `s`."""
+     absolute paths to audio stimuli for test `s`.
+
+    Args:
+        s: Test name.
+
+    Returns:
+        dict: Dictionary of paths.
+
+
+    """
     dic = _get_common_aud_stim_paths()
     dic.update(_get_aud_stim_paths(s))
     return dic
 
 
-def get_error_messages(lang, name):
-    """Returns an error message."""
+def get_error_messages(lang: str, name: str) -> str:
+    """Returns an error message.
+
+    Args:
+        lang: Language.
+        name: Name of error.
+
+    Returns:
+        str: Error message.
+    """
     return import_module(f"charlie2.instructions.{lang}.errors").__dict__[name]
 
 
-def get_docstring_html(s):
-    """Returns the docstring of a given test, converted from markdown into html."""
+def get_docstring_html(s: str) -> object:
+    """Returns the docstring of a given test, converted from markdown into html.
+
+    Args:
+        s: Test name.
+
+    Returns:
+        str: HTML-formatted docstring.
+    """
     d = import_module(f"charlie2.tests.{s}").__doc__
     html = publish_string(source=d, writer_name="html").decode()
     html = html[html.find("<body>") + 6 : html.find("</body>")].strip()

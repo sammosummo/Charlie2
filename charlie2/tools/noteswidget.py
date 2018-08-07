@@ -1,31 +1,32 @@
 """Note-taking widget within gui.
 
 """
-from copy import copy
 from logging import getLogger
+
 from PyQt5.QtWidgets import (
-    QWidget,
+    QComboBox,
     QGridLayout,
     QLabel,
-    QComboBox,
-    QPushButton,
     QPlainTextEdit,
+    QPushButton,
+    QWidget,
 )
-from charlie2.tools.data import Proband
-from charlie2.tools.paths import proband_pickles
 
+from .paths import proband_pickles
+from .proband import Proband
 
 logger = getLogger(__name__)
 
 
 class NotesWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Notes widget.
 
         """
         super(NotesWidget, self).__init__(parent=parent)
+        logger.debug(f"initialised {type(self)} with parent={parent}")
 
-        logger.info("creating graphical elements of notes widget")
+        logger.debug("creating graphical elements of notes widget")
 
         # instructions
         self.instructions = self.parent().instructions
@@ -56,7 +57,7 @@ class NotesWidget(QWidget):
         # layout > stretch factor
         # self.layout.addStretch(1)
 
-        logger.info("creating a default proband")
+        logger.debug("creating a default proband")
         self.proband = None
 
         # connect
@@ -64,17 +65,17 @@ class NotesWidget(QWidget):
         self.save_button.clicked.connect(self._save)
         self.reset_button.clicked.connect(self._reset)
 
-    def _load(self):
+    def _load(self) -> None:
         """Load notes for a given subject."""
-        logger.info("load proband with id: %s" % self.proband_id_box.currentText())
+        logger.debug("load proband with id: %s" % self.proband_id_box.currentText())
         self.proband = Proband(proband_id=self.proband_id_box.currentText())
         self._reset()
 
-    def _save(self):
+    def _save(self) -> None:
         """Save the notes."""
         self.proband.data["notes"] = self.notes_box.toPlainText()
         self.proband.save()
 
-    def _reset(self):
+    def _reset(self) -> None:
         """Reset notes to the saved value."""
         self.notes_box.setPlainText(self.proband.data["notes"])

@@ -4,13 +4,11 @@
 from datetime import datetime
 from logging import getLogger
 
-
 logger = getLogger(__name__)
 
 
 class Trial(dict):
-
-    def __init__(self, *args, **kwds):
+    def __init__(self, *args, **kwds) -> None:
         """Create a trial object.
 
         Trials objects are fancy dictionaries whose items are also attributes. They are
@@ -21,23 +19,24 @@ class Trial(dict):
 
         """
         super(Trial, self).__init__(*args, **kwds)
-        logger.info(f"initialised {type(self)}")
+        logger.debug(f"initialised {type(self)}")
 
         self.__dict__ = self
-        assert "trial_number" in self.__dict__, "must contain trial_number"
-        assert isinstance(self.trial_number, int), "trial_number must be an int"
-
         defaults = {
             "block_number": 0,
             "status": "pending",
             "practice": False,
             "resumed_from_here": False,
-            "timestamp": datetime.now(),
+            "started_timestamp": datetime.now(),
             "correct": None,
+            "reason_skipped": "not skipped",
+            "finished_timestamp": None,
         }
-        for k, v in defaults.items():
-            if k not in self.__dict__:
-                self.__dict__[k] = v
+        self.__dict__.update({**defaults, **self.__dict__})
+
+        assert "trial_number" in self.__dict__, "must contain trial_number"
+        assert isinstance(self.trial_number, int), "trial_number must be an int"
+
         if self.block_number == 0:
             self.__dict__["first_block"] = True
         else:
@@ -50,4 +49,5 @@ class Trial(dict):
             self.__dict__["first_trial_in_test"] = True
         else:
             self.__dict__["first_trial_in_test"] = False
-        logger.info("finished constructing trial object")
+
+        logger.debug("finished constructing trial object")

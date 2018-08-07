@@ -1,78 +1,98 @@
-"""Defines the proband class.
+"""Defines a custom Proband object.
 
 """
 from datetime import datetime
 from logging import getLogger
 from os import remove
-from os.path import exists, join as pj
-from pickle import load, dump
-from .defaults import default_keywords, forbidden_ids
-from.paths import proband_path
+from os.path import exists
+from os.path import join as pj
+from pickle import dump, load
 
+from .defaults import default_keywords, forbidden_ids
+from .paths import proband_path
 
 logger = getLogger(__name__)
+
 keywords = {"proband_id", "age", "sex", "other_ids", "notes"}
 defaults = {k: v for k, v in default_keywords.items() if k in keywords}
 
 
 class Proband(object):
-
-    def __init__(self, **kwds):
-        """Create a proband object.
+    def __init__(self, **kwds) -> None:
+        """Proband object.
 
         These objects contain information about the current proband, such as their ID,
         when they were tested, etc. This information is saved in a special .pkl file
-        (really just a pickled python dictionary). When the object is initialised, it
-        will try to load any pre-existing information about the proband, which can be
-        overwritten if necessary.
+        (really just a pickled python dictionary).
+
+        Kwds:
+            proband_id (str): The proband ID. This is the only keyword required at
+            initialisation. Others will be inherited in the following order:
+                1. Generic defaults.
+                2. Previously saved to disk.
+                3. Passed upon initialisation.
+                4. Automatically determined based on `proband_id`.
 
         """
-        logger.info(f"initialised {type(self)} with {kwds}")
-        self.data = kwds.copy()
-        self.data["filename"] = self.data["proband_id"] + ".pkl"
-        self.data["path"] = pj(proband_path, self.data["filename"])
-        if exists(self.data["path"]):
-            logger.info("data belonging to proband with this id already exists")
-            old_data = load(open(self.data["path"], "rb"))
-            missing_data = {k: v for k, v in old_data.items() if k not in self.data}
-            self.data.update(missing_data)
-            self.data["last_loaded"] = datetime.now()
-        else:
-            logger.info("data do not exist")
-            self.data["created"] = datetime.now()
-        logger.info("filling missing with defaults (most of the time, should be none)")
-        self.data.update({k: v for k, v in defaults.items() if k not in self.data})
-        self.update()
-        logger.info(f"fully initialised, looks like {self.data}")
+        logger.debug(f"initialised {type(self)} with {kwds}")
+        assert "proband_id" in kwds, "proband_id must be a keyword argument"
 
-    def save(self):
+        self.proband_id = kwds["proband_id"]
+        self.filename = f"{self.proband_id}.pkl"
+        self.path = pj(proband_path, self.filename)
+        autos = {
+            "proband_id": self.proband_id,
+            "filename": self.filename,
+            "path": self.path,
+        }
+        stored = self.load()
+        self.data = {**defaults, **stored, **kwds, **autos}
+        self.update()
+
+        logger.debug(f"fully initialised, looks like {self.data}")
+
+    def load(self) -> dict:
+        """Load data from disk if any exist."""
+        logger.debug("called load()")
+        dic = {}
+        if exists(self.path):
+            logger.debug("data belonging to proband with this id already exists")
+            dic.update(load(open(self.path, "rb")))
+            dic["last_loaded"] = datetime.now()
+        else:
+            logger.debug("data belonging to proband with this id not found on disk")
+            dic["created"] = datetime.now()
+        logger.debug(f"loaded data looks like this: {dic}")
+        return dic
+
+    def save(self) -> None:
         """Dump the data. Don't do this if proband ID is TEST."""
-        logger.info("called save()")
-        if self.data["proband_id"].upper() not in forbidden_ids:
-            self._backup()
-            logger.info("saving the data")
-            self.data["saved"] = datetime.now()
-            dump(self.data, open(self.data["path"], "wb"))
+        logger.debug("called save()")
+        if self.proband_id.upper() not in forbidden_ids:
+            self.backup()
+            logger.debug("saving the data")
+            self.data["last_saved"] = datetime.now()
+            dump(self.data, open(self.path, "wb"))
         else:
-            logger.info("not saving the data (forbidden ID)")
+            logger.debug("not saving the data: forbidden ID")
         self.update()
 
-    def update(self):
+    def update(self) -> None:
         """Updates the attributes according to the internal dictionary."""
-        logger.info("called update()")
+        logger.debug("called update()")
         self.__dict__.update(self.data)
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete the proband from disk."""
-        logger.info("called delete()")
-        self._backup()
-        if exists(self.data["path"]):
-            remove(self.data["path"])
+        logger.debug("called delete()")
+        self.backup()
+        if exists(self.path):
+            remove(self.path)
 
-    def _backup(self):
+    def backup(self) -> None:
         """Make a backup."""
         pass
-        # logger.info("called _backup()")
+        # logger.debug("called backup()")
         # if exists(self.data["path"]):
         #     logger.warning("making a backup of previously saved data")
         #     path = self.path.replace("current", "old")

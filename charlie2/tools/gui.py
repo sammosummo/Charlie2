@@ -2,34 +2,37 @@
 
 """
 from logging import getLogger
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLabel, QWidget, QVBoxLayout, QTabWidget
-from .paths import logo_path, get_instructions, proband_pickles
+from PyQt5.QtWidgets import QLabel, QTabWidget, QVBoxLayout, QWidget
+
+from charlie2.tools.backupwidget import BackupWidget
+from charlie2.tools.noteswidget import NotesWidget
 from charlie2.tools.probandwidget import ProbandWidget
 from charlie2.tools.testswidget import TestsWidget
-from charlie2.tools.noteswidget import NotesWidget
-from charlie2.tools.backupwidget import BackupWidget
 
+from .paths import get_instructions, logo_path, proband_pickles
 
 logger = getLogger(__name__)
 
 
 class GUIWidget(QWidget):
-    def __init__(self, parent=None):
-        """Widget for the front end graphical user interface (GUI). Allows the
-        experimenter to choose the proband ID, which tests to run, etc.
+    def __init__(self, parent=None) -> None:
+        """Widget for the front end graphical user interface (GUI).
+
+        Allows the experimenter to choose the proband ID, which tests to run, etc.
 
         """
         super(GUIWidget, self).__init__(parent=parent)
-        logger.info(f"initialised {type(self)}")
+        logger.debug(f"initialised {type(self)}")
 
         self.instructions = get_instructions("gui", self.parent().kwds["language"])
 
-        logger.info("setting proband to None")
+        logger.debug("setting proband to None")
         self.proband = None
 
-        logger.info("creating all graphical elements of gui")
+        logger.debug("creating all graphical elements of gui")
 
         # layout
         self.vbox = QVBoxLayout()
@@ -97,7 +100,7 @@ class GUIWidget(QWidget):
         # connect tab changing to method
         self.tabs.currentChanged.connect(self._update_proband_lists)
 
-    def _update_proband_lists(self):
+    def _update_proband_lists(self) -> None:
         """The Tests and Notes tabs have proband boxes that need to be updated."""
         self.test_widget.proband_id_box.clear()
         self.test_widget.proband_id_box.addItems(["TEST"] + sorted(proband_pickles()))

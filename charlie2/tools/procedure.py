@@ -1,17 +1,17 @@
-"""Defines procedure class.
+"""Defines a custom Procedure object. Add more procedure classes in the future.
 
 """
 from datetime import datetime
-from copy import copy
 from logging import getLogger
-from os.path import exists, join as pj
+from os.path import exists
+from os.path import join as pj
 from pickle import dump, load
+from typing import Union
 
 import pandas as pd
 
+from .defaults import default_keywords, forbidden_ids
 from .paths import csv_path, summaries_path, test_data_path
-from .defaults import default_keywords
-from .proband import Proband
 from .trial import Trial
 
 logger = getLogger(__name__)
@@ -21,176 +21,214 @@ keywords = {
     "test_name",
     "language",
     "fullscreen",
-    "resume",
     "computer_id",
     "user_id",
     "platform",
+    "test_started",
+    "test_resumed",
+    "test_completed",
+    "remaining_trials",
+    "completed_trials",
+    "summary",
+    "resumable",
 }
-defaults = {k: v for k, v in default_keywords.items() if k in keywords}
 
 
-class SimpleProcedure(Proband):
+class SimpleProcedure(object):
+    def __init__(self, proband_id: str, test_name: str, **kwds) -> None:
+        """SimpleProcedure object.
 
-    def __init__(self, **kwds):
-        """Create a test data object.
+        These objects contain information about a proband and test. This information is
+        saved in a special .pkl file (really just a pickled python dictionary).
 
-        Contains all the necessary information for a proband to perform/resume a test
-        and save the data. Important information is saved in a special .pkl file (really
-        just a pickled python dictionary). When the object is initialised, it will try
-        to load any pre-existing information about the proband, which can be overwritten
-        if necessary.
+        Procedure objects are also iterators. When iterated, these objects move trials
+        between two special attributes called `remaining_trials` and `completed_trials`.
+        Both are lists of dictionaries, which each dictionary representing a trial. When
+        the test is over (e.g., when `remaining_trials` if empty), an exception is
+        raised.
 
-        The object is also an iterator over trials. The procedure is  "simple" in the
-        sense that it starts at the first trial and moves forward one trial at each
-        iteration until there are no trials remaining.
+        "Simple" procedures are those that start at the first trial and move forward one
+        trial at a time until there are no trials remaining. This is in contrast to
+        adaptive procedures, where new trials might be generated based on prior
+        responses (not yet implemented).
+
+        Args:
+            proband_id (str): The proband ID. This is required at initialisation.
+            test_name (str): The test name. Also required at initialisation.
+
+        Others keywords will be inherited in the following order:
+            1. Generic defaults.
+            2. Previously saved to disk.
+            3. Passed upon initialisation.
+            4. Automatically determined based on `proband_id` and `test_name`.
 
         """
-        logger.info(f"initialised {type(self)} with {kwds}")
-        self.data = kwds.copy()
-        self.data["filename"] = (
-                self.data["proband_id"] + "_" + self.data["test_name"] + ".pkl"
-        )
-        self.data["path"] = pj(test_data_path, self.data["filename"])
-        self.data["csv"] = pj(csv_path, self.data["filename"]).replace(".pkl", ".csv")
-        self.data["summary_path"] = pj(summaries_path, self.data["filename"]).replace(
-            ".pkl", "_summary.csv"
-        )
-        if exists(self.data["path"]):
-            logger.info("data belonging to proband with this id already exists")
-            old_data = load(open(self.data["path"], "rb"))
-            missing_data = {k: v for k, v in old_data.items() if k not in self.data}
-            self.data.update(missing_data)
-            self.data["last_loaded"] = datetime.now()
-            self.data["test_resumed"] = True
-            if self.data["test_completed"] is False:
-                logger.info("add current_trial back to remaining_trials list")
-                trial = copy(self.data["current_trial"])
-                trial["resumed_from_here"] = True
-                trial["status"] = "pending"
-                self.data["remaining_trials"] = [trial] + self.data["remaining_trials"]
-                self.data["current_trial"] = None
+        logger.debug(f"initialised {type(self)} with {kwds}")
 
-        else:
+        # create some keywords automatically
+        self.proband_id = proband_id
+        self.test_name = test_name
+        self.filename = f"{self.proband_id}_{self.test_name}.pkl"
+        self.path = pj(test_data_path, self.filename)
+        self.csv = pj(csv_path, self.filename.replace(".pkl", ".csv"))
+        s = self.filename.replace(".pkl", "_summary.csv")
+        self.summary_path = pj(summaries_path, s)
+        autos = {
+            "proband_id": self.proband_id,
+            "filename": self.filename,
+            "path": self.path,
+            "csv": self.csv,
+            "summary_path": self.summary_path,
+            "started_timestamp": datetime.now(),
+            "finished_timestamp": None,
+        }
 
-            logger.info("data do not exist")
-            self.data["created"] = datetime.now()
-            self.data["test_resumed"] = False
-            self.data["test_completed"] = False
-            self.data["remaining_trials"] = []
-            self.data["current_trial"] = None
-            self.data["completed_trials"] = []
+        # load some keywords from disk
+        stored = self.load()
 
-        logger.info("filling missing with defaults (most of the time, should be none)")
-        self.data.update({k: v for k, v in defaults.items() if k not in self.data})
-        self.update()
-        logger.info(f"fully initialised, looks like {self.data}")
+        # get some default keywords
+        defaults = {k: v for k, v in default_keywords.items() if k in keywords}
+
+        # store the keywords
+        self.data = {**defaults, **stored, **kwds, **autos}
         self.update()
 
-    def __iter__(self):
-        """Just returns itself."""
-        return self
+        logger.debug(f"fully initialised, looks like {self.data}")
 
-    def __next__(self):
-        """Iterate one trial."""
-        logger.info("iterating one trial")
+    def next(self, current_trial: Union[None, Trial, dict] = None) -> Trial:
+        """Iterate one trial.
 
-        if len(self.data["remaining_trials"]) == 0:
-            logger.info("remaining_trials is empty, test must be completed")
-            self.data["test_completed"] = True
-            logger.info("is there an orphaned current_trial?")
-            if self.data["current_trial"] is not None:
-                logger.info("yes, appending to completed_trials")
-                self._append_current_trial()
-            self.update()
+        Iterating involves checking if the test has been completed, defined by having an
+        empty remaining_trials list and a non-empty completed_trials list. If so, an
+        exception is raised. Otherwise, it checks if the next trial should be skipped.
+        If so, that trial is silently moved to the bottom of the completed_trials list
+        and the iterator is recursively iterated again. If not, the trial is returned.
+
+        If the optional `current_trial` is not None, this trial is appended (as a
+        vanilla dict) to the `completed_trials` list.
+
+        Args:
+            current_trial: The current trial.
+
+        Returns:
+            charlie2.tools.trial.Trial: The next trial.
+
+        """
+        logger.debug(f"called __next__() with current_trial={current_trial}")
+        self.data["test_started"] = True
+
+        if current_trial is not None:
+
+            current_trial["finished_timestamp"] = datetime.now()
+            self.data["completed_trials"].append(current_trial)
+
+        self.data["test_completed"] = all(
+            [
+                len(self.data["remaining_trials"]) == 0,
+                len(self.data["completed_trials"]) > 0,
+            ]
+        )
+        self.to_csv()
+
+        if self.data["test_completed"]:
+            logger.debug("stopping iterations")
+            self.data["finished_timestamp"] = datetime.now()
             raise StopIteration
 
-        if self.data["current_trial"] is None:
-            logger.info("no current_trial, so popping new one from remaining_trials")
-            self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
+        else:
+            logger.debug("attempting to iterate")
+            next_trial = Trial(self.data["remaining_trials"].pop(0))
+            if next_trial.status == "skipped":
+                logger.debug("skipping")
+                return self.next(dict(next_trial))
+            else:
+                logger.debug("returning the current trial")
+                return next_trial
+
+    def load(self) -> dict:
+        """Load attributes of a previously saved object.
+
+        Returns:
+            dict: Previously saved attributes of an object with this `proband_id` and
+                `test_name`.
+        """
+        logger.debug("called load()")
+        dic = {}
+
+        if exists(self.path):
+
+            logger.debug("data belonging to proband with this id already exists")
+            dic.update(load(open(self.path, "rb")))
+            dic["last_loaded"] = datetime.now()
+
+            if dic["test_started"] is True and dic["test_completed"] is False:
+
+                dic["test_resumed"] = True
+                dic["remaining_trials"][-1]["resumed_from_here"] = True
 
         else:
-            logger.info("there is a current_trial; what is it?")
-            logger.info("current_trial is a %s" % str(type(self.data["current_trial"])))
 
-            if isinstance(self.data["current_trial"], Trial):
-                logger.info("must have been created in this session, so appending")
-                self._append_current_trial()
-                logger.info("and popping new one from remaining_trials")
-                self.data["current_trial"] = Trial(self.data["remaining_trials"].pop(0))
+            logger.debug("data not found on disk")
+            dic["created"] = datetime.now()
 
-            elif isinstance(self.data["current_trial"], dict):
-                logger.info("must have been loaded from file, so using it")
-                self.data["current_trial"] = Trial(self.data["current_trial"])
+        logger.debug(f"loaded data looks like this: {dic}")
+        return dic
 
+    def save(self) -> None:
+        """Dump the data. Don't do this if proband ID is TEST."""
+        logger.debug("called save()")
+        if self.proband_id.upper() not in forbidden_ids:
+            self.backup()
+            logger.debug(f"saving these data: {self.data}")
+            self.data["last_saved"] = datetime.now()
+            dump(self.data, open(self.path, "wb"))
+        else:
+            logger.debug("not saving the data: forbidden ID")
         self.update()
 
-        logger.info("current_trial looks like %s" % str(self.data["current_trial"]))
-        logger.info("should this trial be skipped?")
+    def update(self) -> None:
+        """Updates the attributes according to the internal dictionary."""
+        logger.debug("called update()")
+        self.__dict__.update(self.data)
 
-        if self.data["current_trial"].status == "skipped":
-            logger.info("yes, so recursively iterating")
-            return self.__next__()
-        else:
-            logger.info("no, so returning current_trial")
-            return self.data["current_trial"]
+    def skip_block(self, b: int, reason: str) -> None:
+        """Label all trials with the same block number as the last completed trial as
+        skipped.
 
-    def _append_current_trial(self):
-        """Append current_trial to completed_trials, if there is indeed a current_trial
-        and it is not already at the bottom of completed_trials.
+        Args:
+            b (int): Block number.
+            reason: Reason for skipping.
 
         """
-        logger.info("attempting to append to current_trial to completed_trials")
-        ct = self.data["current_trial"]
-        # if ct.status != "skipped":
-        #     logger.info("setting status of current_trial to completed")
-        #     ct.status = "completed"
-        # else:
-        #     logger.info("preserving status of current_trial as skipped")
-        if len(self.data["completed_trials"]) > 0:
-            if dict(ct) == self.data["completed_trials"][-1]:
-                logger.info("current_trial is last item in completed_trials already")
-                return
-        logger.info("current_trial is not on completed_trials, so appending")
-        self.data["completed_trials"].append(vars(ct))
+        trials = self.data["remaining_trials"]
+        if "block_number" in trials[0]:
+            trials = [t for t in trials if t["block_number"] == b]
+            for t in trials:
+                t["status"] = "skipped"
+                t["reason_skipped"] = reason
+        else:
+            self.skip_all(reason)
 
-    def save_completed_trials_as_csv(self):
-        """Output the list of dicts as a csv."""
-        df = pd.DataFrame(self.data["completed_trials"])
-        try:
-            df.set_index("trial_number", inplace=True)
-        except KeyError:
-            logger.warning("No trial_number in data frame, no trials yet?")
-        df.dropna(axis=1, how="all", inplace=True)
-        df.to_csv(self.data["csv"])
-        self.update()
+    def skip_all(self, reason: str) -> None:
+        """Label all trials as skipped.
 
-    def save_summary(self):
+        Args:
+            reason (str): Reason for skipping
+        """
+        for t in self.data["remaining_trials"]:
+            t["status"] = "skipped"
+            t["reason_skipped"] = reason
+
+    def to_csv(self) -> None:
+        """Write all trials to a csv."""
+        trials = self.data["completed_trials"]
+        pd.DataFrame(trials).dropna(axis=1).to_csv(self.csv, index=False)
+
+    def save_summary(self) -> None:
         """Save the summary as a csv"""
         pd.Series(self.data["summary"]).to_csv(self.data["summary_path"])
-        self.update()
 
-    def skip_current_trial(self, reason):
-        """Set the current trial to skipped."""
-        t = self.data["current_trial"]
-        t.status = "skipped"
-        t.reason_skipped = reason
-
-    def skip_current_block(self, reason):
-        """Set all trials in remaining_trials in the current block, including
-        current_trial, to skipped.
-
-        """
-        logger.debug("current_trial type: %s" % str(type(self.data["current_trial"])))
-        b = self.data["current_trial"].block_number
-        logger.debug("current block number: %s" % str(b))
-        self.skip_current_trial(reason)
-        for i, t in enumerate(self.data["remaining_trials"]):
-            logger.debug("trial %s" % str(t))
-            if "block_number" in t:
-                if t["block_number"] == b:
-                    self.data["remaining_trials"][i]["status"] = "skipped"
-                    self.data["remaining_trials"][i]["reason_skipped"] = reason
-            else:
-                self.data["remaining_trials"][i]["status"] = "skipped"
-                self.data["remaining_trials"][i]["reason_skipped"] = reason
-            logger.debug("trial %s" % str(t))
+    def backup(self) -> None:
+        """Make a backup."""
+        # TODO: Not implemented yet.
+        pass

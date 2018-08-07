@@ -5,6 +5,7 @@ Digit symbol
 
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/digitsymbol.py
+:Author: Sam Mathias
 
 Description
 ===========
@@ -40,28 +41,57 @@ References
   814–823.
 
 """
+from charlie2.tools.stats import basic_summary
+
 __version__ = 2.0
+__author__ = "Sam Mathias"
 
 
 from logging import getLogger
+from typing import Dict, List, Union
+
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeyEvent
+
 from ..tools.basetestwidget import BaseTestWidget
 from ..tools.recipes import digits, symbols
-
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
+        """Initialise the test.
 
+        Does the following:
+            1. Calls super() to initialise everything from base classes.
+            2. Sets a block deadline of 90s (for practice, too).
+            3. Hide the mouse.
+            4. Define x-positions of digits and symbols in the key.
+            5. Load and hide the key.
+
+        """
         super(TestWidget, self).__init__(parent)
+        self.block_deadline = 90 * 1000
         self.mouse_visible = False
         self.symbols = [self.load_image(f"sym{i}.png") for i in range(1, 10)]
         self.digits = [self.load_text(str(i)) for i in range(1, 10)]
         self.xs = range(-300, 350, 75)
+        self.digit = None
+        self.symbol = None
 
-    def make_trials(self):
+    def make_trials(self) -> List[Dict[str, int]]:
+        """Generates new trials.
+
+            Returns:
+                :obj:`list`: Each entry is a dict containing:
+                    1. `trial_number` (:obj:`int`)
+                    2. `block_number` (:obj:`int`)
+                    3. `practice` (:obj:`bool`)
+                    4: `digit` (:obj:`int`)
+                    5. `symbol` (:obj:`int`)
+
+        """
 
         blocks = ([0] * 5) + ([1] * 295) + ([2] * 300)
         practices = ([True] * 5) + ([False] * 595)
@@ -71,38 +101,60 @@ class TestWidget(BaseTestWidget):
 
         return [dict(zip(names, t)) for t in details]
 
-    def block(self):
+    def block(self) -> None:
+        """New block.
 
-        if self.data.current_trial.block_number > 0:
-            logger.info("adding block deadline")
-            self.block_deadline = 90 * 1000
-        else:
-            logger.info("block deadline set to None")
-            self.block_deadline = None
+        Does the following:
+            1. Pre-load digits and symbols.
+            2. Displays block-specific task instructions with a key press to continue.
 
-        b = self.data.current_trial.block_number
-        self.display_instructions_with_space_bar(self.instructions[4 + b])
-
+        """
         for symbol, digit, x in zip(self.symbols, self.digits, self.xs):
             g = self.move_widget(symbol, (x, 250))
             symbol.hide()
             digit.resize(g.size())
             self.move_widget(digit, (x, 200))
             digit.hide()
+        b = self.current_trial.block_number
+        self.display_instructions_with_space_bar(self.instructions[4 + b])
 
-    def keyReleaseEvent_(self, event):
+    def trial(self) -> None:
+        """New trial.
 
+        Does the following:
+            1. Clears the screen (but doesn't delete).
+            2. Displays the arrow keys and their labels.
+            3. Displays the key.
+            4. Shows the target digt and symbol.
+
+        """
+        self.clear_screen(delete=False)
+        self.display_keyboard_arrow_keys(self.instructions[2:4])
+        [l.show() for l in self.symbols + self.digits]
+        s = self.current_trial.symbol
+        d = self.current_trial.digit
+        self.symbol = self.display_image(f"sym{s}.png", (0, 25))
+        self.digit = self.display_text(str(d), (0, -25))
+
+    def keyReleaseEvent_(self, event: QKeyEvent) -> None:
+        """Key release event.
+
+        If the event was a release of either the left or right arrow keys, records a
+        response. Displays feedback (if a practice trial) and moves onto the next trial.
+
+        Args:
+            event (PyQt5.QtGui.QKeyEvent)
+
+        """
         dic = {Qt.Key_Left: True, Qt.Key_Right: False}
-        t = self.data.current_trial
+        t = self.current_trial
 
         if event.key() in dic:
             t.rsp = dic[event.key()]
             t.correct = t.rsp == (t.symbol == t.digit)
             t.status = "completed"
-            # should prevent dozens of old labels being stored in memory
             self.symbol.deleteLater()
             self.digit.deleteLater()
-            # feedback?
             if t.practice:
                 s = self.instructions[7:9][not t.correct]
                 a = self.display_text(s, (0, -100))
@@ -110,37 +162,21 @@ class TestWidget(BaseTestWidget):
                 a.hide()
                 a.deleteLater()
 
-    def trial(self):
+    def summarise(self) -> Dict[str, int]:
+        """Summarises the data.
 
-        self.clear_screen(delete=False)
-        self.display_keyboard_arrow_keys(self.instructions[2:4])
-        [l.show() for l in self.symbols + self.digits]
-        s = self.data.current_trial.symbol
-        d = self.data.current_trial.digit
-        self.symbol = self.display_image(f"sym{s}.png", (0, 25))
-        self.digit = self.display_text(str(d), (0, -25))
+        Besides the basic summary stats, calculates an adjusted score as the number of
+        correct trials divided by accuracy. Creates summaries for each block separately
+        and all trials together.
 
-    def summarise(self):
+        Returns:
+            dict: Summary statistics.
 
-        dic = self.basic_summary()
+        """
+        trials = self.procedure.completed_trials
+        dic = basic_summary(trials)
         dic["adjusted_score"] = dic["correct_trials"] * dic["accuracy"]
         for b in [1, 2]:
-            trials = [
-                t for t in self.data.data["completed_trials"] if t["block_number"] == b
-            ]
-            dic_ = self.basic_summary(trials=trials, prefix=str(b))
-            dic.update(dic_)
-        del dic["total_trials"]
-        del dic["skipped_trials"]
-        del dic["duration_ms"]
-        del dic["1_total_trials"]
-        del dic["1_skipped_trials"]
-        del dic["1_began_timestamp"]
-        del dic["1_duration_ms"]
-        del dic["1_finished_timestamp"]
-        del dic["2_total_trials"]
-        del dic["2_skipped_trials"]
-        del dic["2_began_timestamp"]
-        del dic["2_duration_ms"]
-        del dic["2_finished_timestamp"]
+            trials_ = [t for t in trials if t["block_number"] == b]
+            dic.update(basic_summary(trials_, prefix=str(b)))
         return dic

@@ -4,30 +4,31 @@
 from logging import getLogger
 from os import remove
 from re import match
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QGroupBox,
-    QGridLayout,
-    QLabel,
-    QComboBox,
-    QPushButton,
-    QErrorMessage,
-)
-from charlie2.tools.data import Proband
-from charlie2.tools.paths import proband_pickles, get_error_messages
 
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QErrorMessage,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from .paths import get_error_messages, proband_pickles
+from .proband import Proband
 
 logger = getLogger(__name__)
 
 
 class ProbandWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Proband tab widget.
 
         """
         super(ProbandWidget, self).__init__(parent=parent)
-        logger.info(f"initialised {type(self)}")
+        logger.debug(f"initialised {type(self)} with parent={parent}")
 
         # instructions
         self.instructions = self.parent().instructions
@@ -111,7 +112,7 @@ class ProbandWidget(QWidget):
         self.delete_button.clicked.connect(self._delete_proband)
         self._update()
 
-    def _update(self):
+    def _update(self) -> None:
         """Update all fields in this widget."""
         self.proband_id_box.currentTextChanged.disconnect()
         self.proband_id_box.clear()
@@ -124,15 +125,13 @@ class ProbandWidget(QWidget):
             self.addinf_otherids_box.addItems(sorted(self.proband.other_ids))
         self.proband_id_box.currentTextChanged.connect(self._set_proband)
 
-    def _set_proband(self, s):
+    def _set_proband(self, s: str) -> None:
         """Creates a new proband object, if valid."""
-        print(s)
         if self._valid_proband_id(s):
             self.proband = Proband(proband_id=s)
-            print(self.proband.data)
             self._update()
 
-    def _add_other_id(self):
+    def _add_other_id(self) -> None:
         """Add other ID to other-IDs set."""
         b = self.addinf_otherids_box
         other_ids = sorted({b.itemText(i) for i in range(b.count())})
@@ -142,7 +141,7 @@ class ProbandWidget(QWidget):
         else:
             self._invalid_id()
 
-    def _rm_other_id(self):
+    def _rm_other_id(self) -> None:
         """Add other ID to other IDs set."""
         b = self.addinf_otherids_box
         other_ids = sorted({b.itemText(i) for i in range(b.count())})
@@ -151,16 +150,16 @@ class ProbandWidget(QWidget):
             self.addinf_otherids_box.removeItem(self.addinf_otherids_box.findText(s))
 
     @staticmethod
-    def _invalid_id():
+    def _invalid_id() -> None:
         """Show warning message about ID being invalid."""
-        logger.info("displaying warning message")
+        logger.debug("displaying warning message")
         message_box = QErrorMessage()
         msg = get_error_messages("en", "invalid_id")
         message = msg
         message_box.setMinimumSize(400, 200)
         message_box.showMessage(message)
 
-    def _save_proband(self):
+    def _save_proband(self) -> None:
         """Save the current selection."""
         if self._valid_proband_id(self.proband_id_box.currentText()):
             b = self.addinf_otherids_box
@@ -175,21 +174,21 @@ class ProbandWidget(QWidget):
         else:
             self._invalid_id()
 
-    def _delete_proband(self):
+    def _delete_proband(self) -> None:
         """Delete the ID."""
         if self.proband.proband_id in proband_pickles():
             remove(self.proband.path)
             self._set_proband(proband_pickles()[0])
 
     @staticmethod
-    def _valid_proband_id(s):
+    def _valid_proband_id(s: str) -> bool:
         """Make sure the proband ID contains is not empty, contains no spaces, and no
         special characters besides underscores.
 
         """
         if s and match("^[a-zA-Z0-9_]*$", s):
-            logger.info(s + " is a valid proband id")
+            logger.debug(s + " is a valid proband id")
             return True
         else:
-            logger.info(s + " is a invalid")
+            logger.debug(s + " is a invalid")
             return False

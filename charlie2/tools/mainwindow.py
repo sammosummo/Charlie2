@@ -4,20 +4,31 @@
 from datetime import datetime
 from logging import getLogger
 from sys import exit
-from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
+
+from PyQt5.QtGui import QCloseEvent
 from httplib2 import ServerNotFoundError
-from .defaults import defaults_for_mainwidow
-from .googledrive import backup
+from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
+
+from .defaults import default_keywords
 from .gui import GUIWidget
 from .paths import durations_path, get_test
-
 
 logger = getLogger(__name__)
 window_size = (1000, 750)
 
+keywords = {
+    "batch_name",
+    "test_name",
+    "test_names",
+    "language",
+    "fullscreen",
+    "resumable",
+    "gui",
+}
+
 
 class MainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Main window.
 
         Top-level widget for running a test or batch of tests. Called once with no
@@ -27,89 +38,89 @@ class MainWindow(QMainWindow):
 
         """
         super(MainWindow, self).__init__(parent)
-        logger.info(f"initialised {type(self)}")
+        logger.debug(f"initialised {type(self)}")
 
-        logger.info("loading default keywords")
-        self.kwds = defaults_for_mainwidow
-        logger.info("keywords are %s" % str(self.kwds))
+        logger.debug("loading default keywords")
+        self.kwds = {k: v for k, v in default_keywords.items() if k in keywords}
+        logger.debug("keywords are %s" % str(self.kwds))
 
-        logger.info("getting desktop dimensions")
+        logger.debug("getting desktop dimensions")
         self.desktop_size = QDesktopWidget().availableGeometry().size()
-        logger.info("dimensions are %s" % str(self.desktop_size))
+        logger.debug("dimensions are %s" % str(self.desktop_size))
 
-        logger.info("starting a rough timer")
+        logger.debug("starting a rough timer")
         self.time_started = datetime.now()
 
-        logger.info("starting the app proper")
+        logger.debug("starting the app proper")
         self.ignore_close_event = False
         self.switch_central_widget()
 
-    def switch_central_widget(self):
+    def switch_central_widget(self) -> None:
         """Switch the central widget.
         
         Show the GUI, move from one test to another, or close the app. This method
         also checks whether a test should be resumed.
 
         """
-        logger.info("called switch_central_widget()")
+        logger.debug("called switch_central_widget()")
 
-        logger.info("removing empty test names")
+        logger.debug("removing empty test names")
         self.kwds["test_names"] = [s for s in self.kwds["test_names"] if s]
 
         if len(self.kwds["test_names"]) == 0 and self.kwds["gui"] is True:
 
             gui = GUIWidget(self)
 
-            logger.info("sizing, centring, and showing the window")
+            logger.debug("sizing, centring, and showing the window")
             if self.isFullScreen():
-                logger.info("in full screen")
+                logger.debug("in full screen")
                 self.showNormal()  # TODO: Do I need this extra call?
             self.setFixedSize(gui.sizeHint())
             self._centre()
             self.showNormal()  # TODO: Do I need this extra call?
 
-            logger.info("showing the gui")
+            logger.debug("showing the gui")
             self.setCentralWidget(gui)
 
         elif len(self.kwds["test_names"]) > 0:
 
-            logger.info("at least one test in test_names")
+            logger.debug("at least one test in test_names")
             self.kwds["test_name"] = self.kwds["test_names"].pop(0)
 
-            logger.info(f"initialising {self.kwds['test_name']}")
+            logger.debug(f"initialising {self.kwds['test_name']}")
             w = get_test(self.kwds["test_name"])
             widget = w(self)
 
             if not self.kwds["fullscreen"] or self.kwds["platform"] == "darwin":
-                logger.info("showing the window in normal mode")
+                logger.debug("showing the window in normal mode")
                 self.setFixedSize(*window_size)
                 widget.setFixedSize(*window_size)
                 self._centre()
                 self.showNormal()
 
             else:
-                logger.info("showing the window in fullscreen mode")
+                logger.debug("showing the window in fullscreen mode")
                 self.setFixedSize(self.desktop_size)
                 widget.setFixedSize(self.desktop_size)
                 self.showFullScreen()
 
-            logger.info("showing the test")
+            logger.debug("showing the test")
             self.setCentralWidget(widget)
 
-            logger.info("starting the test")
+            logger.debug("starting the test")
             widget.begin()
 
         else:
             exit()
 
-    def _centre(self):
+    def _centre(self) -> None:
         """Move normal window to centre of screen."""
         rect = self.frameGeometry()
         centre_point = QDesktopWidget().availableGeometry().center()
         rect.moveCenter(centre_point)
         self.move(rect.topLeft())
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Reimplemented exit protocol.
 
         It doesn't make logical sense to exit the entire application when closing a
@@ -123,29 +134,22 @@ class MainWindow(QMainWindow):
 
         If in batch mode, a close event will kill the current test, not the whole batch.
 
+        Args:
+            event:
+
         """
-        logger.info("close event encountered in main window")
+        logger.debug("close event encountered in main window")
         if self.ignore_close_event:
-            logger.info("ignoring close event")
+            logger.debug("ignoring close event")
             event.ignore()
         else:
             if isinstance(self.centralWidget(), GUIWidget):
-                logger.info("at the gui, so properly closing")
-                if self.kwds["autobackup"] is True:
-                    logger.info("attempting autobackup")
-                    self._attempt_backup()
+                logger.debug("at the gui, so properly closing")
                 duration = datetime.now() - self.time_started
                 s = ",".join([str(duration), str(self.time_started)]) + "\n"
                 open(durations_path, "a").write(s)
                 exit()
             else:
-                logger.info("at a test, safely closing")
+                logger.debug("at a test, safely closing")
                 self.centralWidget().safe_close()
                 event.ignore()
-
-    @staticmethod
-    def _attempt_backup():
-        try:
-            backup()
-        except ServerNotFoundError:
-            pass

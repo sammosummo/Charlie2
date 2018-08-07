@@ -6,7 +6,6 @@ from logging import getLogger
 from socket import gethostname
 from sys import platform
 
-
 logger = getLogger(__name__)
 forbidden_ids = {"TEST", ""}
 this_user = getuser()
@@ -19,8 +18,7 @@ default_keywords = {
     "test_names": [],
     "language": "en",
     "fullscreen": [True, False][platform == "darwin"],
-    "resume": False,
-    "autobackup": False,
+    "resumable": False,
     "age": 1,
     "sex": "Male",
     "other_ids": set(),
@@ -29,17 +27,11 @@ default_keywords = {
     "platform": platform,
     "notes": "Add notes about the proband here...",
     "gui": True,
+    "completed_trials": [],
+    "remaining_trials": [],
+    "current_trial": None,
+    "test_started": False,
+    "test_resumed": False,
+    "test_completed": False,
+    "summary": {},
 }
-
-_fmw = {
-    "batch_name",
-    "test_name",
-    "test_names",
-    "language",
-    "fullscreen",
-    "resume",
-    "autobackup",
-    "gui",
-}
-
-defaults_for_mainwidow = {k: v for k, v in default_keywords.items() if k in _fmw}

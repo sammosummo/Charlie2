@@ -5,6 +5,7 @@ Verbal fluency
 
 :Version: 2.0
 :Source: http://github.com/sammosummo/Charlie2/tests/verbalfluency.py
+:Author: Sam Mathias
 
 Description
 ===========
@@ -36,17 +37,18 @@ References
 
 """
 __version__ = 2.0
+__author__ = "Sam Mathias"
 
 from logging import getLogger
-from PyQt5 import QtCore, QtWidgets, QtGui
-from charlie2.tools.basetestwidget import BaseTestWidget
 
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def __init__(self, parent=None):
 
         super(TestWidget, self).__init__(parent)
@@ -63,20 +65,20 @@ class TestWidget(BaseTestWidget):
     def block(self):
 
         self.skip_countdown = True
-        if self.data.current_trial.first_trial_in_test:
+        if self.current_trial.first_trial_in_test:
             self.display_instructions_with_continue_button(self.instructions[4])
 
     def trial(self):
 
         self.clear_screen(delete=True)
-        if self.data.current_trial.trial_type == "instruct":
+        if self.current_trial.trial_type == "instruct":
             return self._instruct()
         else:
             return self._perform()
 
     def _instruct(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         s = self.instructions[5 + t.trial_number // 2]
         self.display_instructions(s, font=QtGui.QFont("Helvetica", 18))
         self._add_timing_details()
@@ -84,7 +86,7 @@ class TestWidget(BaseTestWidget):
 
     def _perform(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
 
         # set default values
         t.valid_responses = 0
@@ -156,17 +158,17 @@ class TestWidget(BaseTestWidget):
         layout.addWidget(button_box, 3, 0, 1, 2)
         self.setLayout(layout)
 
-        self.data.current_trial.responses_list = []
+        self.current_trial.responses_list = []
 
     @property
     def _total_responses(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         return t.valid_responses + t.invalid_responses
 
     def _valid(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         t.valid_responses += 1
         self.rsp_counter.display(self._total_responses)
         t.responses_list.append(("valid", self.trial_time.elapsed()))
@@ -175,7 +177,7 @@ class TestWidget(BaseTestWidget):
 
     def _invalid(self):
 
-        t = self.data.current_trial
+        t = self.current_trial
         t.invalid_responses += 1
         self.rsp_counter.display(self._total_responses)
         t.responses_list.append(("invalid", self.trial_time.elapsed()))
@@ -206,25 +208,29 @@ class TestWidget(BaseTestWidget):
         self.countdown.display(self._time_left)
         if self._time_left == 0:
             self.timer.stop()
-            self.data.current_trial.status = "completed"
+            self.current_trial.status = "completed"
             self._add_timing_details()
-            logging.debug("current trial looks like %s" % str(self.data.current_trial))
+            logging.debug(
+                "current trial looks like %s" % str(self.current_trial)
+            )
             self.button.clicked.disconnect()
             self.button.clicked.connect(self.next_trial)
             self.button.setText(self.instructions[17])
 
     def _end_trial(self):
 
-        self.data.current_trial.status = "completed"
+        self.current_trial.status = "completed"
         self._add_timing_details()
-        logging.debug("current trial looks like %s" % str(self.data.current_trial))
+        logging.debug("current trial looks like %s" % str(self.current_trial))
         self.next_trial()
 
     def summarise(self):
 
         dic = self.basic_summary()
         for k in ["f", "a", "s", "animal"]:
-            trials = [t for t in self.data.data["completed_trials"] if t["kind"] == k]
+            trials = [
+                t for t in self.procedure.data["completed_trials"] if t["kind"] == k
+            ]
             trials = [t for t in trials if t["trial_type"] == "perform"]
             dic_ = self.basic_summary(trials=trials, prefix=k)
             if len(trials) > 0:
@@ -234,7 +240,9 @@ class TestWidget(BaseTestWidget):
                 dic_[k + "_valid"] = None
                 dic_[k + "_invalid"] = None
             dic.update(dic_)
-        trials = [t for t in self.data.data["completed_trials"] if t["kind"] in "fas"]
+        trials = [
+            t for t in self.procedure.data["completed_trials"] if t["kind"] in "fas"
+        ]
         trials = [t for t in trials if t["trial_type"] == "perform"]
         dic_ = self.basic_summary(trials=trials, prefix="letter")
         if len(trials) > 0:

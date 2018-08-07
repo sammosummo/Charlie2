@@ -5,6 +5,7 @@ Visual memory
 
 :Version: 1.0
 :Source: http://github.com/sammosummo/Charlie2/tests/visualmemory.py
+:Author: Sam Mathias
 
 Description
 ===========
@@ -26,52 +27,111 @@ Reference
   with schizophrenia. Neuropsychol, 27(2), 220-229.
 
 """
-__version__ = 1.0
+from typing import List, Dict
 
+from charlie2.tools.stats import basic_summary
+
+__version__ = 1.0
+__author__ = "Sam Mathias"
 
 from logging import getLogger
-from math import cos, sin, pi
-from PyQt5.QtGui import QPixmap
-from charlie2.tools.basetestwidget import BaseTestWidget
+from math import cos, pi, sin
 
+from PyQt5.QtGui import QPixmap, QMouseEvent
+
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
+    def __init__(self, parent=None) -> None:
+        """Initialise the test.
 
-    def __init__(self, parent=None):
+        Does the following:
+            1. Calls super() to initialise everything from base classes.
+            2. Set the block deadline to 300 s.
+            3. Make a labels storage list.
 
+        """
         super(TestWidget, self).__init__(parent)
+        self.block_deadline = 300 * 1000
+        self.labels = []
 
-    def make_trials(self):
+    def make_trials(self) -> List[Dict[str, float]]:
+        """Generates new trials.
 
+        Returns:
+            :obj:`list`: Each entry is a dict containing:
+                1. `trial_number` (:obj:`int`)
+                2. `theta` (:obj:`float`)
+
+        """
         names = ["trial_number", "theta"]
         thetas = [
-            0.07287796, 0.41152918, 0.91638001, 0.10786362, 0.44804563,
-             0.07869748, 0.32707228, 0.13110916, 0.39891674, 0.13511945,
-             0.96472743, 0.49840824, 0.75278005, 0.36421804, 0.90371158,
-             0.15003588, 0.82969852, 0.04375173, 0.8420186, 0.49465768,
-             0.73329339, 0.27312348, 0.66541802, 0.62325591, 0.39011348,
-             0.07071519, 0.22071366, 0.64990979, 0.21862013, 0.22426774
+            0.07287796,
+            0.41152918,
+            0.91638001,
+            0.10786362,
+            0.44804563,
+            0.07869748,
+            0.32707228,
+            0.13110916,
+            0.39891674,
+            0.13511945,
+            0.96472743,
+            0.49840824,
+            0.75278005,
+            0.36421804,
+            0.90371158,
+            0.15003588,
+            0.82969852,
+            0.04375173,
+            0.8420186,
+            0.49465768,
+            0.73329339,
+            0.27312348,
+            0.66541802,
+            0.62325591,
+            0.39011348,
+            0.07071519,
+            0.22071366,
+            0.64990979,
+            0.21862013,
+            0.22426774,
         ]
         return [dict(zip(names, params)) for params in enumerate(thetas)]
 
-    def block(self):
+    def block(self) -> None:
+        """New block.
 
-        self.block_deadline = 300 * 1000
+        Does the following:
+            1. Displays task instructions with a key press to continue.
+
+        """
         self.display_instructions_with_continue_button(self.instructions[4])
 
-    def trial(self):
+    def trial(self) -> None:
+        """New trial.
 
-        t = self.data.current_trial
+        Does the following:
+            1. Hides the mouse and disables responses.
+            2. Clears the screen.
+            3. Displays the study array.
+            4. Hide the study array
+            5. Show the response array.
+            6. Set up "zones".
 
-        logger.info("commencing study phase of trial")
+        """
+
+        t = self.current_trial
+
+        logger.debug("commencing study phase of trial")
         self.mouse_visible = False
         self.performing_trial = False
         self.clear_screen(delete=False)
 
-        logger.info("about to display items")
+        logger.debug("about to display items")
         self.labels = []
         delta = 2 * pi / 4
         for item in range(4):
@@ -90,22 +150,36 @@ class TestWidget(BaseTestWidget):
         self.labels[0].setPixmap(QPixmap(self.vis_stim_paths[s]))
         [label.show() for label in self.labels]
 
-        self.make_zones(l.frameGeometry() for l in self.labels)
+        self.make_zones([l.frameGeometry() for l in self.labels])
         self.mouse_visible = True
         self.performing_trial = True
 
-    def mousePressEvent_(self, event):
+    def mousePressEvent_(self, event: QMouseEvent) -> None:
+        """Mouse or touchscreen press event.
 
+        If the event was within a zone, marks trial as complete and moves on.
+
+        Args:
+            event (PyQt5.QtGui.QMouseEvent)
+
+        """
         ix = [event.pos() in z for z in self.zones]
-        t = self.data.current_trial
+        t = self.current_trial
         if any(ix):
             t.rsp = next(i for i, v in enumerate(ix) if v)
             t.correct = t.rsp == 0
-            self.data.current_trial.status = "completed"
+            self.current_trial.status = "completed"
 
-    def block_stopping_rule(self):
+    def block_stopping_rule(self) -> bool:
+        """Block stopping rule.
 
-        trials = self.data.completed_trials
+        Stop if below chance performance after 4 trials completed.
+
+        Returns:
+            bool: Should we stop?
+
+        """
+        trials = self.procedure.completed_trials
         logger.debug(str(trials))
         if len(trials) > 4:
             correct = [t for t in trials if t["correct"]]
@@ -115,8 +189,15 @@ class TestWidget(BaseTestWidget):
         else:
             return False
 
-    def summarise(self):
+    def summarise(self) -> Dict[str, int]:
+        """Summarises the data.
 
-        dic = self.basic_summary()
+        Additionally calculates K.
+
+        Returns:
+            dict: Summary statistics.
+
+        """
+        dic = basic_summary(self.procedure.completed_trials)
         dic["k"] = dic["accuracy"] * 4
         return dic
