@@ -19,8 +19,17 @@ class AudioWidget(QWidget):
 
         """
         super(AudioWidget, self).__init__(parent)
-        self.kwds = self.parent().kwds
-        print(self.kwds)
+        inherit = (
+            "proband_id",
+            "test_name",
+            "language",
+            "fullscreen",
+            "computer_id",
+            "user_id",
+            "platform",
+            "resumable",
+        )
+        self.kwds = {k: v for k, v in self.parent().kwds.items() if k in inherit}
         logger.debug(f"initialised {type(self)} with parent={parent}")
 
         # stimuli paths

@@ -27,6 +27,7 @@ Reference
   with schizophrenia. Neuropsychol, 27(2), 220-229.
 
 """
+from sys import gettrace
 from typing import List, Dict
 
 from charlie2.tools.stats import basic_summary
@@ -141,10 +142,12 @@ class TestWidget(BaseTestWidget):
             s = "l%i_t%i_i%i.png" % (4, t.trial_number, item)
             label = self.display_image(s, (x, y))
             self.labels.append(label)
-        self.sleep(3000)
+        if gettrace() is None:  # checks whether running through a debugger
+            self.sleep(3000)
 
         [label.hide() for label in self.labels]
-        self.sleep(2000)
+        if gettrace() is None:
+            self.sleep(2000)
 
         s = "l%i_t%i_i%i_r.png" % (4, t.trial_number, 0)
         self.labels[0].setPixmap(QPixmap(self.vis_stim_paths[s]))

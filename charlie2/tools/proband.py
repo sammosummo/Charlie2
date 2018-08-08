@@ -8,13 +8,10 @@ from os.path import exists
 from os.path import join as pj
 from pickle import dump, load
 
-from .defaults import default_keywords, forbidden_ids
 from .paths import proband_path
 
 logger = getLogger(__name__)
-
-keywords = {"proband_id", "age", "sex", "other_ids", "notes"}
-defaults = {k: v for k, v in default_keywords.items() if k in keywords}
+forbidden_ids = {"TEST", ""}
 
 
 class Proband(object):
@@ -46,6 +43,13 @@ class Proband(object):
             "path": self.path,
         }
         stored = self.load()
+        defaults = {
+            "proband_id": "TEST",
+            "age": 1,
+            "sex": "Male",
+            "other_ids": set(),
+            "notes": "Add notes about the proband here...",
+        }
         self.data = {**defaults, **stored, **kwds, **autos}
         self.update()
 

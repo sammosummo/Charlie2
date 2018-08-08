@@ -3,28 +3,17 @@
 """
 from datetime import datetime
 from logging import getLogger
-from sys import exit
+from sys import exit, platform
 
 from PyQt5.QtGui import QCloseEvent
 from httplib2 import ServerNotFoundError
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
 
-from .defaults import default_keywords
 from .gui import GUIWidget
 from .paths import durations_path, get_test
 
 logger = getLogger(__name__)
 window_size = (1000, 750)
-
-keywords = {
-    "batch_name",
-    "test_name",
-    "test_names",
-    "language",
-    "fullscreen",
-    "resumable",
-    "gui",
-}
 
 
 class MainWindow(QMainWindow):
@@ -41,7 +30,15 @@ class MainWindow(QMainWindow):
         logger.debug(f"initialised {type(self)}")
 
         logger.debug("loading default keywords")
-        self.kwds = {k: v for k, v in default_keywords.items() if k in keywords}
+        self.kwds = {
+            "batch_name": None,
+            "test_name": None,
+            "test_names": [],
+            "language": "en",
+            "fullscreen": [True, False][platform == "darwin"],
+            "resumable": False,
+            "gui": True,
+        }
         logger.debug("keywords are %s" % str(self.kwds))
 
         logger.debug("getting desktop dimensions")

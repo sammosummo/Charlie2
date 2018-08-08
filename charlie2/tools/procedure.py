@@ -1,37 +1,23 @@
 """Defines a custom Procedure object. Add more procedure classes in the future.
 
 """
+from getpass import getuser
+from socket import gethostname
 from datetime import datetime
 from logging import getLogger
 from os.path import exists
 from os.path import join as pj
 from pickle import dump, load
+from sys import platform
 from typing import Union
 
 import pandas as pd
 
-from .defaults import default_keywords, forbidden_ids
+from .proband import forbidden_ids
 from .paths import csv_path, summaries_path, test_data_path
 from .trial import Trial
 
 logger = getLogger(__name__)
-
-keywords = {
-    "proband_id",
-    "test_name",
-    "language",
-    "fullscreen",
-    "computer_id",
-    "user_id",
-    "platform",
-    "test_started",
-    "test_resumed",
-    "test_completed",
-    "remaining_trials",
-    "completed_trials",
-    "summary",
-    "resumable",
-}
 
 
 class SimpleProcedure(object):
@@ -75,6 +61,7 @@ class SimpleProcedure(object):
         self.summary_path = pj(summaries_path, s)
         autos = {
             "proband_id": self.proband_id,
+            "test_name": self.test_name,
             "filename": self.filename,
             "path": self.path,
             "csv": self.csv,
@@ -82,12 +69,19 @@ class SimpleProcedure(object):
             "started_timestamp": datetime.now(),
             "finished_timestamp": None,
         }
-
-        # load some keywords from disk
+        defaults = {
+            "language": "en",
+            "computer_id": gethostname(),
+            "user_id": getuser(),
+            "platform": platform,
+            "test_started": False,
+            "test_resumed": False,
+            "test_completed": False,
+            "remaining_trials": [],
+            "completed_trials": [],
+            "summary": {},
+        }
         stored = self.load()
-
-        # get some default keywords
-        defaults = {k: v for k, v in default_keywords.items() if k in keywords}
 
         # store the keywords
         self.data = {**defaults, **stored, **kwds, **autos}

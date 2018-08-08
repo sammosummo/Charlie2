@@ -15,8 +15,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from .defaults import default_keywords
 from .paths import (
     batches_list,
     get_error_messages,
@@ -117,7 +115,9 @@ class TestsWidget(QWidget):
 
         # populate
         logger.debug("creating default keywords")
-        self.kwds = {k: v for k, v in default_keywords.items() if k in keywords}
+        keywords = ("proband_id", "test_name", "language", "fullscreen", "resumable")
+        kwds = self.parent().parent().kwds.items()
+        self.kwds = {k: v for k, v in kwds if k in keywords}
         self.proband_id_box.addItems(["TEST"] + proband_pickles())
         self.fullscreen_checkbox.setChecked(self.kwds["fullscreen"])
         self.resume_checkbox.setChecked(self.kwds["resumable"])

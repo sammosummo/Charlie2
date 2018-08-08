@@ -26,6 +26,7 @@ Reference
   Antonio, TX: The Psychological Corporation.
 
 """
+from sys import gettrace
 from typing import List, Dict
 
 from PyQt5.QtGui import QMouseEvent
@@ -104,9 +105,10 @@ class TestWidget(BaseTestWidget):
         self.make_zones(rects)
 
         # prevent super-quick responses
-        self.performing_trial = False
-        self.sleep(1000)
-        self.performing_trial = True
+        if gettrace() is None:
+            self.performing_trial = False
+            self.sleep(1000)
+            self.performing_trial = True
 
     def mousePressEvent_(self, event: QMouseEvent) -> None:
         """Mouse or touchscreen press event.
@@ -133,10 +135,11 @@ class TestWidget(BaseTestWidget):
             bool: Should we stop?
 
         """
+        logger.debug(f"completed trials: {self.procedure.completed_trials}")
         if len(self.procedure.completed_trials) > 5:
             trials = self.procedure.completed_trials[-5:]
             correct = len([t for t in trials if t["correct"]])
-            logger.debug("corect trials: %s/5" % str(correct))
+            logger.debug("correct trials: %s/5" % str(correct))
             outcome = True if correct <= 1 else False
         else:
             outcome = False

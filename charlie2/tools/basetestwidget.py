@@ -164,6 +164,8 @@ class BaseTestWidget(VisualWidget):
         if started is False and completed is False:
             logger.debug("generating new remaining_trials list")
             self.procedure.data["remaining_trials"] = self.make_trials()
+            self.procedure.update()
+            logger.debug(f"looks like {self.procedure.data['remaining_trials']}")
         self._step()
 
     def _step(self) -> None:

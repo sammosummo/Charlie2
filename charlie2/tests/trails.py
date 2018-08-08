@@ -109,6 +109,7 @@ class TestWidget(BaseTestWidget):
         # get their glyphs and positions
         glyphs = [t["glyph"] for t in trials]
         positions = [t["blaze_position"] for t in trials]
+        print(self.procedure.remaining_trials)
 
         # load the blazes but don't show them yet
         self.rects = []
@@ -116,8 +117,8 @@ class TestWidget(BaseTestWidget):
         for glyph, pos in zip(glyphs, positions):
             img = self.display_image(f"a_{glyph}.png", pos)
             self.images.append(img)
-            img.hide()
             self.rects.append(img.frameGeometry())
+            img.hide()
 
         self.tick = self.display_image("tick.png", positions[0])
         self.tick.hide()

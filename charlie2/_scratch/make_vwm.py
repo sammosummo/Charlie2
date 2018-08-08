@@ -25,13 +25,12 @@ if __name__ == '__main__':
     s = "/Users/smathias/Documents/Charlie2/charlie2/stimuli/audio/common/silence.wav"
     s = wave.open(s, 'rb')
     for f in [f for f in listdir(p) if '.wav' in f]:
-        print(f)
         w = wave.open(p + f, 'rb')
         data = []
         data.append([s.getparams(), s.readframes(s.getnframes())])
         data.append([w.getparams(), w.readframes(w.getnframes())])
         w.close()
-        output = wave.open('_' + p + f, 'wb')
+        output = wave.open('tmp.wav', 'wb')
         output.setparams(data[0][0])
         for i in range(2):
             output.writeframes(data[i][1])

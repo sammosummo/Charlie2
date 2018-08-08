@@ -3,6 +3,7 @@
 """
 from copy import copy
 from logging import getLogger
+from sys import gettrace
 from typing import Tuple, List
 
 from PyQt5.QtCore import QPoint, Qt, QRect
@@ -129,7 +130,8 @@ class VisualWidget(AudioWidget):
                 _paintEvent = copy(self.paintEvent)
                 self.paintEvent = lambda _: None
             button.setEnabled(False)
-            self.sleep(2 * 1000)
+            if gettrace() is None:
+                self.sleep(2 * 1000)
             button.setEnabled(True)
             if hasattr(self, "paintEvent"):
                 logger.debug("reenabling paint events")
@@ -386,7 +388,8 @@ class VisualWidget(AudioWidget):
                 _paintEvent = copy(self.paintEvent)
                 self.paintEvent = lambda _: None
             button.setEnabled(False)
-            self.sleep(2 * 1000)
+            if gettrace() is None:
+                self.sleep(2 * 1000)
             button.setEnabled(True)
             if hasattr(self, "paintEvent"):
                 logger.debug("reenabling paint events")
@@ -401,6 +404,8 @@ class VisualWidget(AudioWidget):
     def display_countdown(self, t: int = 5, s: int = 1000) -> None:
         """Display the countdown timer."""
         logger.debug("called display_countdown()")
+        if gettrace() is not None:
+            s = 1
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
             self.sleep(s)
