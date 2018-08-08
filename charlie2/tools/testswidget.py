@@ -134,19 +134,6 @@ class TestsWidget(QWidget):
         """Run a single test."""
         logger.debug("called _run_single_test()")
         s = self.proband_id_box.currentText()
-        if s == "TEST":
-            logger.debug("showing a warning popup because proband is TEST")
-            message_box = QMessageBox()
-            msg = get_error_messages(self.kwds["language"], "proband_is_TEST")
-            message_box.setText(msg)
-            message_box.buttonClicked.connect(self.__run_single_test)
-            message_box.exec_()
-        else:
-            self.__run_single_test()
-
-    def __run_single_test(self) -> None:
-        logger.debug("called __run_single_test()")
-        s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
             self.kwds["fullscreen"] = self.fullscreen_checkbox.isChecked()
@@ -154,26 +141,13 @@ class TestsWidget(QWidget):
             self.kwds["language"] = self.language_box.currentText()
             self.kwds["test_names"] = [self.test_name_box.currentText()]
             self._update_maiwindow_kwds()
-            logger.debug("about to run with these kewyords: %s" % str(self.kwds))
+        rsp = self._show_confirmation_box()
+        if rsp == QMessageBox.Ok:
             self._begin()
 
     def _run_batch(self) -> None:
         """Run a single test."""
         logger.debug("called _run_batch()")
-        s = self.proband_id_box.currentText()
-        if s == "TEST":
-            logger.debug("showing a warning popup because proband is TEST")
-            message_box = QMessageBox()
-            msg = get_error_messages(self.kwds["language"], "proband_is_TEST")
-            message_box.setText(msg)
-            message_box.buttonClicked.connect(self.__run_batch)
-            message_box.exec_()
-        else:
-            self.__run_batch()
-
-    def __run_batch(self) -> None:
-        """Run a batch of tests."""
-        logger.debug("called __run_batch()")
         s = self.proband_id_box.currentText()
         if s:
             self.kwds["proband_id"] = s
@@ -185,8 +159,20 @@ class TestsWidget(QWidget):
                 tests = get_tests_from_batch(batch)
                 self.kwds["test_names"] = tests
                 self._update_maiwindow_kwds()
-                logger.debug("about to run with these kewyords: %s" % str(self.kwds))
-                self._begin()
+        rsp = self._show_confirmation_box()
+        if rsp == QMessageBox.Ok:
+            self._begin()
+
+    def _show_confirmation_box(self) -> int:
+        """Display a pop-up message box."""
+        logger.debug("called _show_confirmation_box()")
+        message_box = QMessageBox()
+        s = self.instructions[57] % (
+            self.kwds["proband_id"], '\n'.join(self.kwds["test_names"])
+        )
+        message_box.setText(s)
+        message_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        return message_box.exec_()
 
     def _begin(self) -> None:
         logger.debug("called _begin()")

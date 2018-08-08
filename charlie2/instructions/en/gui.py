@@ -71,4 +71,10 @@ marks) as the proband ID will result in no data being saved.""",
     "Attempting backup ...",
     "Backup succeeded (backup again)",
     "Backup failed (try again)",
+    """About to run proband with ID "%s"
+on the following test(s):
+
+%s
+
+Click Continue to run this, or Cancel to go back to the GUI.""",
 ]
