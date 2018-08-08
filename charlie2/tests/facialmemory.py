@@ -25,6 +25,7 @@ Reference
   performance and ”effort”. Brain Cogn.,33, 388-414.
 
 """
+from sys import gettrace
 from typing import Dict, List
 
 from PyQt5.QtGui import QKeyEvent
@@ -141,7 +142,10 @@ class TestWidget(BaseTestWidget):
         """
         b = self.current_trial.block_number
         if b == 0:
-            self.trial_deadline = int(2.5 * 1000)
+            if gettrace() is None:
+                self.trial_deadline = int(2.5 * 1000)
+            else:
+                self.trial_deadline = 100
         else:
             self.trial_deadline = None
             self.block_deadline = 300 * 1000

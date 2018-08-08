@@ -25,6 +25,8 @@ Reference
   Methodology and validation in healthy people. Neuropsychopharmacol, 25, 766-776.
 
 """
+from sys import gettrace
+
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
@@ -84,7 +86,11 @@ class TestWidget(BaseTestWidget):
             (118, -139),
             (310, 173),
         ]
-        return [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
+        trials = [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
+        if gettrace() is not None:
+            logger.debug("running in debug mode, so just running 5 trials")
+            trials = trials[:5]
+        return trials
 
     def block(self) -> None:
         """New block.

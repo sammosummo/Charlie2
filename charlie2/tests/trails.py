@@ -39,6 +39,8 @@ References
 """
 from typing import List, Dict
 
+from charlie2.tools.stats import basic_summary
+
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
@@ -83,6 +85,7 @@ class TestWidget(BaseTestWidget):
                 3. `trial_number` (:obj:`int`)
                 4. `blaze_position` (:obj:`tuple` of :obj:`int`)
                 5. `glyph` (:obj:`str`)
+                6. `practice` (:obj:`bool`)
 
         """
         return make_trail_trials()
@@ -148,7 +151,7 @@ class TestWidget(BaseTestWidget):
         # reset click/press counters
         t.attempts = 0
         t.errors = 0
-        t.responses_list = []
+        t.responses = []
 
     def mousePressEvent_(self, event: QMouseEvent) -> None:
         """Mouse or touchscreen press event.
@@ -159,13 +162,14 @@ class TestWidget(BaseTestWidget):
             event (PyQt5.QtGui.QMouseEvent)
 
         """
+        r = (self.trial_time.elapsed(), (event.x(), event.y()))
+        self.current_trial.responses.append(r)
         ix = [event.pos() in z for z in self.zones]
         t = self.current_trial
         if any(ix):
             logger.debug("clicked within a blaze")
             rsp = next(i for i, v in enumerate(ix) if v)
             t.correct = rsp == t.trial_number
-            t.responses_list.append((rsp, self.trial_time.elapsed()))
 
             if t.correct:
                 logger.debug("clicked within the correct blaze")
@@ -176,7 +180,6 @@ class TestWidget(BaseTestWidget):
         else:
             logger.debug("clicked outside a blaze")
             t.attempts += 1
-            t.responses_list.append(("miss", self.trial_time.elapsed()))
 
     def paintEvent(self, _) -> None:
         """Paint event.
@@ -198,44 +201,25 @@ class TestWidget(BaseTestWidget):
     def summarise(self) -> Dict[str, int]:
         """Summarises the data.
 
-        Besides the basic summary stats, counts the total number of attempts and
-        redefines accuracy as correct responses divided by attempts.
+        Besides the basic summary stats, counts the total number of attempts and errors
+        redefines accuracy as correct responses divided by trials plus attempts plus
+        errors. Does this separately for each of the three block types.
 
         Returns:
             dict: Summary statistics.
 
         """
-
-        d = self.basic_summary()
-        dic = {
-            "total_duration_ms": d["total_duration_ms"],
-            "total_duration_min": d["total_duration_min"],
-        }
-        blocks = set(t["block_type"] for t in self.procedure.completed_trials)
-        for b in blocks:
-
-            trials = [
-                t for t in self.procedure.completed_trials if t["block_type"] == b
-            ]
-            trials = [t for t in trials if not t["practice"]]
-            dic_ = self.basic_summary(adjust=True, trials=trials, prefix=b)
-            logger.debug("changing what is meant by accuracy for this task")
-
-            if dic_[b + "_completed_trials"] > 0:
-
-                trials = [t for t in trials if "attempts" in t]
-                attempts = sum(t["attempts"] for t in trials)
-                dic_[b + "_attempts"] = attempts
-                errors = sum(t["errors"] for t in trials)
-                dic_[b + "_errors"] = errors
-                denom = dic_[b + "_completed_trials"] + errors + attempts
-                dic_[b + "_accuracy"] = dic_[b + "_completed_trials"] / denom
-
-            else:
-
-                dic_[b + "_accuracy"] = 0
-                dic_[b + "_errors"] = 0
-                dic_[b + "_accuracy"] = 0
-
-            dic.update(dic_)
+        trials = self.procedure.completed_trials
+        dic = {"total_time_taken": basic_summary(trials)["total_time_taken"]}
+        for b in ("number", "letter", "sequence"):
+            trials_ = [t for t in trials if t["block_type"] == b]
+            dic.update(basic_summary(trials_, adjust=True, prefix=b))
+            trials_ = [t for t in trials_ if t["correct"] is True]
+            if len(trials_) > 0:
+                a = sum(t["attempts"] for t in trials_)
+                dic["_".join((b, "total_attempts"))] = a
+                b_ = sum(t["errors"] for t in trials_)
+                dic["_".join((b, "total_errors"))] = b_
+                denom = len(trials_) + a + b_
+                dic["_".join((b, "accuracy"))] = len(trials_) / denom
         return dic

@@ -177,17 +177,22 @@ class BaseTestWidget(VisualWidget):
         """
         logger.debug("called _step()")
 
-        # stopping rule
-        self._stop_block() if self._block_stopping_rule() else None
-
-        # iterate
-        logger.debug("trying to iterate procedure")
         try:
             self.current_trial = self.procedure.next(self.current_trial)
             logger.debug(f"successfully iterated, got this: {self.current_trial}")
-            self._block() if self.current_trial.first_trial_in_block else self._trial()
 
-        # exit
+            if self.current_trial.first_trial_in_block:
+                logger.debug("first trial in new block")
+                self._block()
+            else:
+                logger.debug("after first trial in new block")
+                if self._block_stopping_rule():
+                    logger.debug("stopping rule says to stop")
+                    self._stop_block()
+                else:
+                    logger.debug("stopping rule says to go")
+                    self._trial()
+
         except StopIteration:
             logger.info("failed to iterate, end of test")
             self.safe_close()
@@ -198,6 +203,9 @@ class BaseTestWidget(VisualWidget):
         self.procedure.skip_block(
             self.current_trial.block_number, "stopping rule failed"
         )
+        self.current_trial.status = "skipped"
+        self.current_trial.reason_skipped = "stopping rule failed"
+        self._next_trial()
 
     def _block_stopping_rule(self) -> bool:
         """Apply block stopping rule.

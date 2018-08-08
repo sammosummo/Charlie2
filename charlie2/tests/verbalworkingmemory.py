@@ -31,6 +31,8 @@ Reference
   Antonio, TX: The Psychological Corporation.
 
 """
+from charlie2.tools.stats import basic_summary
+
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
@@ -47,9 +49,6 @@ logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-    def __init__(self, parent=None):
-
-        super(TestWidget, self).__init__(parent)
 
     def make_trials(self):
 
@@ -140,10 +139,12 @@ class TestWidget(BaseTestWidget):
         incorr_button.clicked.disconnect()
         incorr_button.clicked.connect(self._incorrect)
 
-        QSound.play(self.aud_stim_paths[f"{str(t.sequence)}.wav"])
+        sound = QSound(self.aud_stim_paths[f"{str(t.sequence)}.wav"])
         corr_button.setEnabled(False)
         incorr_button.setEnabled(False)
-        self.sleep(3000)
+        sound.play()
+        while not sound.isFinished():
+            self.sleep(100)
         corr_button.setEnabled(True)
         incorr_button.setEnabled(True)
 
@@ -174,26 +175,11 @@ class TestWidget(BaseTestWidget):
         pass
 
     def summarise(self):
-
-        d = self.basic_summary()
-        dic = {
-            "total_duration_ms": d["total_duration_ms"],
-            "total_duration_min": d["total_duration_min"],
-        }
-        for kind in ["backward", "forward", "lns"]:
-            trials = [
-                t
-                for t in self.procedure.data["completed_trials"]
-                if t["block_type"] == kind
-            ]
-            dic_ = self.basic_summary(trials=trials, prefix=kind)
-            trials = [t for t in trials if t["status"] == "completed"]
-            trials = [t for t in trials if t["correct"]]
-            if len(trials) > 0:
-                dic_[kind + "_k"] = max(t["length"] for t in trials)
-            else:
-                dic_[kind + "_k"] = 0
-            dic.update(dic_)
+        trials = self.procedure.completed_trials
+        dic = {"total_time_taken": basic_summary(trials)["total_time_taken"]}
+        for b in ("forward", "backward", "lns"):
+            trials_ = [t for t in trials if t["block_type"] == b]
+            dic.update(basic_summary(trials_, prefix=b))
         return dic
 
     def block_stopping_rule(self):

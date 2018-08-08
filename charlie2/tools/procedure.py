@@ -194,8 +194,8 @@ class SimpleProcedure(object):
             reason: Reason for skipping.
 
         """
-        trials = self.data["remaining_trials"]
-        if "block_number" in trials[0]:
+        trials = self.data["completed_trials"] + self.data["remaining_trials"]
+        if all("block_number" in t for t in trials):
             trials = [t for t in trials if t["block_number"] == b]
             for t in trials:
                 t["status"] = "skipped"
@@ -216,7 +216,7 @@ class SimpleProcedure(object):
     def to_csv(self) -> None:
         """Write all trials to a csv."""
         trials = self.data["completed_trials"]
-        pd.DataFrame(trials).dropna(axis=1).to_csv(self.csv, index=False)
+        pd.DataFrame(trials).dropna(axis=1, how="all").to_csv(self.csv, index=False)
 
     def save_summary(self) -> None:
         """Save the summary as a csv"""

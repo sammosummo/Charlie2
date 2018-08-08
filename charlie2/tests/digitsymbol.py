@@ -41,6 +41,8 @@ References
   814–823.
 
 """
+from sys import gettrace
+
 from charlie2.tools.stats import basic_summary
 
 __version__ = 2.0
@@ -72,7 +74,10 @@ class TestWidget(BaseTestWidget):
 
         """
         super(TestWidget, self).__init__(parent)
-        self.block_deadline = 90 * 1000
+        if gettrace() is None:
+            self.block_deadline = 90 * 1000
+        else:
+            self.block_deadline = 4 * 1000
         self.mouse_visible = False
         self.symbols = [self.load_image(f"sym{i}.png") for i in range(1, 10)]
         self.digits = [self.load_text(str(i)) for i in range(1, 10)]

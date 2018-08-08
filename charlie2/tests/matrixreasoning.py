@@ -136,7 +136,9 @@ class TestWidget(BaseTestWidget):
 
         """
         logger.debug(f"completed trials: {self.procedure.completed_trials}")
-        if len(self.procedure.completed_trials) > 5:
+        n = len(self.procedure.completed_trials)
+        logger.debug(f"{n} trials completed")
+        if n >= 5:
             trials = self.procedure.completed_trials[-5:]
             correct = len([t for t in trials if t["correct"]])
             logger.debug("correct trials: %s/5" % str(correct))

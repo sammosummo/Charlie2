@@ -30,27 +30,29 @@ def basic_summary(
     logger.debug("called basic_summary()")
 
     # filter out practice trials
-    if no_practice is False:
-        trials = [t for t in trials if t["practice"] is False]
+    if no_practice is True:
+        trials_ = [t for t in trials if t["practice"] is False]
+    else:
+        trials_ = trials
 
     # check all trials are either "completed" or "skipped"
-    completed_trials = [t for t in trials if t["status"] == "completed"]
-    skipped_trials = [t for t in trials if t["status"] == "skipped"]
+    completed_trials = [t for t in trials_ if t["status"] == "completed"]
+    skipped_trials = [t for t in trials_ if t["status"] == "skipped"]
     n = len(completed_trials) + len(skipped_trials)
-    if n != len(trials):
+    if n != len(trials_):
         logger.warning("some trials have a status other than 'completed' or 'skipped'")
 
     # create dictionary
     dic = {
-        "total_trials": len(trials),
+        "total_trials": len(trials_),
         "completed_trials": len(completed_trials),
         "skipped_trials": len(skipped_trials),
         "completed_or_skipped_trials": n,
-        "correct_trials": len([t for t in trials if t["correct"] is True]),
+        "correct_trials": len([t for t in trials_ if t["correct"] is True]),
     }
 
     # reaction time
-    correct_trials = [t for t in trials if t["correct"] is True]
+    correct_trials = [t for t in trials_ if t["correct"] is True]
     if len(correct_trials) > 0:
         rts = [t["trial_time_elapsed_ms"] for t in correct_trials]
         dic["mean_rt_correct_ms"] = sum(rts) / len(rts)
@@ -69,7 +71,7 @@ def basic_summary(
         dic["block_duration_ms_adjusted"] = dic["block_duration_ms"] + extra_time
 
     # accuracy
-    dic["accuracy"] = len(correct_trials) / len(trials)
+    dic["accuracy"] = len(correct_trials) / len(trials_)
 
     # format prefix
     if prefix != "":
