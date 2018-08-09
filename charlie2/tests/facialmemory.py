@@ -25,22 +25,20 @@ Reference
   performance and ”effort”. Brain Cogn.,33, 388-414.
 
 """
+from logging import getLogger
 from sys import gettrace
 from typing import Dict, List
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeyEvent
+
+from charlie2.tools.basetestwidget import BaseTestWidget
 
 from ..tools.stats import basic_summary
 
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
-
-from logging import getLogger
-
-from PyQt5.QtCore import Qt
-
-from charlie2.tools.basetestwidget import BaseTestWidget
 
 logger = getLogger(__name__)
 
@@ -142,13 +140,16 @@ class TestWidget(BaseTestWidget):
         """
         b = self.current_trial.block_number
         if b == 0:
-            if gettrace() is None:
+            if self.debugging is False:
                 self.trial_deadline = int(2.5 * 1000)
             else:
                 self.trial_deadline = 100
         else:
             self.trial_deadline = None
-            self.block_deadline = 300 * 1000
+            if self.debugging:
+                self.block_deadline = 4 * 1000
+            else:
+                self.block_deadline = 240 * 1000
         self.display_instructions_with_space_bar(self.instructions[4 + b])
 
     def trial(self) -> None:
@@ -192,6 +193,9 @@ class TestWidget(BaseTestWidget):
             dict: Summary statistics.
 
         """
-        trials = [t for t in self.procedure.completed_trials if
-                  t["block_type"] == "recognition"]
+        trials = [
+            t
+            for t in self.procedure.completed_trials
+            if t["block_type"] == "recognition"
+        ]
         return basic_summary(trials)

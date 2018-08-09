@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from .paths import (
     batches_list,
     get_error_messages,
@@ -26,13 +27,7 @@ from .procedure import SimpleProcedure
 
 logger = getLogger(__name__)
 
-keywords = {
-    "proband_id",
-    "test_name",
-    "language",
-    "fullscreen",
-    "resumable",
-}
+keywords = {"proband_id", "test_name", "language", "fullscreen", "resumable"}
 
 
 class TestsWidget(QWidget):
@@ -168,7 +163,8 @@ class TestsWidget(QWidget):
         logger.debug("called _show_confirmation_box()")
         message_box = QMessageBox()
         s = self.instructions[57] % (
-            self.kwds["proband_id"], '\n'.join(self.kwds["test_names"])
+            self.kwds["proband_id"],
+            "\n".join(self.kwds["test_names"]),
         )
         message_box.setText(s)
         message_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)

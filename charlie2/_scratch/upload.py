@@ -5,14 +5,14 @@
 import datetime
 import hashlib
 import mimetypes
-import time
 import os
+import time
+
 import httplib2
 from apiclient import discovery
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
 from apiclient.http import MediaFileUpload
+from oauth2client import client, tools
+from oauth2client.file import Storage
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json

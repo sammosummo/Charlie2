@@ -5,6 +5,7 @@ GUIWidget instance if in GUI mode.
 """
 import argparse
 from argparse import ArgumentParser
+
 from .recipes import str2bool
 
 

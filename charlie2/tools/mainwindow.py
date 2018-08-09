@@ -5,8 +5,8 @@ from datetime import datetime
 from logging import getLogger
 from sys import exit, platform
 
-from PyQt5.QtGui import QCloseEvent
 from httplib2 import ServerNotFoundError
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDesktopWidget, QMainWindow
 
 from .gui import GUIWidget

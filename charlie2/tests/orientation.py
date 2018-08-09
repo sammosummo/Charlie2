@@ -25,19 +25,18 @@ Reference
   Methodology and validation in healthy people. Neuropsychopharmacol, 25, 766-776.
 
 """
-from sys import gettrace
-
-__version__ = 2.0
-__author__ = "Sam Mathias"
-
-
 from logging import getLogger
+from sys import gettrace
 from typing import Dict, List
 
 from PyQt5.QtGui import QMouseEvent
 
 from charlie2.tools.basetestwidget import BaseTestWidget
 from charlie2.tools.stats import basic_summary
+
+__version__ = 2.0
+__author__ = "Sam Mathias"
+
 
 logger = getLogger(__name__)
 
@@ -52,7 +51,10 @@ class TestWidget(BaseTestWidget):
 
         """
         super(TestWidget, self).__init__(parent)
-        self.block_deadline = 60 * 1000
+        if self.debugging:
+            self.block_deadline = 6 * 1000
+        else:
+            self.block_deadline = 60 * 1000
 
     def make_trials(self) -> List[Dict[str, int]]:
         """Generates new trials.
@@ -87,7 +89,7 @@ class TestWidget(BaseTestWidget):
             (310, 173),
         ]
         trials = [{"trial_number": i, "position": p} for i, p in enumerate(pos)]
-        if gettrace() is not None:
+        if self.debugging is True:
             logger.debug("running in debug mode, so just running 5 trials")
             trials = trials[:5]
         return trials

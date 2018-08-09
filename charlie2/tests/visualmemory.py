@@ -27,20 +27,19 @@ Reference
   with schizophrenia. Neuropsychol, 27(2), 220-229.
 
 """
+from logging import getLogger
+from math import cos, pi, sin
 from sys import gettrace
-from typing import List, Dict
+from typing import Dict, List
 
+from PyQt5.QtGui import QMouseEvent, QPixmap
+
+from charlie2.tools.basetestwidget import BaseTestWidget
 from charlie2.tools.stats import basic_summary
 
 __version__ = 1.0
 __author__ = "Sam Mathias"
 
-from logging import getLogger
-from math import cos, pi, sin
-
-from PyQt5.QtGui import QPixmap, QMouseEvent
-
-from charlie2.tools.basetestwidget import BaseTestWidget
 
 logger = getLogger(__name__)
 
@@ -56,7 +55,10 @@ class TestWidget(BaseTestWidget):
 
         """
         super(TestWidget, self).__init__(parent)
-        self.block_deadline = 300 * 1000
+        if self.debugging:
+            self.block_deadline = 10 * 1000
+        else:
+            self.block_deadline = 300 * 1000
         self.labels = []
 
     def make_trials(self) -> List[Dict[str, float]]:
@@ -142,11 +144,11 @@ class TestWidget(BaseTestWidget):
             s = "l%i_t%i_i%i.png" % (4, t.trial_number, item)
             label = self.display_image(s, (x, y))
             self.labels.append(label)
-        if gettrace() is None:  # checks whether running through a debugger
+        if self.debugging is False:  # checks whether running through a debugger
             self.sleep(3000)
 
         [label.hide() for label in self.labels]
-        if gettrace() is None:
+        if self.debugging is False:
             self.sleep(2000)
 
         s = "l%i_t%i_i%i_r.png" % (4, t.trial_number, 0)

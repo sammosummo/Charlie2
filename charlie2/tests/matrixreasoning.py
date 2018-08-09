@@ -26,28 +26,24 @@ Reference
   Antonio, TX: The Psychological Corporation.
 
 """
+from logging import getLogger
 from sys import gettrace
-from typing import List, Dict
+from typing import Dict, List
 
+from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QMouseEvent
 
+from charlie2.tools.basetestwidget import BaseTestWidget
 from charlie2.tools.stats import basic_summary
 
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
 
-from logging import getLogger
-
-from PyQt5.QtCore import QRect
-
-from charlie2.tools.basetestwidget import BaseTestWidget
-
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self) -> List[Dict[str, int]]:
         """Generates new trials.
 
@@ -59,7 +55,7 @@ class TestWidget(BaseTestWidget):
                 4. `array` (:obj:`str`)
 
         """
-        answers = [int(i) for i in '13132002444120132003441104322303124']
+        answers = [int(i) for i in "13132002444120132003441104322303124"]
         return [
             {
                 "trial_number": i,
@@ -105,7 +101,7 @@ class TestWidget(BaseTestWidget):
         self.make_zones(rects)
 
         # prevent super-quick responses
-        if gettrace() is None:
+        if self.debugging is False:
             self.performing_trial = False
             self.sleep(1000)
             self.performing_trial = True

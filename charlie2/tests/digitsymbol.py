@@ -41,22 +41,20 @@ References
   814–823.
 
 """
-from sys import gettrace
-
-from charlie2.tools.stats import basic_summary
-
-__version__ = 2.0
-__author__ = "Sam Mathias"
-
-
 from logging import getLogger
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeyEvent
 
+from charlie2.tools.stats import basic_summary
+
 from ..tools.basetestwidget import BaseTestWidget
 from ..tools.recipes import digits, symbols
+
+__version__ = 2.0
+__author__ = "Sam Mathias"
+
 
 logger = getLogger(__name__)
 
@@ -71,10 +69,11 @@ class TestWidget(BaseTestWidget):
             3. Hide the mouse.
             4. Define x-positions of digits and symbols in the key.
             5. Load and hide the key.
+            6. Set a flag so that skipped trials are deleted rather than stored.
 
         """
         super(TestWidget, self).__init__(parent)
-        if gettrace() is None:
+        if self.debugging is False:
             self.block_deadline = 90 * 1000
         else:
             self.block_deadline = 4 * 1000
@@ -84,6 +83,7 @@ class TestWidget(BaseTestWidget):
         self.xs = range(-300, 350, 75)
         self.digit = None
         self.symbol = None
+        self.delete_skipped = True
 
     def make_trials(self) -> List[Dict[str, int]]:
         """Generates new trials.
@@ -161,11 +161,14 @@ class TestWidget(BaseTestWidget):
             self.symbol.deleteLater()
             self.digit.deleteLater()
             if t.practice:
+                self.performing_trial = False
                 s = self.instructions[7:9][not t.correct]
                 a = self.display_text(s, (0, -100))
+                self.play_feeback(t.correct)
                 self.sleep(1000)
                 a.hide()
                 a.deleteLater()
+                self._performing_trial = True
 
     def summarise(self) -> Dict[str, int]:
         """Summarises the data.

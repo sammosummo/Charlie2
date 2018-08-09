@@ -29,6 +29,9 @@ def basic_summary(
     """
     logger.debug("called basic_summary()")
 
+    if len(trials) == 0:
+        return {}
+
     # filter out practice trials
     if no_practice is True:
         trials_ = [t for t in trials if t["practice"] is False]
@@ -71,9 +74,12 @@ def basic_summary(
         dic["block_duration_ms_adjusted"] = dic["block_duration_ms"] + extra_time
 
     # accuracy
-    dic["accuracy"] = len(correct_trials) / len(trials_)
+    try:
+        dic["accuracy"] = len(correct_trials) / len(trials_)
+    except ZeroDivisionError:
+        dic["accuracy"] = 0
 
-    # format prefix
+        # format prefix
     if prefix != "":
         p = f"{prefix}_"
     else:

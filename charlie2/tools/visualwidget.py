@@ -3,11 +3,10 @@
 """
 from copy import copy
 from logging import getLogger
-from sys import gettrace
-from typing import Tuple, List
+from typing import List, Tuple
 
-from PyQt5.QtCore import QPoint, Qt, QRect
-from PyQt5.QtGui import QFont, QPixmap, QKeyEvent
+from PyQt5.QtCore import QPoint, QRect, Qt
+from PyQt5.QtGui import QFont, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import QLabel, QPushButton, QWidget
 
 from .audiowidget import AudioWidget
@@ -130,7 +129,7 @@ class VisualWidget(AudioWidget):
                 _paintEvent = copy(self.paintEvent)
                 self.paintEvent = lambda _: None
             button.setEnabled(False)
-            if gettrace() is None:
+            if self.debugging is False:
                 self.sleep(2 * 1000)
             button.setEnabled(True)
             if hasattr(self, "paintEvent"):
@@ -276,7 +275,7 @@ class VisualWidget(AudioWidget):
         return label
 
     def load_keyboard_arrow_keys(
-            self, instructions: List[str], y: int = -225
+        self, instructions: List[str], y: int = -225
     ) -> List[QLabel]:
         """Load keyboard arrow keys.
 
@@ -324,7 +323,7 @@ class VisualWidget(AudioWidget):
         return w
 
     def display_keyboard_arrow_keys(
-            self, instructions: List[str], y: int = -225
+        self, instructions: List[str], y: int = -225
     ) -> List[QLabel]:
         """Same as `load_keyboard_arrow_keys` except also show them.
 
@@ -388,7 +387,7 @@ class VisualWidget(AudioWidget):
                 _paintEvent = copy(self.paintEvent)
                 self.paintEvent = lambda _: None
             button.setEnabled(False)
-            if gettrace() is None:
+            if self.debugging is False:
                 self.sleep(2 * 1000)
             button.setEnabled(True)
             if hasattr(self, "paintEvent"):
@@ -404,8 +403,10 @@ class VisualWidget(AudioWidget):
     def display_countdown(self, t: int = 5, s: int = 1000) -> None:
         """Display the countdown timer."""
         logger.debug("called display_countdown()")
-        if gettrace() is not None:
-            s = 1
+        if self.debugging is True:
+            s = 10
         for i in range(t):
             self.display_instructions(self.instructions[0] % (t - i))
+            if self.debugging is False:
+                self.pip.play()
             self.sleep(s)

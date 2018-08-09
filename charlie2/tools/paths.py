@@ -8,7 +8,7 @@ from os import listdir as ls
 from os.path import dirname
 from os.path import join as pj
 from pkgutil import iter_modules
-from typing import Union, List
+from typing import List, Union
 
 from docutils.core import publish_string
 

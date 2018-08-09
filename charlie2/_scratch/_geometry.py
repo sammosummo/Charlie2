@@ -1,9 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import interpolate
 import cmocean
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import cm
-
+from scipy import interpolate
 
 cmap = cm.ScalarMappable(cmap=cmocean.cm.phase)
 cmap.to_rgba([0., 0.5, 1.])

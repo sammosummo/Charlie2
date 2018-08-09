@@ -31,25 +31,24 @@ Reference
   Antonio, TX: The Psychological Corporation.
 
 """
-from charlie2.tools.stats import basic_summary
-
-__version__ = 2.0
-__author__ = "Sam Mathias"
-
-
 from logging import getLogger
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtMultimedia import QSound
 
+from charlie2.tools.stats import basic_summary
+
 from ..tools.basetestwidget import BaseTestWidget
 from ..tools.recipes import get_vwm_stimuli
+
+__version__ = 2.0
+__author__ = "Sam Mathias"
+
 
 logger = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self):
 
         sequences = get_vwm_stimuli(self.kwds["language"])

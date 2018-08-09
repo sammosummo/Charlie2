@@ -7,8 +7,8 @@ from sys import argv, exit
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
-from charlie2.tools.mainwindow import MainWindow
-from charlie2.tools.paths import logo_path
+from .mainwindow import MainWindow
+from .paths import logo_path
 
 logger = getLogger(__name__)
 

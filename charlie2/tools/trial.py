@@ -31,6 +31,8 @@ class Trial(dict):
             "correct": None,
             "reason_skipped": "not skipped",
             "finished_timestamp": None,
+            # "_remaining_trials_in_block": None,
+            # "_remaining_trials_in_test": None,
         }
         self.__dict__.update({**defaults, **self.__dict__})
 
@@ -49,5 +51,18 @@ class Trial(dict):
             self.__dict__["first_trial_in_test"] = True
         else:
             self.__dict__["first_trial_in_test"] = False
+
+        # rtib = self._remaining_trials_in_block
+        # if rtib is not None:
+        #     if len(rtib) == 0:
+        #         self.__dict__["last_trial_in_block"] = True
+        #     else:
+        #         self.__dict__["last_trial_in_block"] = False
+        # rtit = self._remaining_trials_in_test
+        # if rtit is not None:
+        #     if len(rtit) == 0:
+        #         self.__dict__["last_trial_in_test"] = True
+        #     else:
+        #         self.__dict__["last_trial_in_test"] = False
 
         logger.debug("finished constructing trial object")

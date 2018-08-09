@@ -90,9 +90,7 @@ def _create_folder(service: object, name: object, parents: object) -> object:
     return item
 
 
-def _upload_file(
-        service: object, name: object, parents: object, path: object
-) -> None:
+def _upload_file(service: object, name: object, parents: object, path: object) -> None:
     """Uploads a file or folder if it doesn't exist.
 
     Args:

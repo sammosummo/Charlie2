@@ -37,20 +37,19 @@ References
   of the Trail Making Test. J Clin Psychol, 43(4), 402–409.
 
 """
-from typing import List, Dict
+from logging import getLogger
+from typing import Dict, List
+
+from PyQt5.QtGui import QMouseEvent, QPainter, QPen
 
 from charlie2.tools.stats import basic_summary
+
+from ..tools.basetestwidget import BaseTestWidget
+from ..tools.recipes import make_trail_trials
 
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
-
-from logging import getLogger
-
-from PyQt5.QtGui import QPainter, QPen, QMouseEvent
-
-from ..tools.basetestwidget import BaseTestWidget
-from ..tools.recipes import make_trail_trials
 
 logger = getLogger(__name__)
 
@@ -67,7 +66,10 @@ class TestWidget(BaseTestWidget):
 
         """
         super(TestWidget, self).__init__(parent)
-        self.block_deadline = 180 * 1000
+        if self.debugging:
+            self.block_deadline = 18 * 1000
+        else:
+            self.block_deadline = 180 * 1000
         self.rects = []
         self.images = []
         self.tick = None
@@ -112,7 +114,6 @@ class TestWidget(BaseTestWidget):
         # get their glyphs and positions
         glyphs = [t["glyph"] for t in trials]
         positions = [t["blaze_position"] for t in trials]
-        print(self.procedure.remaining_trials)
 
         # load the blazes but don't show them yet
         self.rects = []
@@ -177,6 +178,7 @@ class TestWidget(BaseTestWidget):
             else:
                 logger.debug("clicked within a different blaze")
                 t.errors += 1
+                self.play_feeback(False)
         else:
             logger.debug("clicked outside a blaze")
             t.attempts += 1

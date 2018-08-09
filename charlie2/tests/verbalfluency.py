@@ -36,26 +36,23 @@ References
   106.
 
 """
-from typing import List, Dict
+from logging import getLogger
+from typing import Dict, List
 
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QMouseEvent
 
+from charlie2.tools.basetestwidget import BaseTestWidget
 from charlie2.tools.stats import basic_summary
 
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
-from logging import getLogger
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-from charlie2.tools.basetestwidget import BaseTestWidget
 
 logging = getLogger(__name__)
 
 
 class TestWidget(BaseTestWidget):
-
     def make_trials(self) -> List[Dict[str, int]]:
         """Generates new trials.
 
@@ -244,9 +241,7 @@ class TestWidget(BaseTestWidget):
             self.timer.stop()
             self.current_trial.status = "completed"
             self._add_timing_details()
-            logging.debug(
-                "current trial looks like %s" % str(self.current_trial)
-            )
+            logging.debug("current trial looks like %s" % str(self.current_trial))
             self.button.clicked.disconnect()
             self.button.clicked.connect(self.next_trial)
             self.button.setText(self.instructions[17])

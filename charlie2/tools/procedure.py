@@ -1,20 +1,20 @@
 """Defines a custom Procedure object. Add more procedure classes in the future.
 
 """
-from getpass import getuser
-from socket import gethostname
 from datetime import datetime
+from getpass import getuser
 from logging import getLogger
 from os.path import exists
 from os.path import join as pj
 from pickle import dump, load
+from socket import gethostname
 from sys import platform
 from typing import Union
 
 import pandas as pd
 
-from .proband import forbidden_ids
 from .paths import csv_path, summaries_path, test_data_path
+from .proband import forbidden_ids
 from .trial import Trial
 
 logger = getLogger(__name__)
@@ -80,6 +80,7 @@ class SimpleProcedure(object):
             "remaining_trials": [],
             "completed_trials": [],
             "summary": {},
+            "delete_skipped": False,
         }
         stored = self.load()
 
@@ -114,7 +115,14 @@ class SimpleProcedure(object):
         if current_trial is not None:
 
             current_trial["finished_timestamp"] = datetime.now()
-            self.data["completed_trials"].append(current_trial)
+            if all([
+                self.data["delete_skipped"] is True,
+                current_trial["status"] == "skipped",
+                len(self.data["completed_trials"]) > 0,
+            ]):
+                pass
+            else:
+                self.data["completed_trials"].append(current_trial)
 
         self.data["test_completed"] = all(
             [
@@ -131,7 +139,18 @@ class SimpleProcedure(object):
 
         else:
             logger.debug("attempting to iterate")
-            next_trial = Trial(self.data["remaining_trials"].pop(0))
+            trial = self.data["remaining_trials"].pop(0)
+            # trial.update({
+            #     "_remaining_trials_in_test": self.data["remaining_trials"]
+            # })
+            # if "block_number" in trial:
+            #     rt = [t for t in self.data["remaining_trials"] if
+            #           t["block_number"] == trial["block_number"]]
+            #     trial.update({
+            #         "_remaining_trials_in_block": rt
+            #     })
+
+            next_trial = Trial(trial)
             if next_trial.status == "skipped":
                 logger.debug("skipping")
                 return self.next(dict(next_trial))

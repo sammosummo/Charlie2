@@ -4,7 +4,7 @@
 from logging import getLogger
 
 from PyQt5.QtCore import QEventLoop, Qt, QTime, QTimer
-from PyQt5.QtGui import QMouseEvent, QKeyEvent
+from PyQt5.QtGui import QKeyEvent, QMouseEvent
 
 from .procedure import SimpleProcedure
 from .stats import basic_summary
@@ -42,6 +42,7 @@ class BaseTestWidget(VisualWidget):
         self.trial_deadline = None
         self.procedure = None
         self.current_trial = None
+        self.delete_skipped = False
 
         # silent attributes
         self._performing_block = False
@@ -158,6 +159,8 @@ class BaseTestWidget(VisualWidget):
 
         """
         logger.debug("called begin()")
+        if self.delete_skipped is True:
+            self.kwds["delete_skipped"] = True
         self.procedure = SimpleProcedure(**self.kwds)
         started = self.procedure.data["test_started"]
         completed = self.procedure.data["test_completed"]
@@ -235,6 +238,7 @@ class BaseTestWidget(VisualWidget):
             self._trial()
         else:
             logger.debug("this is a not a silent block")
+            self.new_block.play()
             self.skip_countdown = False
             logger.debug("running block()")
             self.block()
@@ -247,6 +251,7 @@ class BaseTestWidget(VisualWidget):
 
         """
         logger.debug("called _trial()")
+        self.silence.play()
         if self.current_trial.first_trial_in_block and not self.skip_countdown:
             logger.debug("countdown requested")
             self.display_countdown()
@@ -303,7 +308,6 @@ class BaseTestWidget(VisualWidget):
     def _next_trial(self) -> None:
         """Moves on to the next trial."""
         logger.debug("called _next_trial()")
-        self.performing_trial = False
         self._step()
 
     def next_trial(self) -> None:
@@ -323,8 +327,6 @@ class BaseTestWidget(VisualWidget):
             self._add_timing_details()
             if self.current_trial.status == "completed":
                 logger.debug("current_trial was completed successfully")
-                # if t.practice is True:
-                #     self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
@@ -335,8 +337,6 @@ class BaseTestWidget(VisualWidget):
             self._add_timing_details()
             if self.current_trial.status == "completed":
                 logger.debug("current_trial was completed successfully")
-                # if t.practice is True:
-                #     self.play_feedback_sound(t.correct)
                 self._next_trial()
 
     def _add_timing_details(self) -> None:

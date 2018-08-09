@@ -1,7 +1,4 @@
 google-api-python-client>=1.7.4
 oauth2client>=4.1.2
-numpy>=1.14.3
 pandas>=0.23.0
-pytables>=3.4.3
 pyqt>=5.9.2
-docutils>=0.14

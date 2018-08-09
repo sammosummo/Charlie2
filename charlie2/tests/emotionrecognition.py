@@ -24,21 +24,18 @@ Reference
   Neurosci. Methods, 115:137–143.
 
 """
+from logging import getLogger
 from typing import Dict, List
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeyEvent
 
+from charlie2.tools.basetestwidget import BaseTestWidget
 from charlie2.tools.stats import basic_summary
 
 __version__ = 2.0
 __author__ = "Sam Mathias"
 
-
-from logging import getLogger
-
-from PyQt5.QtCore import Qt
-
-from charlie2.tools.basetestwidget import BaseTestWidget
 
 logger = getLogger(__name__)
 
@@ -55,7 +52,10 @@ class TestWidget(BaseTestWidget):
         """
         super(TestWidget, self).__init__(parent)
         self.mouse_visible = False
-        self.block_deadline = 300 * 1000
+        if self.debugging:
+            self.block_deadline = 4 * 1000
+        else:
+            self.block_deadline = 240 * 1000
 
     def make_trials(self) -> List[Dict[str, int]]:
         """Generates new trials.
@@ -66,6 +66,7 @@ class TestWidget(BaseTestWidget):
                 2. `face` (:obj:`str`)
                 3. `emotion` (:obj:`str`)
         """
+
         def e(s):
             if "N" in s:
                 return "neutral"

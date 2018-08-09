@@ -5,9 +5,10 @@ Creates a Drive v3 API service and prints the names and ids of the last 10 files
 the user has access to.
 """
 from __future__ import print_function
+
 from apiclient.discovery import build
 from httplib2 import Http
-from oauth2client import file, client, tools
+from oauth2client import client, file, tools
 
 # Setup the Drive v3 API
 SCOPES = [
