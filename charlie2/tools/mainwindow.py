@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
             w = get_test(self.kwds["test_name"])
             widget = w(self)
 
-            if not self.kwds["fullscreen"] or self.kwds["platform"] == "darwin":
+            if not self.kwds["fullscreen"] or platform == "darwin":
                 logger.debug("showing the window in normal mode")
                 self.setFixedSize(*window_size)
                 widget.setFixedSize(*window_size)
