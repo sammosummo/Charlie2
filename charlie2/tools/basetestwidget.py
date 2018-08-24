@@ -179,6 +179,7 @@ class BaseTestWidget(VisualWidget):
 
         """
         logger.debug("called _step()")
+        self.performing_trial = False
 
         try:
             self.current_trial = self.procedure.next(self.current_trial)
@@ -227,7 +228,7 @@ class BaseTestWidget(VisualWidget):
 
         """
         logger.debug("called _block()")
-        self._performing_block = False
+        self.performing_block = False
         logger.debug("checking if this is a silent block")
 
         if self.silent_block:
