@@ -213,7 +213,7 @@ class SimpleProcedure(object):
             reason: Reason for skipping.
 
         """
-        trials = self.data["completed_trials"] + self.data["remaining_trials"]
+        trials = self.data["remaining_trials"]
         if all("block_number" in t for t in trials):
             trials = [t for t in trials if t["block_number"] == b]
             for t in trials:

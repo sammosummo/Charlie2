@@ -138,7 +138,10 @@ class TestWidget(BaseTestWidget):
             trials = self.procedure.completed_trials[-5:]
             correct = len([t for t in trials if t["correct"]])
             logger.debug("correct trials: %s/5" % str(correct))
-            outcome = True if correct <= 1 else False
+            if correct <= 1:
+                outcome = True
+            else:
+                outcome = False
         else:
             outcome = False
         logger.debug("should we stop? %s" % str(outcome))
