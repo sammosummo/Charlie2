@@ -2,7 +2,7 @@
 Charlie2
 ********
 
-:Version: 2.0
+:Version: 2.1
 :Author: Samuel R. Mathias
 :Contact: samuel.mathias@yale.edu
 :Github: http://github.com/sammosummo/Charlie2/
@@ -90,3 +90,8 @@ you, I recommend performing the following steps:
 4. Download Charlie2: https://github.com/sammosummo/Charlie2/archive/master.zip
 
 5. `cd` to the directory you saved Charlie2 and run `python main.py`.
+
+Change history
+==============
+
+2.1: Fixed some bugs which caused crashes during test timeouts.

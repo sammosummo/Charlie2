@@ -1,7 +1,7 @@
 __author__ = "Samuel Robert Mathias"
 __copyright__ = "Copyright (c) 2018 Sam Mathias"
 __license__ = "MIT"
-__version__ = "2.0"
+__version__ = "2.1"
 __maintainer__ = "Samuel Robert Mathias"
 __email__ = "samuel.mathias@yale.edu"
 __status__ = "Production"
