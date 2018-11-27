@@ -25,6 +25,7 @@ from .paths import credentials_path, data_path, last_backed_up, token_path
 logger = getLogger(__name__)
 this_computer = gethostname()
 mime = "application/vnd.google-apps.%s"
+update_files = False
 
 
 def _build_service() -> object:
@@ -64,8 +65,10 @@ def _exists(service: object, name: object, parents: object) -> object:
     items = service.files().list(pageSize=100, q=q).execute().get("files", [])
     items = [i for i in items if i["name"] == name]
     if len(items) == 0:
+        logger.debug(f"no item with name {name} with parents {parents} found")
         return None
     elif len(items) == 1:
+        logger.debug(f"item with name {name} with parents {parents} found")
         return items[0]
     else:
         raise IndexError("More than one item found")
@@ -85,8 +88,11 @@ def _create_folder(service: object, name: object, parents: object) -> object:
     logger.debug("called _create_folder()")
     item = _exists(service, name, parents)
     if item is None:
+        logger.debug(f"creating a folder called {name} with parents {parents}")
         metadata = {"name": name, "parents": parents, "mimeType": mime % "folder"}
         item = service.files().create(body=metadata, fields="id").execute()
+    else:
+        logger.debug(f"not creating the folder")
     return item
 
 
@@ -106,10 +112,15 @@ def _upload_file(service: object, name: object, parents: object, path: object) -
     media = MediaFileUpload(path, mimetype=mimetype)
     item = _exists(service, name, parents)
     if item is None:
+        logger.debug(f"uploading file")
         service.files().create(body=metadata, media_body=media, fields="id").execute()
     else:
         fid = item["id"]
-        service.files().update(fileId=fid, media_body=media, fields="id").execute()
+        if update_files is True:
+            logger.debug(f"updating file")
+            service.files().update(fileId=fid, media_body=media, fields="id").execute()
+        else:
+            logger.debug(f"skipping file")
 
 
 def backup() -> bool:
