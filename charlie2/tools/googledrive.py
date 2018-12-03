@@ -62,7 +62,9 @@ def _exists(service: object, name: object, parents: object) -> object:
     q = f"trashed != True"
     for p in parents:
         q += f" and '{p}' in parents"
-    items = service.files().list(pageSize=100, q=q).execute().get("files", [])
+    q += f" and name = '{name}'"
+    items = service.files().list(pageSize=1000, q=q).execute().get("files", [])
+    [logger.debug(name + "<->" + i["name"]) for i in items]
     items = [i for i in items if i["name"] == name]
     if len(items) == 0:
         logger.debug(f"no item with name {name} with parents {parents} found")
